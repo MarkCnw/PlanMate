@@ -15,34 +15,45 @@ class AvatarItem extends StatelessWidget {
     required this.onTap,
   });
 
+  // ใน avatar_widget.dart - เพิ่ม responsive sizing:
+
   @override
   Widget build(BuildContext context) {
+    // คำนวณขนาดตามความกว้างหน้าจอ
+    final screenWidth = MediaQuery.of(context).size.width;
+    final avatarSize =
+        (screenWidth - 60) /
+        3.5; // 60 = padding ซ้าย-ขวา, 3.5 = พื้นที่สำหรับ 3 avatar + spacing
+    final clampedSize = avatarSize.clamp(
+      70.0,
+      100.0,
+    ); // จำกัดขนาดไม่ให้เล็กหรือใหญ่เกินไป
+
     return GestureDetector(
       onTap: onTap,
       child: Column(
         children: [
           Container(
             decoration: BoxDecoration(
-              border: isSelected 
-                ? Border.all(color: Colors.white, width: 4)
-                : null,
+              border:
+                  isSelected
+                      ? Border.all(color: Colors.white, width: 4)
+                      : null,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Image.asset(
               imagePath,
-              width: 120,
-              height: 120,
+              width: clampedSize,
+              height: clampedSize,
               fit: BoxFit.contain,
             ),
           ),
           SizedBox(height: 8),
-          // ใส่พื้นหลังให้กับข้อความเพื่อให้ชัดเจน
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              // เพิ่มเงาเล็กน้อยเพื่อให้ดูโดดเด่น
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
@@ -54,7 +65,7 @@ class AvatarItem extends StatelessWidget {
             child: Text(
               name,
               style: GoogleFonts.chakraPetch(
-                fontSize: 16,
+                fontSize: 14, // ลดขนาดฟอนต์จาก 16 เป็น 14
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 color: isSelected ? Color(0xFFF6874E) : Colors.black87,
               ),
