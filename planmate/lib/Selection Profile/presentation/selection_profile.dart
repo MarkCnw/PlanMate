@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:planmate/Selection%20Profile/Models/avatar_data.dart';
 import 'package:planmate/Selection%20Profile/Widgets/avatar_widget.dart';
 import 'package:planmate/Home/presentation/home.dart';
-import 'package:planmate/Theme/app_theme.dart';
 
 
 class ProfileScreen extends StatefulWidget {
@@ -34,7 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   ];
 
   // Colors - ควรย้ายไปไว้ใน theme หรือ constants
-
+  static const Color _primaryColor = Color(0xFFF6874E);
   static const double _spacing = 40.0;
 
   void _onAvatarSelected(String avatarName) {
@@ -61,7 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+      backgroundColor: _primaryColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -76,7 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildHeaderImage(),
                     const SizedBox(height: 35),
                     _buildAvatarSelection(),
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 60),
                     _buildConfirmButton(),
                   ],
                 ),
@@ -100,17 +99,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildHeaderImage() {
-  final screenHeight = MediaQuery.of(context).size.height;
-  return SvgPicture.asset(
-    'assets/avatar/team_profile.svg',
-    height: screenHeight * 0.3, // หรือปรับตามต้องการ
-    fit: BoxFit.contain,
-  );
-}
+    return SvgPicture.asset(
+      'assets/avatar/team_profile.svg',
+      width: 300,
+      height: 300,
+    );
+  }
 
   Widget _buildAvatarSelection() {
     return Wrap(
-      spacing: 10,
+      spacing: 8,
       alignment: WrapAlignment.center,
       children: _availableAvatars.map((avatar) {
         return AvatarItem(

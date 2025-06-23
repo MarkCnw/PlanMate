@@ -15,8 +15,6 @@ class AvatarItem extends StatelessWidget {
     required this.onTap,
   });
 
-  // ใน avatar_widget.dart - เพิ่ม responsive sizing:
-
   @override
   Widget build(BuildContext context) {
     // คำนวณขนาดตามความกว้างหน้าจอ
