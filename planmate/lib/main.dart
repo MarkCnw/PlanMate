@@ -5,11 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:planmate/Home/presentation/home.dart';
 import 'package:planmate/Onboarding/Presentation/onboarding_screen.dart';
 
-
-
 import 'firebase_options.dart';
-
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,24 +15,23 @@ void main() async {
   runApp(MyApp());
 }
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return  MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home:StreamBuilder(
+      home: StreamBuilder(
         stream: FirebaseAuth.instance.authStateChanges(),
-         builder: (context,snapshot){
+        builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return HomeScreen();  
-          }else{
+            return HomeScreen();
+          } else {
             return OnboardingScreen();
           }
-         }
-      ) ,
+        },
+      ),
     );
   }
 }

@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:planmate/Selection%20Profile/Models/avatar_data.dart';
 import 'package:planmate/Selection%20Profile/Widgets/avatar_widget.dart';
 import 'package:planmate/Home/presentation/home.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,26 +15,38 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String? selectedAvatar;
-  
-  // Constants - ย้ายไปไว้ที่ top level หรือ config file
+
   static const List<AvatarData> _availableAvatars = [
-    AvatarData(
-      name: "Ironman",
-      imagePath: 'assets/avatar/avatar1.png',
-    ),
-    AvatarData(
-      name: "Batman", 
-      imagePath: 'assets/avatar/avatar3.png',
-    ),
-    AvatarData(
-      name: "Spiderman",
-      imagePath: 'assets/avatar/avatar2.png',
-    ),
+    AvatarData(name: "Ironman", imagePath: 'assets/avatar/avatar1.png'),
+    AvatarData(name: "Batman", imagePath: 'assets/avatar/avatar3.png'),
+    AvatarData(name: "Spiderman", imagePath: 'assets/avatar/avatar2.png'),
   ];
 
-  // Colors - ควรย้ายไปไว้ใน theme หรือ constants
   static const Color _primaryColor = Color(0xFFF6874E);
   static const double _spacing = 40.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfProfileAlreadySelected();
+  }
+
+  Future<void> _checkIfProfileAlreadySelected() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedAvatar = prefs.getString('selected_avatar');
+    if (savedAvatar != null) {
+      final avatarData = _availableAvatars.firstWhere(
+        (avatar) => avatar.name == savedAvatar,
+        orElse: () => _availableAvatars[0], // fallback
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(selectedAvatar: avatarData),
+        ),
+      );
+    }
+  }
 
   void _onAvatarSelected(String avatarName) {
     setState(() {
@@ -42,13 +54,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  void _onConfirmPressed() {
+  Future<void> _onConfirmPressed() async {
     if (selectedAvatar == null) return;
-    
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selected_avatar', selectedAvatar!);
+
     final selectedAvatarData = _availableAvatars.firstWhere(
       (avatar) => avatar.name == selectedAvatar,
     );
-    
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -123,7 +138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildConfirmButton() {
     final isEnabled = selectedAvatar != null;
-    
+
     return SizedBox(
       width: 330,
       height: 60,
