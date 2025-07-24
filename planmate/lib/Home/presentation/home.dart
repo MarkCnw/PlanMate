@@ -2,17 +2,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:planmate/Auth/presentation/login_screen.dart';
 import 'package:planmate/Auth/services/google_service.dart';
-import 'package:planmate/Selection%20Profile/Models/avatar_data.dart';
+
 
 import 'package:planmate/Widgets/bunton.dart';
 // เพิ่ม import
 
 class HomeScreen extends StatelessWidget {
-  final AvatarData? selectedAvatar;
+  
   
   const HomeScreen({
     super.key,
-    this.selectedAvatar,
+    
   });
 
   @override
@@ -28,8 +28,6 @@ class HomeScreen extends StatelessWidget {
             children: [
               _buildWelcomeText(),
               const SizedBox(height: 30),
-              _buildAvatarSection(),
-              const SizedBox(height: 20),
               _buildUserInfoSection(user),
               const SizedBox(height: 30),
               _buildLogoutButton(context),
@@ -51,48 +49,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatarSection() {
-    if (selectedAvatar == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      children: [
-        // แสดงรูป Avatar ที่เลือก
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.blue, width: 3),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Image.asset(
-            selectedAvatar!.imagePath,
-            width: 120,
-            height: 120,
-            fit: BoxFit.contain,
-          ),
-        ),
-        const SizedBox(height: 12),
-        // แสดงชื่อ Avatar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.blue.withOpacity(0.3)),
-          ),
-          child: Text(
-            selectedAvatar!.name,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  
 
   Widget _buildUserInfoSection(User? user) {
     return Column(

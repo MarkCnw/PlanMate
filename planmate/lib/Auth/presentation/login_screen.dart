@@ -3,7 +3,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:planmate/Auth/services/auth_service.dart';
 import 'package:planmate/Auth/services/google_service.dart';
-import 'package:planmate/Selection%20Profile/presentation/selection_profile.dart';
 import 'package:planmate/Widgets/snackbar.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -22,61 +21,9 @@ class _SignInScreenState extends State<SignInScreen> {
 
   
 
-  // Email/Password Login
-  void loginUser() async {
-    if (!_formKey.currentState!.validate()) return;
+  
 
-    setState(() => isLoading = true);
-
-    try {
-      String res = await AuthServicews().loginUser(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-
-      if (res == "success") {
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const ProfileScreen()),
-          );
-        }
-      } else {
-        if (mounted) {
-          showSnackbar(context, res);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        showSnackbar(context, "Login failed: ${e.toString()}");
-      }
-    } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
-    }
-  }
-
-  // Google Sign In
-  void signInWithGoogle() async {
-    setState(() => isLoading = true);
-
-    try {
-      await FirebaseServices().signInWithGoogle();
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const ProfileScreen()),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        showSnackbar(context, "Google Sign In failed: ${e.toString()}");
-      }
-    } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
-    }
-  }
+  
 
   @override
   Widget build(BuildContext context) {
