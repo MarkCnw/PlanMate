@@ -26,7 +26,7 @@ class CustomFAB extends StatelessWidget {
         ],
       ),
       child: IconButton(
-        onPressed: () => onPressed,
+        onPressed: onPressed,
         icon: Icon(
           FontAwesomeIcons.pencil,
           size: 28,
