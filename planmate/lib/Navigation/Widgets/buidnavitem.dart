@@ -24,16 +24,17 @@ class NavItemWidget extends StatelessWidget {
         children: [
           Icon(
             icon, 
-            color: isSelected ? Color(0xFF8B5CF6) : Colors.grey[400], // สีม่วงเมื่อเลือก
-            size: 20,
+            color: isSelected ? Theme.of(context).primaryColor : Colors.grey[400],
+            size: 22,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? Color(0xFF8B5CF6) : Colors.grey[400],
+              color: isSelected ? Theme.of(context).primaryColor : Colors.grey[500],
               fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              letterSpacing: 0.3,
             ),
           ),
         ],
