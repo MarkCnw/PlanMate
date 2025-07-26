@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:planmate/Home/presentation/home.dart';
 import 'package:planmate/Navigation/Widgets/buttonappbar.dart';
 import 'package:planmate/Navigation/Widgets/customfab.dart';
 import 'package:planmate/Profile/Presentation/profile.screen.dart';
@@ -15,7 +16,7 @@ class _CustomBottomNavBarAppState extends State<CustomBottomNavBarApp> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    Center(child: Text('Home')),
+    HomeScreen(),
     Center(child: Text('Search')),
     Center(child: Text('Create')),
     Center(child: Text('History')),

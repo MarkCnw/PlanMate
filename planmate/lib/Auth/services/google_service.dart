@@ -65,7 +65,6 @@ class FirebaseServices {
         await userDoc.set({
           'uid': user.uid,
           'name': user.displayName ?? '',
-          'email': user.email ?? '',
           'photoURL': user.photoURL ?? '',
           'createdAt': FieldValue.serverTimestamp(),
           'lastSignIn': FieldValue.serverTimestamp(),

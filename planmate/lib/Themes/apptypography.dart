@@ -1,71 +1,63 @@
-import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTypography {
-  static const String primaryFont = 'Inter';
-  static const String secondaryFont =
-      'SF Pro Display'; // iOS-style alternative
-
   // Navigation Typography
-  static TextStyle navLabel(bool isSelected) => TextStyle(
+  static TextStyle navLabel(bool isSelected) => GoogleFonts.inter(
     fontSize: 12,
     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-    fontFamily: 'Inter', // Modern, clean font for English
     letterSpacing: 0.3,
   );
 
-  // Other Typography Styles
-  static final TextStyle heading1 = TextStyle(
+  // Headings
+  static TextStyle get heading1 => GoogleFonts.inter(
     fontSize: 32,
     fontWeight: FontWeight.w700,
-    fontFamily: primaryFont,
     letterSpacing: -0.8,
     height: 1.2,
   );
 
-  static final TextStyle heading2 = TextStyle(
+  static TextStyle get heading2 => GoogleFonts.inter(
     fontSize: 24,
     fontWeight: FontWeight.w600,
-    fontFamily: primaryFont,
     letterSpacing: -0.4,
     height: 1.3,
   );
 
-  static final TextStyle heading3 = TextStyle(
+  static TextStyle get heading3 => GoogleFonts.inter(
     fontSize: 20,
     fontWeight: FontWeight.w600,
-    fontFamily: primaryFont,
     letterSpacing: -0.2,
     height: 1.4,
   );
 
-  static final TextStyle body1 = TextStyle(
+  // Body text
+  static TextStyle get body1 => GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFont,
     letterSpacing: 0.1,
     height: 1.5,
   );
 
-  static final TextStyle body2 = TextStyle(
+  static TextStyle get body2 => GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFont,
     letterSpacing: 0.1,
     height: 1.4,
   );
 
-  static final TextStyle caption = TextStyle(
+  // Small text
+  static TextStyle get caption => GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    fontFamily: primaryFont,
     letterSpacing: 0.4,
     height: 1.3,
   );
 
-  static final TextStyle button = TextStyle(
+  // Button text
+  static TextStyle get button => GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    fontFamily: primaryFont,
     letterSpacing: 0.2,
   );
 }
