@@ -7,77 +7,61 @@ import 'package:planmate/Themes/apptypography.dart';
 class HeaderSection extends StatelessWidget {
   final User? user;
 
-  const HeaderSection({
-    super.key,
-    required this.user,
-  });
+  const HeaderSection({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      height: 300,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundImage:
+                  user?.photoURL != null
+                      ? NetworkImage(user!.photoURL!)
+                      : const AssetImage('assets/avatar/NogoogleImage.png')
+                          as ImageProvider,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Welcome,',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  Text(
+                    user?.displayName ?? 'Ronalldo',
+                    style: AppTypography.heading2.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                // handle tap
+              },
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white24,
+                ),
+                child: const Icon(
+                  FontAwesomeIcons.solidBell,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundImage:
-                    user?.photoURL != null
-                        ? NetworkImage(user!.photoURL!)
-                        : const AssetImage(
-                              'assets/avatar/NogoogleImage.png',
-                            )
-                            as ImageProvider,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Welcome,',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    Text(
-                      user?.displayName ?? 'Ronalldo',
-                      style: AppTypography.heading2.copyWith(
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  // handle tap
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white24,
-                  ),
-                  child: const Icon(
-                    FontAwesomeIcons.solidBell,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
