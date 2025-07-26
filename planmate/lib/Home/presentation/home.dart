@@ -16,25 +16,51 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // backgroundColor: const Color(0xFFEDE8F9),
       body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-               HeaderSection(user: user),
-              padding: const EdgeInsets.all(20),
-              height: 300,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+        child: SingleChildScrollView(
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height, // สำคัญมาก
+            child: Stack(
+              children: [
+                // Header background
+                Container(
+                  height: 260,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: HeaderSection(user: user),
                 ),
-              ),
+
+                // Chart section ลอยออกมาด้านล่าง
+                Positioned(
+                  top: 120,
+                  left: 20,
+                  right: 20,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const ProgressChartSection(),
+                  ),
+                ),
+              ],
             ),
-            // HeaderSection(user: user),
-            SizedBox(height: 20),
-            ProgressChartSection(),
-          ],
+          ),
         ),
       ),
     );
