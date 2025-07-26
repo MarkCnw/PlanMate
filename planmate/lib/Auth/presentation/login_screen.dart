@@ -23,10 +23,10 @@ class _SignInScreenState extends State<SignInScreen> {
 
     try {
       await FirebaseServices().signInWithGoogle();
-      
+
       // เช็คว่า user ได้เข้าสู่ระบบแล้วหรือไม่
       final User? user = FirebaseAuth.instance.currentUser;
-      
+
       if (user != null && mounted) {
         // นำทางไปหน้า Home
         Navigator.of(context).pushReplacement(
@@ -94,52 +94,54 @@ class _SignInScreenState extends State<SignInScreen> {
                   child: ElevatedButton(
                     onPressed: isLoading ? null : signInWithGoogle,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isLoading ? Colors.grey : Colors.black,
+                      backgroundColor:
+                          isLoading ? Colors.grey : Colors.black,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
                       ),
                     ),
-                    child: isLoading
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                    child:
+                        isLoading
+                            ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                "Signing In...",
-                                style: GoogleFonts.chakraPetch(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
+                                const SizedBox(width: 12),
+                                Text(
+                                  "Signing In...",
+                                  style: GoogleFonts.chakraPetch(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/icons/google.png',
-                                scale: 3,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                "Sign in with Google",
-                                style: GoogleFonts.chakraPetch(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
+                              ],
+                            )
+                            : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/icons/google.png',
+                                  scale: 3,
                                 ),
-                              ),
-                            ],
-                          ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  "Sign in with Google",
+                                  style: GoogleFonts.chakraPetch(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                   ),
                 ),
               ),
