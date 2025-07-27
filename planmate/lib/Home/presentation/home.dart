@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:planmate/Home/Widgets/header_widget.dart';
 import 'package:planmate/Home/Widgets/progress_widget.dart';
+import 'package:planmate/Home/Widgets/project_section.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -57,6 +58,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: const ProgressChartSection(),
                   ),
+                ),
+                Positioned(
+                  top: 500, // ปรับตามความสูงของ header + chart
+                  left: 20,
+                  right: 20,
+                  child: const ProjectSection(),
                 ),
               ],
             ),
