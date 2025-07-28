@@ -69,6 +69,15 @@ class ProjectModel {
         description: 'Learn programming through games',
         createdAt: DateTime.now(),
       ),
+      ProjectModel(
+        id: '3',
+        title: 'Baseketball ',
+        taskCount: 12,
+        color: const Color.fromARGB(255, 233, 126, 73),
+        icon: Icons.sports_basketball,
+        description: 'Play basketball with friends',
+        createdAt: DateTime.now(),
+      ),
     ];
   }
 
