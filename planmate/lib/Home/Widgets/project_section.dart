@@ -9,7 +9,7 @@ class ProjectSection extends StatelessWidget {
   Widget build(BuildContext context) {
     // ใช้ Mock Data ก่อน
     final projects = ProjectModel.getMockProjects();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -35,27 +35,33 @@ class ProjectSection extends StatelessWidget {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Grid View สำหรับ Project Cards
-        GridView.builder(
-          shrinkWrap: true, // สำคัญ! ให้ Grid ไม่ขยายเต็มหน้าจอ
-          physics: const NeverScrollableScrollPhysics(), // ปิดการ scroll ของ Grid
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, // 2 columns
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.2, // อัตราส่วน width:height
+        SizedBox(
+          height: 160,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: projects.length,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemBuilder: (context, index) {
+              final project = projects[index];
+              return Padding(
+                padding: const EdgeInsets.only(
+                  right: 20,
+                ), // ระยะห่างระหว่างการ์ด
+                child: SizedBox(
+                  width:
+                      MediaQuery.of(context).size.width / 2 -
+                      32, // ✅ ขนาดเท่า Grid 2 คอลัมน์
+                  child: ProjectCard(project: project),
+                ),
+              );
+            },
           ),
-          itemCount: projects.length,
-          itemBuilder: (context, index) {
-            final project = projects[index];
-            return ProjectCard(project: project);
-          },
         ),
       ],
     );
   }
 }
-

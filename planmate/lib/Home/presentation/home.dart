@@ -60,9 +60,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 Positioned(
-                  top: 500, // ปรับตามความสูงของ header + chart
-                  left: 20,
-                  right: 20,
+                  top: 450, // ปรับตามความสูงของ header + chart
+                  left: 15,
+                  right: 15,
                   child: const ProjectSection(),
                 ),
               ],
