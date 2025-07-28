@@ -38,25 +38,24 @@ class ProjectSection extends StatelessWidget {
         
         const SizedBox(height: 16),
         
-        // Horizontal ListView สำหรับ Project Cards
-        SizedBox(
-          height: 166, // ความสูงของ card (200 / 1.2 = 166)
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal, // เลื่อนในแนวนอน
-            itemCount: projects.length,
-            itemBuilder: (context, index) {
-              final project = projects[index];
-              return Container(
-                width: 166, // กำหนดความกว้างเท่ากับความสูง (สี่เหลี่ยมจัตุรัส)
-                margin: EdgeInsets.only(
-                  right: index < projects.length - 1 ? 12 : 0, // เว้นระยะห่างระหว่าง card
-                ),
-                child: ProjectCard(project: project),
-              );
-            },
+        // Grid View สำหรับ Project Cards
+        GridView.builder(
+          shrinkWrap: true, // สำคัญ! ให้ Grid ไม่ขยายเต็มหน้าจอ
+          physics: const NeverScrollableScrollPhysics(), // ปิดการ scroll ของ Grid
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2, // 2 columns
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.2, // อัตราส่วน width:height
           ),
+          itemCount: projects.length,
+          itemBuilder: (context, index) {
+            final project = projects[index];
+            return ProjectCard(project: project);
+          },
         ),
       ],
     );
   }
 }
+
