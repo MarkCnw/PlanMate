@@ -40,16 +40,16 @@ class ProjectSection extends StatelessWidget {
 
         // Grid View สำหรับ Project Cards
         SizedBox(
-          height: 160,
+          height: 180,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: projects.length,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             itemBuilder: (context, index) {
               final project = projects[index];
               return Padding(
                 padding: const EdgeInsets.only(
-                  right: 20,
+                  right: 12,
                 ), // ระยะห่างระหว่างการ์ด
                 child: SizedBox(
                   width:
