@@ -53,10 +53,13 @@ class CreateScreen extends StatelessWidget {
                       width: 100,
                       height: 100,
                     ),
+                    Stack(
+                      
+                    )
                   ],
                 ),
               ),
-              SizedBox(height: 22),
+              SizedBox(height: 40),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
