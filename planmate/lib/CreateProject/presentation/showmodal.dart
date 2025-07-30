@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class CreateProjectSheet extends StatefulWidget {
-  final void Function(String name, IconData icon) onSubmit;
+  final void Function(String name, String iconPath) onSubmit;
 
   const CreateProjectSheet({super.key, required this.onSubmit});
 
@@ -12,16 +11,24 @@ class CreateProjectSheet extends StatefulWidget {
 
 class _CreateProjectSheetState extends State<CreateProjectSheet> {
   final TextEditingController _nameController = TextEditingController();
-  IconData? _selectedIcon;
+  String? _selectedIconPath;
 
-  final List<IconData> _icons = [
-    FontAwesomeIcons.basketball,
-    FontAwesomeIcons.paintBrush,
-    FontAwesomeIcons.music,
-    FontAwesomeIcons.code,
-    FontAwesomeIcons.book,
-    FontAwesomeIcons.camera,
-    FontAwesomeIcons.rocket,
+  final List<String> iconPath = [
+    'assets/icons/arrow.png',
+    'assets/icons/book.png',
+    'assets/icons/check.png',
+    'assets/icons/check&cal.png',
+    'assets/icons/Chess.png',
+    'assets/icons/computer.png',
+    'assets/icons/crayons.png',
+    'assets/icons/Egg&Bacon.png',
+    'assets/icons/esports.png',
+    'assets/icons/Football.png',
+    'assets/icons/Gymming.png',
+    'assets/icons/pencil.png',
+    'assets/icons/Pizza.png',
+    'assets/icons/rocket.png',
+    'assets/icons/ruler.png',
   ];
 
   @override
@@ -33,10 +40,7 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
         children: [
           const Text(
             'Create New Project',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
 
@@ -62,29 +66,34 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
           Wrap(
             spacing: 12,
             runSpacing: 12,
-            children: _icons.map((icon) {
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedIcon = icon;
-                  });
-                },
-                child: CircleAvatar(
-                  radius: 24,
-                  backgroundColor: _selectedIcon == icon
-                      ? Colors.blue.shade100
-                      : Colors.grey.shade200,
-                  child: FaIcon(
-                    icon,
-                    color: _selectedIcon == icon
-                        ? Colors.blue
-                        : Colors.grey.shade700,
-                    size: 20,
-                  ),
-                ),
-              );
-            }).toList(),
+            children:
+                iconPath.map((path) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedIconPath = path;
+                      });
+                    },
+                    child: CircleAvatar(
+                      radius: 28,
+                      backgroundColor:
+                          _selectedIconPath == path
+                              ? Colors.blue.shade100
+                              : Colors.grey.shade200,
+                      child: Image.asset(
+                        path,
+                        width: 40,
+                        height: 40,
+                        // color:
+                        //     _selectedIconPath == path
+                        //         ? Colors.blue
+                        //         : Colors.grey.shade700,
+                      ),
+                    ),
+                  );
+                }).toList(),
           ),
+
           const SizedBox(height: 20),
 
           // Submit Button
@@ -93,8 +102,11 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
             child: ElevatedButton(
               onPressed: () {
                 if (_nameController.text.isNotEmpty &&
-                    _selectedIcon != null) {
-                  widget.onSubmit(_nameController.text, _selectedIcon!);
+                    _selectedIconPath != null) {
+                  widget.onSubmit(
+                    _nameController.text,
+                    _selectedIconPath!,
+                  );
                   Navigator.pop(context);
                 }
               },

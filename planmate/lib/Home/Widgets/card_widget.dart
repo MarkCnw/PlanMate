@@ -39,7 +39,8 @@ class ProjectCard extends StatelessWidget {
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(project.icon, color: Colors.white, size: 24),
+                child: Image.asset(project.iconPath, width: 60, height: 60) // ✅ แบบใหม่
+
               ),
             ],
           ),
