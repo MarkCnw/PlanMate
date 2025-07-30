@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:planmate/CreateProject/Widgets/inspiration.dart';
+import 'package:planmate/CreateProject/presentation/showmodal.dart';
 
 class CreateScreen extends StatefulWidget {
   const CreateScreen({super.key});
@@ -166,7 +167,27 @@ class _CreateScreenState extends State<CreateScreen> {
                       width: double.infinity,
                       height: 56, // 🆕 เพิ่มความสูง
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(20),
+                              ),
+                            ),
+                            builder:
+                                (context) => CreateProjectSheet(
+                                  onSubmit: (name, icon) {
+                                    print("ชื่อโปรเจกต์: $name");
+                                    print("ไอคอน: $icon");
+                                    // TODO: บันทึกหรือสร้างโปรเจกต์จริง
+                                  },
+                                ),
+                          );
+                          
+                        },
+                        
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF667EEA),
                           foregroundColor: Colors.white,
