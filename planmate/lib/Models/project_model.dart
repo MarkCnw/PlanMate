@@ -40,55 +40,80 @@ class ProjectModel {
   // Static method สำหรับ Icon Options พร้อมสีที่เฉพาะ
   static Map<String, ProjectIconData> getIconOptions() {
     return {
-      'basketball': const ProjectIconData(
-        iconPath: 'assets/icons/basketball.png',
+      'arrow': const ProjectIconData(
+        iconPath: 'assets/icons/arrow.png',
         color: Color(0xFFFF6B35), // สีแดงส้ม
-        name: 'Basketball',
-      ),
-      'travel': const ProjectIconData(
-        iconPath: 'assets/icons/travel.png',
-        color: Color(0xFF60A5FA), // สีฟ้า
-        name: 'Travel',
-      ),
-      'coding': const ProjectIconData(
-        iconPath: 'assets/icons/code.png',
-        color: Color(0xFF8B5CF6), // สีม่วง
-        name: 'Coding',
-      ),
-      'music': const ProjectIconData(
-        iconPath: 'assets/icons/music.png',
-        color: Color(0xFFEC4899), // สีชมพู
-        name: 'Music',
+        name: 'arrow',
       ),
       'book': const ProjectIconData(
         iconPath: 'assets/icons/book.png',
-        color: Color(0xFF10B981), // สีเขียว
-        name: 'Reading',
+        color: Color(0xFF60A5FA), // สีฟ้า
+        name: 'book',
       ),
-      'camera': const ProjectIconData(
-        iconPath: 'assets/icons/camera.png',
+      'check': const ProjectIconData(
+        iconPath: 'assets/icons/check.png',
+        color: Color(0xFF8B5CF6), // สีม่วง
+        name: 'check',
+      ),
+      'check&cal': const ProjectIconData(
+        iconPath: 'assets/icons/check&cal.png',
+        color: Color(0xFFEC4899), // สีชมพู
+        name: 'check&cal',
+      ),
+      'Chess': const ProjectIconData(
+        iconPath: 'assets/icons/Chess.png',
+        color: Color(0xFF10B981), // สีเขียว
+        name: 'Chess',
+      ),
+      'computer': const ProjectIconData(
+        iconPath: 'assets/icons/computer.png',
         color: Color(0xFFF59E0B), // สีเหลือง
-        name: 'Photography',
+        name: 'computer',
+      ),
+      'crayons': const ProjectIconData(
+        iconPath: 'assets/icons/crayons.png',
+        color: Color(0xFF6366F1), // สีม่วงน้ำเงิน
+        name: 'crayons',
+      ),
+      'Egg&Bacon': const ProjectIconData(
+        iconPath: 'assets/icons/Egg&Bacon.png',
+        color: Color(0xFFEF4444), // สีแดง
+        name: 'Egg&Bacon',
+      ),
+      'esports': const ProjectIconData(
+        iconPath: 'assets/icons/esports.png',
+        color: Color(0xFF059669), // สีเขียวเข้ม
+        name: 'esports',
+      ),
+      'Football': const ProjectIconData(
+        iconPath: 'assets/icons/Football.png',
+        color: Color(0xFFDC2626), // สีแดงเข้ม
+        name: 'Football',
+      ),
+      'Gymming': const ProjectIconData(
+        iconPath: 'assets/icons/Gymming.png',
+        color: Color(0xFFDC2626), // สีแดงเข้ม
+        name: 'Gymming',
+      ),
+      'pencil': const ProjectIconData(
+        iconPath: 'assets/icons/pencil.png',
+        color: Color(0xFFDC2626), // สีแดงเข้ม
+        name: 'pencil',
+      ),
+      'Pizza': const ProjectIconData(
+        iconPath: 'assets/icons/Pizza.png',
+        color: Color(0xFFDC2626), // สีแดงเข้ม
+        name: 'Pizza',
       ),
       'rocket': const ProjectIconData(
         iconPath: 'assets/icons/rocket.png',
-        color: Color(0xFF6366F1), // สีม่วงน้ำเงิน
-        name: 'Business',
-      ),
-      'paintbrush': const ProjectIconData(
-        iconPath: 'assets/icons/paintbrush.png',
-        color: Color(0xFFEF4444), // สีแดง
-        name: 'Art',
-      ),
-      'fitness': const ProjectIconData(
-        iconPath: 'assets/icons/fitness.png',
-        color: Color(0xFF059669), // สีเขียวเข้ม
-        name: 'Fitness',
-      ),
-      'food': const ProjectIconData(
-        iconPath: 'assets/icons/food.png',
         color: Color(0xFFDC2626), // สีแดงเข้ม
-        name: 'Cooking',
+        name: 'rocket',
+      ),
+      'ruler': const ProjectIconData(
+        iconPath: 'assets/icons/ruler.png',
+        color: Color(0xFFDC2626), // สีแดงเข้ม
+        name: 'ruler',
       ),
     };
   }
