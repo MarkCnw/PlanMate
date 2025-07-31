@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:planmate/CreateProject/Widgets/inspiration.dart';
+
 import 'package:planmate/CreateProject/presentation/showmodal.dart';
 
 class CreateScreen extends StatefulWidget {

@@ -5,6 +5,7 @@ class TaskModel {
   final String title;
   final String? description; 
   final bool done;
+  
   final DateTime? dueDate;
   final DateTime createdAt;
   final String userId;
