@@ -82,8 +82,8 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                               : Colors.grey.shade200,
                       child: Image.asset(
                         path,
-                        width: 40,
-                        height: 40,
+                        width: 65,
+                        height: 65,
                         // color:
                         //     _selectedIconPath == path
                         //         ? Colors.blue
