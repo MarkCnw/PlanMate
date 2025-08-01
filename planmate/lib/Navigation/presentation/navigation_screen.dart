@@ -19,7 +19,7 @@ class _CustomBottomNavBarAppState extends State<CustomBottomNavBarApp> {
   final List<Widget> _pages = [
     HomeScreen(),
     Center(child: Text('Search')),
-    CreateScreen(),
+    CreateProjectScreen(),
     Center(child: Text('History')),
     ProfileScreen(),
   ];

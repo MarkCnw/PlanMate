@@ -5,14 +5,14 @@ import 'package:planmate/CreateProject/Widgets/inspiration.dart';
 
 import 'package:planmate/CreateProject/presentation/showmodal.dart';
 
-class CreateScreen extends StatefulWidget {
-  const CreateScreen({super.key});
+class CreateProjectScreen extends StatefulWidget {
+  const CreateProjectScreen({super.key});
 
   @override
-  State<CreateScreen> createState() => _CreateScreenState();
+  State<CreateProjectScreen> createState() => _CreateProjectScreenState();
 }
 
-class _CreateScreenState extends State<CreateScreen> {
+class _CreateProjectScreenState extends State<CreateProjectScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
