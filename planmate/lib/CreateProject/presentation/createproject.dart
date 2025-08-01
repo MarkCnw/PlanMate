@@ -186,9 +186,8 @@ class _CreateScreenState extends State<CreateScreen> {
                                   },
                                 ),
                           );
-                          
                         },
-                        
+
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF667EEA),
                           foregroundColor: Colors.white,

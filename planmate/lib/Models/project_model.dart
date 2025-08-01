@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ProjectIconData {
   final String iconPath;
-  final Color color;
+  final Color color;  
   final String name;
 
   const ProjectIconData({
@@ -226,10 +226,10 @@ class ProjectModel {
       ),
       ProjectModel(
         id: '2',
-        title: 'Coding Games',
+        title: 'Play Sport',
         taskCount: 8,
         color: const Color(0xFF8B5CF6),
-        iconPath: 'assets/icons/code.png',
+        iconPath: 'assets/icons/Football.png',
         iconKey: 'coding',
         userId: 'mock_user_1',
         description: 'Learn programming through interactive games',
@@ -237,10 +237,10 @@ class ProjectModel {
       ),
       ProjectModel(
         id: '3',
-        title: 'Basketball Training',
+        title: 'Chess Training',
         taskCount: 15,
         color: const Color(0xFFFF6B35),
-        iconPath: 'assets/icons/basketball.png',
+        iconPath: 'assets/icons/Chess.png',
         iconKey: 'basketball',
         userId: 'mock_user_1',
         description: 'Improve basketball skills and fitness',
