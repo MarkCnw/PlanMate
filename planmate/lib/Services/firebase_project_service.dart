@@ -19,6 +19,9 @@ class FirebaseProjectServices {
     String? description,
   }) async {
     try {
+      print('🔄 Creating project...');
+      print('📍 User ID: $currentUserId');
+      
       // ตรวจสอบว่า user ล็อกอินแล้วหรือไม่
       if (currentUserId == null) {
         throw Exception('User not authenticated');
@@ -31,6 +34,8 @@ class FirebaseProjectServices {
         userId: currentUserId!,
         description: description,
       );
+
+      print('📋 Project data: ${project.toMap()}');
 
       // Validate ข้อมูล
       if (!project.isValid) {
@@ -59,63 +64,14 @@ class FirebaseProjectServices {
     }
   }
 
-  /// อัปเดตโปรเจค
-  Future<void> updateProject(ProjectModel project) async {
-    try {
-      if (currentUserId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // ตรวจสอบว่าเป็นเจ้าของโปรเจคหรือไม่
-      if (!project.belongsToUser(currentUserId!)) {
-        throw Exception('Unauthorized to update this project');
-      }
-
-      await projectRef.doc(project.id).update(project.toMap());
-      print('✅ Project updated successfully');
-      
-    } catch (e) {
-      print('❌ Failed to update project: $e');
-      rethrow;
-    }
-  }
-
-  /// ลบโปรเจค
-  Future<void> deleteProject(String projectId) async {
-    try {
-      if (currentUserId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // ดึงข้อมูลโปรเจคก่อนลบเพื่อตรวจสอบสิทธิ์
-      final doc = await projectRef.doc(projectId).get();
-      if (!doc.exists) {
-        throw Exception('Project not found');
-      }
-
-      final project = ProjectModel.fromMap(
-        doc.data() as Map<String, dynamic>, 
-        doc.id,
-      );
-
-      // ตรวจสอบสิทธิ์
-      if (!project.belongsToUser(currentUserId!)) {
-        throw Exception('Unauthorized to delete this project');
-      }
-
-      await projectRef.doc(projectId).delete();
-      print('✅ Project deleted successfully');
-      
-    } catch (e) {
-      print('❌ Failed to delete project: $e');
-      rethrow;
-    }
-  }
-
   /// ดึงโปรเจคทั้งหมดของ user ปัจจุบัน (Real-time)
   Stream<List<ProjectModel>> getUserProjects() {
     try {
+      print('🔄 Getting user projects...');
+      print('📍 User ID: $currentUserId');
+      
       if (currentUserId == null) {
+        print('⚠️ No user logged in, returning empty stream');
         return Stream.value([]);
       }
 
@@ -124,12 +80,25 @@ class FirebaseProjectServices {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .map((snapshot) {
-        return snapshot.docs.map((doc) {
-          return ProjectModel.fromMap(
-            doc.data() as Map<String, dynamic>,
-            doc.id,
-          );
-        }).toList();
+        print('📦 Received ${snapshot.docs.length} projects from Firestore');
+        
+        final projects = snapshot.docs.map((doc) {
+          try {
+            final data = doc.data() as Map<String, dynamic>;
+            print('📄 Project data: $data');
+            
+            return ProjectModel.fromMap(data, doc.id);
+          } catch (e) {
+            print('❌ Error parsing project ${doc.id}: $e');
+            return null;
+          }
+        }).where((project) => project != null).cast<ProjectModel>().toList();
+
+        print('✅ Successfully parsed ${projects.length} projects');
+        return projects;
+      }).handleError((error) {
+        print('❌ Stream error: $error');
+        throw error;
       });
       
     } catch (e) {
@@ -138,24 +107,37 @@ class FirebaseProjectServices {
     }
   }
 
-  /// ดึงโปรเจคทั้งหมดของ user ปัจจุบัน (One-time)
-  Future<List<ProjectModel>> getUserProjectsOnce() async {
+  /// ดึงโปรเจคทั้งหมดของ user ปัจจุบัน (One-time) - แบบไม่มี orderBy
+  Future<List<ProjectModel>> getUserProjectsOnceSimple() async {
     try {
+      print('🔄 Getting user projects (simple)...');
+      print('📍 User ID: $currentUserId');
+      
       if (currentUserId == null) {
+        print('⚠️ No user logged in, returning empty list');
         return [];
       }
 
       final snapshot = await projectRef
           .where('userId', isEqualTo: currentUserId)
-          .orderBy('createdAt', descending: true)
           .get();
 
-      return snapshot.docs.map((doc) {
-        return ProjectModel.fromMap(
-          doc.data() as Map<String, dynamic>,
-          doc.id,
-        );
-      }).toList();
+      print('📦 Received ${snapshot.docs.length} projects from Firestore');
+
+      final projects = snapshot.docs.map((doc) {
+        try {
+          final data = doc.data() as Map<String, dynamic>;
+          print('📄 Project data: $data');
+          
+          return ProjectModel.fromMap(data, doc.id);
+        } catch (e) {
+          print('❌ Error parsing project ${doc.id}: $e');
+          return null;
+        }
+      }).where((project) => project != null).cast<ProjectModel>().toList();
+
+      print('✅ Successfully parsed ${projects.length} projects');
+      return projects;
       
     } catch (e) {
       print('❌ Failed to get user projects: $e');
@@ -163,88 +145,70 @@ class FirebaseProjectServices {
     }
   }
 
-  /// ดึงโปรเจคเดียว
-  Future<ProjectModel?> getProject(String projectId) async {
+  /// Stream แบบง่าย ๆ ไม่มี orderBy
+  Stream<List<ProjectModel>> getUserProjectsSimple() {
     try {
-      final doc = await projectRef.doc(projectId).get();
+      print('🔄 Getting user projects (simple stream)...');
+      print('📍 User ID: $currentUserId');
       
-      if (!doc.exists) {
-        return null;
-      }
-
-      final project = ProjectModel.fromMap(
-        doc.data() as Map<String, dynamic>,
-        doc.id,
-      );
-
-      // ตรวจสอบสิทธิ์การเข้าถึง
-      if (currentUserId != null && !project.belongsToUser(currentUserId!)) {
-        throw Exception('Unauthorized to access this project');
-      }
-
-      return project;
-      
-    } catch (e) {
-      print('❌ Failed to get project: $e');
-      rethrow;
-    }
-  }
-
-  /// อัปเดตจำนวน tasks ในโปรเจค
-  Future<void> updateTaskCount(String projectId, int newCount) async {
-    try {
       if (currentUserId == null) {
-        throw Exception('User not authenticated');
+        print('⚠️ No user logged in, returning empty stream');
+        return Stream.value([]);
       }
 
-      await projectRef.doc(projectId).update({
-        'taskCount': newCount,
-        'updatedAt': FieldValue.serverTimestamp(),
+      return projectRef
+          .where('userId', isEqualTo: currentUserId)
+          .snapshots()
+          .map((snapshot) {
+        print('📦 Received ${snapshot.docs.length} projects from Firestore');
+        
+        final projects = snapshot.docs.map((doc) {
+          try {
+            final data = doc.data() as Map<String, dynamic>;
+            print('📄 Project data: $data');
+            
+            return ProjectModel.fromMap(data, doc.id);
+          } catch (e) {
+            print('❌ Error parsing project ${doc.id}: $e');
+            return null;
+          }
+        }).where((project) => project != null).cast<ProjectModel>().toList();
+
+        print('✅ Successfully parsed ${projects.length} projects');
+        return projects;
+      }).handleError((error) {
+        print('❌ Stream error: $error');
+        throw error;
       });
       
-      print('✅ Task count updated successfully');
-      
     } catch (e) {
-      print('❌ Failed to update task count: $e');
-      rethrow;
+      print('❌ Failed to get user projects: $e');
+      return Stream.error(e);
     }
   }
 
-  /// ดึงสถิติโปรเจคของ user
-  Future<Map<String, dynamic>> getUserProjectStats() async {
+  /// ตรวจสอบสถานะการเชื่อมต่อ
+  Future<bool> checkConnection() async {
     try {
-      if (currentUserId == null) {
-        return {
-          'totalProjects': 0,
-          'totalTasks': 0,
-          'completedTasks': 0,
-        };
-      }
-
-      final projects = await getUserProjectsOnce();
+      print('🔄 Checking Firestore connection...');
       
-      int totalProjects = projects.length;
-      int totalTasks = projects.fold(0, (sum, project) => sum + project.taskCount);
+      // ลองดึงข้อมูล 1 document เพื่อทดสอบการเชื่อมต่อ
+      await _firestore.collection('test').limit(1).get();
       
-      return {
-        'totalProjects': totalProjects,
-        'totalTasks': totalTasks,
-        'completedTasks': 0, // จะต้องคำนวณจาก tasks collection ภายหลัง
-      };
-      
+      print('✅ Firestore connection OK');
+      return true;
     } catch (e) {
-      print('❌ Failed to get user stats: $e');
-      rethrow;
-    }
-  }
-
-  /// ตรวจสอบว่า user มีสิทธิ์เข้าถึงโปรเจคหรือไม่
-  Future<bool> hasProjectAccess(String projectId) async {
-    try {
-      final project = await getProject(projectId);
-      return project != null;
-    } catch (e) {
+      print('❌ Firestore connection failed: $e');
       return false;
     }
+  }
+
+  /// ตรวจสอบสถานะ user
+  void checkUserStatus() {
+    final user = _auth.currentUser;
+    print('👤 Current user: ${user?.uid}');
+    print('📧 User email: ${user?.email}');
+    print('📱 User name: ${user?.displayName}');
+    print('🔐 User signed in: ${user != null}');
   }
 }

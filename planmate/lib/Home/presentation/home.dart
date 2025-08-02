@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:planmate/Home/Widgets/header_widget.dart';
 import 'package:planmate/Home/Widgets/progress_widget.dart';
 import 'package:planmate/Home/Widgets/project_section.dart';
+import 'package:planmate/Models/project_model.dart';
+import 'package:planmate/Services/firebase_project_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,15 +15,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final User? user = FirebaseAuth.instance.currentUser;
+  final FirebaseProjectServices _projectService = FirebaseProjectServices();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: const Color(0xFFEDE8F9),
       body: SafeArea(
         child: SingleChildScrollView(
           child: SizedBox(
-            height: MediaQuery.of(context).size.height, // สำคัญมาก
+            height: MediaQuery.of(context).size.height,
             child: Stack(
               children: [
                 // Header background
@@ -59,11 +61,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: const ProgressChartSection(),
                   ),
                 ),
+
+                // Project section ใช้ Firebase Stream
                 Positioned(
-                  top: 450, // ปรับตามความสูงของ header + chart
+                  top: 450,
                   left: 15,
                   right: 15,
-                  child: const ProjectSection(),
+                  child: StreamBuilder<List<ProjectModel>>(
+                    stream: _projectService.getUserProjectsSimple(),
+                    builder: (context, snapshot) {
+                      return ProjectSection(
+                        projectStream: snapshot,
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
