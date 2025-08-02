@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:planmate/Home/Widgets/card_widget.dart';
 import 'package:planmate/Models/project_model.dart';
 import 'package:planmate/CreateProject/presentation/project_screen.dart';
@@ -43,7 +44,7 @@ class ProjectSection extends StatelessWidget {
 
         // Content based on stream state
         SizedBox(
-          height: 180,
+          height: 250,
           child: _buildProjectContent(context),
         ),
       ],
@@ -172,11 +173,7 @@ class ProjectSection extends StatelessWidget {
                 color: Colors.grey.shade200,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.folder_open_outlined,
-                size: 32,
-                color: Colors.grey.shade500,
-              ),
+              child: SvgPicture.asset('assets/avatar/noproject.svg',width: 50,height: 50,)
             ),
             const SizedBox(height: 12),
             Text(
