@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:planmate/CreateProject/presentation/createproject.dart';
+import 'package:planmate/History/history.dart';
 import 'package:planmate/Home/presentation/home.dart';
 import 'package:planmate/Navigation/Widgets/buttonappbar.dart';
 import 'package:planmate/Navigation/Widgets/customfab.dart';
 import 'package:planmate/Profile/Presentation/profile.screen.dart';
+import 'package:planmate/Search/search.dart';
 
 class CustomBottomNavBarApp extends StatefulWidget {
   const CustomBottomNavBarApp({super.key});
@@ -18,9 +20,9 @@ class _CustomBottomNavBarAppState extends State<CustomBottomNavBarApp> {
 
   final List<Widget> _pages = [
     HomeScreen(),
-    Center(child: Text('Search')),
+    Search(),
     CreateProjectScreen(),
-    Center(child: Text('History')),
+    History(),
     ProfileScreen(),
   ];
 
