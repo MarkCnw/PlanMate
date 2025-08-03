@@ -3,14 +3,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:planmate/Home/Widgets/card_widget.dart';
 import 'package:planmate/Models/project_model.dart';
 import 'package:planmate/CreateProject/presentation/project_screen.dart';
+import 'package:planmate/gen/assets.gen.dart';
 
 class ProjectSection extends StatelessWidget {
   final AsyncSnapshot<List<ProjectModel>> projectStream;
 
-  const ProjectSection({
-    super.key,
-    required this.projectStream,
-  });
+  const ProjectSection({super.key, required this.projectStream});
 
   @override
   Widget build(BuildContext context) {
@@ -43,23 +41,22 @@ class ProjectSection extends StatelessWidget {
         const SizedBox(height: 16),
 
         // Content based on stream state
-        SizedBox(
-          height: 250,
-          child: _buildProjectContent(context),
-        ),
+        SizedBox(height: 250, child: _buildProjectContent(context)),
       ],
     );
   }
 
   Widget _buildProjectContent(BuildContext context) {
-    print('🎯 ProjectSection - Connection State: ${projectStream.connectionState}');
+    print(
+      '🎯 ProjectSection - Connection State: ${projectStream.connectionState}',
+    );
     print('🎯 ProjectSection - Has Error: ${projectStream.hasError}');
     print('🎯 ProjectSection - Has Data: ${projectStream.hasData}');
-    
+
     if (projectStream.hasError) {
       print('❌ ProjectSection Error: ${projectStream.error}');
     }
-    
+
     if (projectStream.hasData) {
       print('📊 ProjectSection Data Count: ${projectStream.data?.length}');
     }
@@ -77,7 +74,7 @@ class ProjectSection extends StatelessWidget {
     // Data state
     if (projectStream.hasData) {
       final projects = projectStream.data!;
-      
+
       // Empty state
       if (projects.isEmpty) {
         return _buildEmptyState(context);
@@ -102,10 +99,7 @@ class ProjectSection extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Loading projects...',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
           ),
         ],
       ),
@@ -141,10 +135,7 @@ class ProjectSection extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               error,
-              style: TextStyle(
-                color: Colors.red.shade600,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.red.shade600, fontSize: 12),
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -157,23 +148,47 @@ class ProjectSection extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+    
+      height: MediaQuery.of(context).size.height * 0.4,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20), // 🆕 เพิ่ม padding
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        // 🆕 Gradient Background (ตาม trend)
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.white, Colors.grey.shade50],
+        ),
+        borderRadius: BorderRadius.circular(20), // 🆕 เพิ่มความโค้งมน
+        // 🆕 Modern Shadow (neumorphism trend)
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            offset: const Offset(8, 8),
+            blurRadius: 20,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.white,
+            offset: const Offset(-8, -8),
+            blurRadius: 20,
+            spreadRadius: 0,
+          ),
+        ],
+        // เอา border ออก (minimalist trend)
       ),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          // mainAxisSize: MainAxisSize.min, // 👈 ป้องกันการขยายเกิน
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                shape: BoxShape.circle,
+            Flexible(
+              flex: 3,
+              child: SvgPicture.asset(
+                Assets.avatar.noproject,
+                height: 150, // 👈 ปรับลดจาก 180
+                fit: BoxFit.contain,
               ),
-              child: SvgPicture.asset('assets/avatar/noproject.svg',width: 50,height: 50,)
             ),
             const SizedBox(height: 12),
             Text(
@@ -187,10 +202,7 @@ class ProjectSection extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Create your first project!',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade500,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
             ),
           ],
         ),
@@ -198,17 +210,22 @@ class ProjectSection extends StatelessWidget {
     );
   }
 
-  Widget _buildProjectsList(BuildContext context, List<ProjectModel> projects) {
+  Widget _buildProjectsList(
+    BuildContext context,
+    List<ProjectModel> projects,
+  ) {
     print('🎯 Building projects list with ${projects.length} projects');
-    
+
     return ListView.builder(
       scrollDirection: Axis.horizontal,
       itemCount: projects.length,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       itemBuilder: (context, index) {
         final project = projects[index];
-        print('🎯 Rendering project: ${project.title} - ${project.iconPath}');
-        
+        print(
+          '🎯 Rendering project: ${project.title} - ${project.iconPath}',
+        );
+
         return Padding(
           padding: const EdgeInsets.only(right: 12),
           child: SizedBox(
@@ -221,11 +238,12 @@ class ProjectSection extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ShowProjectScreen(
-                      projectName: project.title,
-                      iconPath: project.iconPath,
-                      projectId: project.id,
-                    ),
+                    builder:
+                        (context) => ShowProjectScreen(
+                          projectName: project.title,
+                          iconPath: project.iconPath,
+                          projectId: project.id,
+                        ),
                   ),
                 );
               },

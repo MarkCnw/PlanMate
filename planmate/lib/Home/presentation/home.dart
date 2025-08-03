@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:planmate/Home/Widgets/header_widget.dart';
 import 'package:planmate/Home/Widgets/progress_widget.dart';
-import 'package:planmate/Home/Widgets/project_section.dart';
+import 'package:planmate/Home/Widgets/project_section_widget.dart';
 import 'package:planmate/Models/project_model.dart';
 import 'package:planmate/Services/firebase_project_service.dart';
 
