@@ -30,7 +30,7 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
             const SizedBox(height: 20),
             _buildTaskSection(),
             const SizedBox(height: 20),
-            _buildQuickActions(),
+           
           ],
         ),
       ),
@@ -268,99 +268,9 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
     );
   }
 
-  Widget _buildQuickActions() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Quick Actions',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade800,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildActionButton(
-                  'Add New Task',
-                  FontAwesomeIcons.plus,
-                  const Color(0xFF10B981),
-                  () => _showAddTaskBottomSheet(),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildActionButton(
-                  'Add New Task',
-                  FontAwesomeIcons.penToSquare,
-                  const Color(0xFF3B82F6),
-                  () => _showEditProjectBottomSheet(),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  
 
-  Widget _buildActionButton(
-    String title,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.2)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  
 
   void _showProjectOptions() {
     showModalBottomSheet(
