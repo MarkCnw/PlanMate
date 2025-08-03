@@ -148,7 +148,6 @@ class ProjectSection extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return Container(
-    
       height: MediaQuery.of(context).size.height * 0.4,
       width: double.infinity,
       padding: const EdgeInsets.all(20), // 🆕 เพิ่ม padding
@@ -157,7 +156,10 @@ class ProjectSection extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Colors.white, Colors.grey.shade50],
+          colors: [
+            Color(0xFFF6F0FF), // very light purple (เชื่อมกับ header)
+            Colors.white,
+          ],
         ),
         borderRadius: BorderRadius.circular(20), // 🆕 เพิ่มความโค้งมน
         // 🆕 Modern Shadow (neumorphism trend)
@@ -183,7 +185,7 @@ class ProjectSection extends StatelessWidget {
           // mainAxisSize: MainAxisSize.min, // 👈 ป้องกันการขยายเกิน
           children: [
             Flexible(
-              flex: 3,
+              flex: 2,
               child: SvgPicture.asset(
                 Assets.avatar.noproject,
                 height: 150, // 👈 ปรับลดจาก 180
@@ -228,7 +230,7 @@ class ProjectSection extends StatelessWidget {
 
         return Padding(
           padding: const EdgeInsets.only(right: 12),
-          child: SizedBox(
+          child: SizedBox(  
             width: MediaQuery.of(context).size.width / 2 - 32,
             child: ProjectCard(
               project: project,
