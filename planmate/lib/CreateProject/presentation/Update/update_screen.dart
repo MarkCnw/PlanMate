@@ -1,6 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
-import 'package:planmate/CreateProject/presentation/project_screen.dart';
 import 'package:planmate/Services/firebase_project_service.dart';
 
 class UpdateProjectSheet extends StatefulWidget {
@@ -27,7 +26,12 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
   final FirebaseProjectServices _projectService =
       FirebaseProjectServices();
 
-      
+  String? _selectedIconPath;
+  String? _selectedIconKey;
+  bool _isLoading = false;
+  String? _nameError;
+  String? _iconError;
+
   final List<Map<String, String>> iconOptions = [
     {'key': 'arrow', 'path': 'assets/icons/arrow.png'},
     {'key': 'book', 'path': 'assets/icons/book.png'},
@@ -45,6 +49,15 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
     {'key': 'rocket', 'path': 'assets/icons/rocket.png'},
     {'key': 'ruler', 'path': 'assets/icons/ruler.png'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // ตั้งค่าเริ่มต้น
+    _nameController.text = widget.currentTitle;
+    _selectedIconPath = widget.currentIconPath;
+    _selectedIconKey = widget.currentIconKey;
+  }
 
   @override
   void dispose() {
@@ -84,7 +97,7 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
     return isValid;
   }
 
-  Future<void> _handleCreateProject() async {
+  Future<void> _handleEditProject() async {
     if (!_validateForm()) return;
 
     setState(() {
@@ -92,11 +105,10 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
     });
 
     try {
-      // Create project using Firebase service
-      final projectId = await _projectService.editProject(
-        title : currentTitle
-        iconKey
-        projectId
+      await _projectService.editProject(
+        _nameController.text.trim(),
+        _selectedIconKey!,
+        widget.projectId,
       );
 
       if (mounted) {
@@ -106,16 +118,11 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
           _selectedIconPath!,
         );
 
-        // Navigate to project screen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => ShowProjectScreen(
-                  projectName: _nameController.text.trim(),
-                  iconPath: _selectedIconPath!,
-                  projectId: projectId,
-                ),
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Project updated successfully'),
+            backgroundColor: Colors.green,
           ),
         );
       }
@@ -123,7 +130,7 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to create project: ${e.toString()}'),
+            content: Text('Failed to update project: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -344,7 +351,7 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 30),
 
                     // Create Button - ย้ายเข้ามาใน ScrollView
@@ -352,7 +359,7 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleCreateProject,
+                        onPressed: _isLoading ? null : _handleEditProject,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8B5CF6),
                           foregroundColor: Colors.white,
@@ -365,7 +372,8 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                         child:
                             _isLoading
                                 ? const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
                                   children: [
                                     SizedBox(
                                       width: 20,
@@ -377,7 +385,7 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                                     ),
                                     SizedBox(width: 12),
                                     Text(
-                                      'Editing...',
+                                      'Updating...',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
@@ -386,7 +394,7 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                                   ],
                                 )
                                 : const Text(
-                                  'Edit Project',
+                                  'Update Project',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:planmate/CreateProject/presentation/Update/update_screen.dart';
 import 'package:planmate/Services/firebase_project_service.dart';
 import 'package:planmate/Services/firebase_project_service.dart';
 
@@ -400,41 +401,42 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Edit Project',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Project name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  controller: TextEditingController(
-                    text: widget.projectName,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Edit feature coming soon!'),
-                        ),
-                      );
-                    },
-                    child: const Text('Save Changes'),
-                  ),
-                ),
+                UpdateProjectSheet(projectId: projectId, currentTitle: currentTitle, currentIconKey: currentIconKey, currentIconPath: currentIconPath)
+                // Text(
+                //   'Edit Project',
+                //   style: TextStyle(
+                //     fontSize: 20,
+                //     fontWeight: FontWeight.bold,
+                //     color: Colors.grey.shade800,
+                //   ),
+                // ),
+                // const SizedBox(height: 20),
+                // TextField(
+                //   decoration: InputDecoration(
+                //     labelText: 'Project name',
+                //     border: OutlineInputBorder(
+                //       borderRadius: BorderRadius.circular(12),
+                //     ),
+                //   ),
+                //   controller: TextEditingController(
+                //     text: widget.projectName,
+                //   ),
+                // ),
+                // const SizedBox(height: 20),
+                // SizedBox(
+                //   width: double.infinity,
+                //   child: ElevatedButton(
+                //     onPressed: () {
+                //       Navigator.pop(context);
+                //       ScaffoldMessenger.of(context).showSnackBar(
+                //         const SnackBar(
+                //           content: Text('Edit feature coming soon!'),
+                //         ),
+                //       );
+                //     },
+                //     child: const Text('Save Changes'),
+                //   ),
+                // ),
               ],
             ),
           ),
