@@ -23,8 +23,7 @@ class UpdateProjectSheet extends StatefulWidget {
 
 class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
   final TextEditingController _nameController = TextEditingController();
-  final FirebaseProjectServices _projectService =
-      FirebaseProjectServices();
+  final FirebaseProjectServices _projectService = FirebaseProjectServices();
 
   String? _selectedIconPath;
   String? _selectedIconKey;
@@ -74,20 +73,21 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
     bool isValid = true;
 
     // Validate project name
-    if (_nameController.text.trim().isEmpty) {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
       setState(() {
         _nameError = 'Project name is required';
       });
       isValid = false;
-    } else if (_nameController.text.trim().length > 50) {
+    } else if (name.length > 50) {
       setState(() {
         _nameError = 'Project name is too long (max 50 characters)';
       });
       isValid = false;
     }
 
-    // Validate icon selection
-    if (_selectedIconPath == null) {
+    // Validate icon selection (ต้องมีทั้ง path และ key)
+    if (_selectedIconPath == null || _selectedIconKey == null) {
       setState(() {
         _iconError = 'Please select an icon';
       });
@@ -107,24 +107,26 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
     try {
       await _projectService.editProject(
         _nameController.text.trim(),
-        _selectedIconKey!,
+        _selectedIconKey!, // ปลอดภัยเพราะผ่าน validate แล้ว
         widget.projectId,
       );
 
       if (mounted) {
-        // Call the optional callback
+        // แจ้งผลสำเร็จก่อนปิด BottomSheet เพื่อหลีกเลี่ยง context ถูก dispose
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Project updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Callback กลับให้ผู้เรียก (ถ้ามี)
         widget.onSubmit?.call(
           _nameController.text.trim(),
           _selectedIconPath!,
         );
 
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Project updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
@@ -192,8 +194,7 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
 
             Expanded(
               child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -295,58 +296,44 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color:
-                                  _iconError != null
-                                      ? Colors.red
-                                      : Colors.grey.shade300,
+                              color: _iconError != null ? Colors.red : Colors.grey.shade300,
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Wrap(
                             spacing: 12,
                             runSpacing: 12,
-                            children:
-                                iconOptions.map((icon) {
-                                  final isSelected =
-                                      _selectedIconPath == icon['path'];
-                                  return GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedIconPath = icon['path'];
-                                        _selectedIconKey = icon['key'];
-                                        _iconError = null;
-                                      });
-                                    },
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 200,
-                                      ),
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            isSelected
-                                                ? const Color(
-                                                  0xFF8B5CF6,
-                                                ).withOpacity(0.1)
-                                                : Colors.grey.shade100,
-                                        borderRadius:
-                                            BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color:
-                                              isSelected
-                                                  ? const Color(0xFF8B5CF6)
-                                                  : Colors.transparent,
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: Image.asset(
-                                        icon['path']!,
-                                        width: 32,
-                                        height: 32,
-                                      ),
+                            children: iconOptions.map((icon) {
+                              final isSelected = _selectedIconPath == icon['path'];
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedIconPath = icon['path'];
+                                    _selectedIconKey = icon['key'];
+                                    _iconError = null;
+                                  });
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? const Color(0xFF8B5CF6).withOpacity(0.1)
+                                        : Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected ? const Color(0xFF8B5CF6) : Colors.transparent,
+                                      width: 2,
                                     ),
-                                  );
-                                }).toList(),
+                                  ),
+                                  child: Image.asset(
+                                    icon['path']!,
+                                    width: 32,
+                                    height: 32,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ),
                       ],
@@ -354,7 +341,7 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
 
                     const SizedBox(height: 30),
 
-                    // Create Button - ย้ายเข้ามาใน ScrollView
+                    // Update Button
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -369,37 +356,35 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child:
-                            _isLoading
-                                ? const Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
-                                  children: [
-                                    SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
+                        child: _isLoading
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
                                     ),
-                                    SizedBox(width: 12),
-                                    Text(
-                                      'Updating...',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                )
-                                : const Text(
-                                  'Update Project',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
                                   ),
+                                  SizedBox(width: 12),
+                                  Text(
+                                    'Updating...',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const Text(
+                                'Update Project',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
                                 ),
+                              ),
                       ),
                     ),
                   ],

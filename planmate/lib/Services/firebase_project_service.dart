@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../Models/project_model.dart';
 
-class FirebaseProjectServices {
+class FirebaseProjectServices  {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -245,6 +245,9 @@ class FirebaseProjectServices {
     String iconKey,
     String projectId,
   ) async {
+     print('📌 Received Title: $title');
+     print('📌 Received IconKey: $iconKey');
+     print('📌 Received ProjectId: $projectId');
     try {
       print('🔄 Editing project...');
       print('📍 Project ID: $projectId');
