@@ -30,11 +30,20 @@ class $AssetsAvatarGen {
   /// File path: assets/avatar/create.svg
   String get create => 'assets/avatar/create.svg';
 
-  /// File path: assets/avatar/noproject.svg
-  String get noproject => 'assets/avatar/no_project.svg';
+  /// File path: assets/avatar/his.svg
+  String get his => 'assets/avatar/his.svg';
+
+  /// File path: assets/avatar/hisssss.svg
+  String get hisssss => 'assets/avatar/hisssss.svg';
+
+  /// File path: assets/avatar/no_project.svg
+  String get noProject => 'assets/avatar/no_project.svg';
 
   /// File path: assets/avatar/profile1.svg
   String get profile1 => 'assets/avatar/profile1.svg';
+
+  /// File path: assets/avatar/se.svg
+  String get se => 'assets/avatar/se.svg';
 
   /// File path: assets/avatar/team_profile.svg
   String get teamProfile => 'assets/avatar/team_profile.svg';
@@ -46,8 +55,11 @@ class $AssetsAvatarGen {
     avatar2,
     avatar3,
     create,
-    noproject,
+    his,
+    hisssss,
+    noProject,
     profile1,
+    se,
     teamProfile,
   ];
 }
@@ -134,7 +146,7 @@ class $AssetsIconsGen {
 
 class Assets {
   const Assets._();
-  
+
   static const String a2 = 'assets/2.svg';
   static const String a3 = 'assets/3.svg';
   static const $AssetsAvatarGen avatar = $AssetsAvatarGen();

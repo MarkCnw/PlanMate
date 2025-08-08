@@ -3,9 +3,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // เพิ่มบรรทัดนี้
 import 'package:planmate/Navigation/presentation/navigation_screen.dart';
+import 'package:planmate/Onboarding/Presentation/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:planmate/Auth/presentation/login_screen.dart';
-import 'package:planmate/Onboarding/Presentation/onboarding_screen.dart';
+
 import 'firebase_options.dart';
 
 void main() async {
