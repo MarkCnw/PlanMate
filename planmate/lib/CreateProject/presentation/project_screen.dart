@@ -1,18 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:planmate/Models/project_model.dart';
 import 'package:planmate/Services/firebase_project_service.dart';
 
 class ShowProjectScreen extends StatefulWidget {
-  final String projectName;
-  final String iconPath;
-  final String projectId;
+   final ProjectModel project;
+
 
   const ShowProjectScreen({
-    super.key,
-    required this.projectName,
-    required this.iconPath,
-    required this.projectId,
+    super.key, 
+    required this.project,
   });
 
   @override
@@ -111,13 +109,13 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Image.asset(widget.iconPath, width: 60, height: 60),
+            child: Image.asset(widget.project.iconPath, width: 60, height: 60),
           ),
           const SizedBox(height: 16),
 
           // Project Name
           Text(
-            widget.projectName,
+            widget.project.title,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -417,7 +415,7 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
                     ),
                   ),
                   controller: TextEditingController(
-                    text: widget.projectName,
+                    text: widget.project.title,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -458,7 +456,7 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
                 ],
               )
             : Text(
-                'Are you sure you want to delete "${widget.projectName}"?\n\nThis action cannot be undone.',
+                'Are you sure you want to delete "${widget.project.title}"?\n\nThis action cannot be undone.',
               ),
         actions: _isDeleting
             ? []
@@ -471,7 +469,7 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
                   onPressed: () async {
                     setState(() => _isDeleting = true);
                     try {
-                      await deleteProject(widget.projectId);
+                      await deleteProject(widget.project.id);
 
                       if (mounted) {
                         Navigator.of(context).pop(); // close dialog

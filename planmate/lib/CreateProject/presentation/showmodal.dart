@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:planmate/Auth/services/google_service.dart';
 import 'package:planmate/CreateProject/presentation/project_screen.dart';
+import 'package:planmate/Models/project_model.dart';
 import 'package:planmate/Services/firebase_project_service.dart';
 
 class CreateProjectSheet extends StatefulWidget {
@@ -15,6 +17,7 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
   final TextEditingController _nameController = TextEditingController();
   final FirebaseProjectServices _projectService =
       FirebaseProjectServices();
+  final FirebaseServices _firebaseServices = FirebaseServices();
 
   String? _selectedIconPath;
   String? _selectedIconKey;
@@ -79,6 +82,15 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
   }
 
   Future<void> _handleCreateProject() async {
+    final currentUserId = _firebaseServices.getCurrentUser()?.uid;
+
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please Sign In first!!! ')));
+      return;
+    }
+
     if (!_validateForm()) return;
 
     setState(() {
@@ -86,30 +98,27 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
     });
 
     try {
-      // Create project using Firebase service
       final projectId = await _projectService.createProject(
         title: _nameController.text.trim(),
         iconKey: _selectedIconKey!,
         description: null,
       );
 
+      final project = ProjectModel.create(
+        title: _nameController.text.trim(),
+        iconKey: _selectedIconKey!,
+        userId: currentUserId,
+      ).copyWith(id: projectId);
+
       if (mounted) {
-        // Call the optional callback
         widget.onSubmit?.call(
           _nameController.text.trim(),
           _selectedIconPath!,
         );
-
-        // Navigate to project screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => ShowProjectScreen(
-                  projectName: _nameController.text.trim(),
-                  iconPath: _selectedIconPath!,
-                  projectId: projectId,
-                ),
+            builder: (context) => ShowProjectScreen(project: project),
           ),
         );
       }
@@ -117,7 +126,7 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to create project: ${e.toString()}'),
+            content: Text('Failed to create project : ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -338,7 +347,7 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 30),
 
                     // Create Button - ย้ายเข้ามาใน ScrollView
@@ -346,7 +355,8 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleCreateProject,
+                        onPressed:
+                            _isLoading ? null : _handleCreateProject,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8B5CF6),
                           foregroundColor: Colors.white,
@@ -359,7 +369,8 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                         child:
                             _isLoading
                                 ? const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
                                   children: [
                                     SizedBox(
                                       width: 20,
