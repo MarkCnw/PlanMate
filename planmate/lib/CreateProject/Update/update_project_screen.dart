@@ -1,149 +1,32 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
-import 'package:planmate/Services/firebase_project_service.dart';
+import 'package:planmate/Models/project_model.dart';
+import 'update_project_controller.dart';
 
-class UpdateProjectSheet extends StatefulWidget {
-  final void Function(String name, String iconPath)? onSubmit;
-  final String projectId;
-  final String currentTitle;
-  final String currentIconKey;
-  final String currentIconPath;
-  const UpdateProjectSheet({
-    super.key,
-    this.onSubmit,
-    required this.projectId,
-    required this.currentTitle,
-    required this.currentIconKey,
-    required this.currentIconPath,
-  });
+class UpdateProjectScreen extends StatefulWidget {
+  final ProjectModel project;
+
+  const UpdateProjectScreen({super.key, required this.project});
 
   @override
-  State<UpdateProjectSheet> createState() => _UpdateProjectSheetState();
+  State<UpdateProjectScreen> createState() => _UpdateProjectScreenState();
 }
 
-class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
-  final TextEditingController _nameController = TextEditingController();
-  final FirebaseProjectServices _projectService = FirebaseProjectServices();
-
-  String? _selectedIconPath;
-  String? _selectedIconKey;
-  bool _isLoading = false;
-  String? _nameError;
-  String? _iconError;
-
-  final List<Map<String, String>> iconOptions = [
-    {'key': 'arrow', 'path': 'assets/icons/arrow.png'},
-    {'key': 'book', 'path': 'assets/icons/book.png'},
-    {'key': 'check', 'path': 'assets/icons/check.png'},
-    {'key': 'check&cal', 'path': 'assets/icons/check&cal.png'},
-    {'key': 'Chess', 'path': 'assets/icons/Chess.png'},
-    {'key': 'computer', 'path': 'assets/icons/computer.png'},
-    {'key': 'crayons', 'path': 'assets/icons/crayons.png'},
-    {'key': 'Egg&Bacon', 'path': 'assets/icons/Egg&Bacon.png'},
-    {'key': 'esports', 'path': 'assets/icons/esports.png'},
-    {'key': 'Football', 'path': 'assets/icons/Football.png'},
-    {'key': 'Gymming', 'path': 'assets/icons/Gymming.png'},
-    {'key': 'pencil', 'path': 'assets/icons/pencil.png'},
-    {'key': 'Pizza', 'path': 'assets/icons/Pizza.png'},
-    {'key': 'rocket', 'path': 'assets/icons/rocket.png'},
-    {'key': 'ruler', 'path': 'assets/icons/ruler.png'},
-  ];
+class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
+  late UpdateProjectController controller;
 
   @override
   void initState() {
     super.initState();
-    // ตั้งค่าเริ่มต้น
-    _nameController.text = widget.currentTitle;
-    _selectedIconPath = widget.currentIconPath;
-    _selectedIconKey = widget.currentIconKey;
+    controller = UpdateProjectController(
+      project: widget.project,
+      onStateChanged: () => setState(() {}),
+    );
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    controller.dispose();
     super.dispose();
-  }
-
-  bool _validateForm() {
-    setState(() {
-      _nameError = null;
-      _iconError = null;
-    });
-
-    bool isValid = true;
-
-    // Validate project name
-    final name = _nameController.text.trim();
-    if (name.isEmpty) {
-      setState(() {
-        _nameError = 'Project name is required';
-      });
-      isValid = false;
-    } else if (name.length > 50) {
-      setState(() {
-        _nameError = 'Project name is too long (max 50 characters)';
-      });
-      isValid = false;
-    }
-
-    // Validate icon selection (ต้องมีทั้ง path และ key)
-    if (_selectedIconPath == null || _selectedIconKey == null) {
-      setState(() {
-        _iconError = 'Please select an icon';
-      });
-      isValid = false;
-    }
-
-    return isValid;
-  }
-
-  Future<void> _handleEditProject() async {
-    if (!_validateForm()) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await _projectService.editProject(
-        _nameController.text.trim(),
-        _selectedIconKey!, // ปลอดภัยเพราะผ่าน validate แล้ว
-        widget.projectId,
-      );
-
-      if (mounted) {
-        // แจ้งผลสำเร็จก่อนปิด BottomSheet เพื่อหลีกเลี่ยง context ถูก dispose
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Project updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Callback กลับให้ผู้เรียก (ถ้ามี)
-        widget.onSubmit?.call(
-          _nameController.text.trim(),
-          _selectedIconPath!,
-        );
-
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update project: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
   }
 
   @override
@@ -165,7 +48,6 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
             Container(
               width: 40,
               height: 4,
@@ -175,10 +57,8 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Title
             Text(
-              'Edit Project',
+              'Update Project',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -187,14 +67,14 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Fill in the details to Edit your project',
+              'Fill in the details to update your project',
               style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 30),
-
             Expanded(
               child: SingleChildScrollView(
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -204,7 +84,7 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                       children: [
                         RichText(
                           text: TextSpan(
-                            text: 'New Project Name',
+                            text: 'Project Name',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -220,14 +100,13 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                         ),
                         const SizedBox(height: 8),
                         TextField(
-                          controller: _nameController,
+                          controller: controller.nameController,
                           decoration: InputDecoration(
-                            hintText: 'Enter new project name',
+                            hintText: 'Enter project name',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: Colors.grey.shade300,
-                              ),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade300),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -238,22 +117,16 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                             ),
                             errorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Colors.red,
-                                width: 2,
-                              ),
+                              borderSide:
+                                  const BorderSide(color: Colors.red, width: 2),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            errorText: _nameError,
+                                horizontal: 16, vertical: 12),
+                            errorText: controller.nameError,
                           ),
                           onChanged: (value) {
-                            if (_nameError != null) {
-                              setState(() {
-                                _nameError = null;
-                              });
+                            if (controller.nameError != null) {
+                              controller.clearNameError();
                             }
                           },
                         ),
@@ -267,7 +140,7 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                       children: [
                         RichText(
                           text: TextSpan(
-                            text: 'Choose new Icon',
+                            text: 'Choose Icon',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -281,10 +154,10 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                             ],
                           ),
                         ),
-                        if (_iconError != null) ...[
+                        if (controller.iconError != null) ...[
                           const SizedBox(height: 4),
                           Text(
-                            _iconError!,
+                            controller.iconError!,
                             style: const TextStyle(
                               color: Colors.red,
                               fontSize: 12,
@@ -296,22 +169,21 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: _iconError != null ? Colors.red : Colors.grey.shade300,
+                              color: controller.iconError != null
+                                  ? Colors.red
+                                  : Colors.grey.shade300,
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Wrap(
                             spacing: 12,
                             runSpacing: 12,
-                            children: iconOptions.map((icon) {
-                              final isSelected = _selectedIconPath == icon['path'];
+                            children: controller.iconOptions.map((icon) {
+                              final isSelected =
+                                  controller.selectedIconPath == icon['path'];
                               return GestureDetector(
                                 onTap: () {
-                                  setState(() {
-                                    _selectedIconPath = icon['path'];
-                                    _selectedIconKey = icon['key'];
-                                    _iconError = null;
-                                  });
+                                  controller.selectIcon(icon['key']!, icon['path']!);
                                 },
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 200),
@@ -322,7 +194,9 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                                         : Colors.grey.shade100,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isSelected ? const Color(0xFF8B5CF6) : Colors.transparent,
+                                      color: isSelected
+                                          ? const Color(0xFF8B5CF6)
+                                          : Colors.transparent,
                                       width: 2,
                                     ),
                                   ),
@@ -338,15 +212,14 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 30),
 
-                    // Update Button
                     SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleEditProject,
+                        onPressed:
+                            controller.isLoading ? null : () => controller.updateProject(),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8B5CF6),
                           foregroundColor: Colors.white,
@@ -356,7 +229,7 @@ class _UpdateProjectSheetState extends State<UpdateProjectSheet> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: _isLoading
+                        child: controller.isLoading
                             ? const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

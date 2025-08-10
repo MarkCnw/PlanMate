@@ -5,13 +5,9 @@ import 'package:planmate/Models/project_model.dart';
 import 'package:planmate/Services/firebase_project_service.dart';
 
 class ShowProjectScreen extends StatefulWidget {
-   final ProjectModel project;
+  final ProjectModel project;
 
-
-  const ShowProjectScreen({
-    super.key, 
-    required this.project,
-  });
+  const ShowProjectScreen({super.key, required this.project});
 
   @override
   State<ShowProjectScreen> createState() => _ShowProjectScreenState();
@@ -86,8 +82,11 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
       margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+        gradient:  LinearGradient(
+          colors: [
+            widget.project.color.withOpacity(0.8), // 🆕 ใช้สีจาก project
+            widget.project.color, // 🆕 แทน hardcode
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -109,7 +108,11 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Image.asset(widget.project.iconPath, width: 60, height: 60),
+            child: Image.asset(
+              widget.project.iconPath,
+              width: 60,
+              height: 60,
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -440,94 +443,126 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
   }
 
   void _showDeleteConfirmation() {
-  showDialog(
-    context: context,
-    barrierDismissible: !_isDeleting, // กันปิด dialog ตอนลบ
-    builder: (context) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
-        title: const Text('Delete Project'),
-        content: _isDeleting
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Deleting project...'),
-                ],
-              )
-            : Text(
-                'Are you sure you want to delete "${widget.project.title}"?\n\nThis action cannot be undone.',
-              ),
-        actions: _isDeleting
-            ? []
-            : [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    setState(() => _isDeleting = true);
-                    try {
-                      await deleteProject(widget.project.id);
-
-                      if (mounted) {
-                        Navigator.of(context).pop(); // close dialog
-                        Navigator.of(context).pop(); // close screen
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Row(
-                              children: [
-                                Icon(Icons.check_circle, color: Colors.white),
-                                SizedBox(width: 12),
-                                Text('Project deleted successfully'),
-                              ],
-                            ),
-                            backgroundColor: Colors.green,
-                            behavior: SnackBarBehavior.floating,
-                            margin: EdgeInsets.all(16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
-                            ),
+    showDialog(
+      context: context,
+      barrierDismissible: !_isDeleting, // กันปิด dialog ตอนลบ
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setState) => AlertDialog(
+                  title: const Text('Delete Project'),
+                  content:
+                      _isDeleting
+                          ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Deleting project...'),
+                            ],
+                          )
+                          : Text(
+                            'Are you sure you want to delete "${widget.project.title}"?\n\nThis action cannot be undone.',
                           ),
-                        );
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        Navigator.of(context).pop(); // close dialog
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(Icons.error, color: Colors.white),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text('Failed to delete project: $e'),
-                                ),
-                              ],
+                  actions:
+                      _isDeleting
+                          ? []
+                          : [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
                             ),
-                            backgroundColor: Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                            margin: const EdgeInsets.all(16),
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                            TextButton(
+                              onPressed: () async {
+                                setState(() => _isDeleting = true);
+                                try {
+                                  await deleteProject(widget.project.id);
+
+                                  if (mounted) {
+                                    Navigator.of(
+                                      context,
+                                    ).pop(); // close dialog
+                                    Navigator.of(
+                                      context,
+                                    ).pop(); // close screen
+
+                                    ScaffoldMessenger.of(
+                                      context,
+                                    ).showSnackBar(
+                                      const SnackBar(
+                                        content: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.check_circle,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(width: 12),
+                                            Text(
+                                              'Project deleted successfully',
+                                            ),
+                                          ],
+                                        ),
+                                        backgroundColor: Colors.green,
+                                        behavior:
+                                            SnackBarBehavior.floating,
+                                        margin: EdgeInsets.all(16),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.all(
+                                            Radius.circular(10),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    Navigator.of(
+                                      context,
+                                    ).pop(); // close dialog
+                                    ScaffoldMessenger.of(
+                                      context,
+                                    ).showSnackBar(
+                                      SnackBar(
+                                        content: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.error,
+                                              color: Colors.white,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                'Failed to delete project: $e',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        backgroundColor: Colors.red,
+                                        behavior:
+                                            SnackBarBehavior.floating,
+                                        margin: const EdgeInsets.all(16),
+                                        shape:
+                                            const RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.all(
+                                                    Radius.circular(10),
+                                                  ),
+                                            ),
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  setState(() => _isDeleting = false);
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Delete'),
                             ),
-                          ),
-                        );
-                      }
-                    } finally {
-                      setState(() => _isDeleting = false);
-                    }
-                  },
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  child: const Text('Delete'),
+                          ],
                 ),
-              ],
-      ),
-    ),
-  );
-}
-
-
+          ),
+    );
+  }
 }

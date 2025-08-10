@@ -240,40 +240,48 @@ class FirebaseProjectServices  {
     }
   }
 
-  Future<void> editProject(
-    String title,
-    String iconKey,
-    String projectId,
-  ) async {
-     print('📌 Received Title: $title');
-     print('📌 Received IconKey: $iconKey');
-     print('📌 Received ProjectId: $projectId');
-    try {
-      print('🔄 Editing project...');
-      print('📍 Project ID: $projectId');
-      print('📍 User ID: $currentUserId');
-      if (currentUserId == null) {
-        throw Exception('User not authenticated');
-      }
-      final tempProject = ProjectModel.create(
-        title: title,
-        iconKey: iconKey,
-        userId: currentUserId!,
-      );
-      final titleError = tempProject.validateTitle();
-      if (titleError != null) {
-        throw Exception(titleError);
-      }
-      final updateData = {
-        'title': title,
-        'iconKey': iconKey,
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-      await projectRef.doc(projectId).update(updateData);
-      print('✅ Project update successfully');
-    } catch (e) {
-      print('❌ Failed to update project: $e');
-      rethrow;
+  Future<void> updateProject({
+  required String projectId,
+  required String newTitle,
+  required String newIconKey,
+  required String newIconPath,
+}) async {
+  print('📌 Received Title: $newTitle');
+  print('📌 Received IconKey: $newIconKey');
+  print('📌 Received ProjectId: $projectId');
+
+  try {
+    print('🔄 Editing project...');
+    print('📍 Project ID: $projectId');
+    print('📍 User ID: $currentUserId');
+
+    if (currentUserId == null) {
+      throw Exception('User not authenticated');
     }
+
+    final tempProject = ProjectModel.create(
+      title: newTitle,
+      iconKey: newIconKey,
+      userId: currentUserId!,
+    );
+
+    final titleError = tempProject.validateTitle();
+    if (titleError != null) {
+      throw Exception(titleError);
+    }
+
+    final updateData = {
+      'title': newTitle,
+      'iconKey': newIconKey,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    await projectRef.doc(projectId).update(updateData);
+    print('✅ Project update successfully');
+  } catch (e) {
+    print('❌ Failed to update project: $e');
+    rethrow;
   }
+}
+
 }
