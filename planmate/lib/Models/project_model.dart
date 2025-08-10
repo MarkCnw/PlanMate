@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class ProjectIconData {
@@ -145,41 +146,52 @@ class ProjectModel {
 
   // Factory method จาก Firestore data
   factory ProjectModel.fromMap(Map<String, dynamic> map, [String? docId]) {
-    return ProjectModel(
-      id: docId ?? map['id'] as String? ?? '',
-      title: map['title'] as String? ?? '',
-      taskCount: map['taskCount'] as int? ?? 0,
-      color: Color(map['color'] as int? ?? 0xFF8B5CF6),
-      iconPath: map['iconPath'] as String? ?? 'assets/icons/rocket.png',
-      iconKey: map['iconKey'] as String? ?? 'rocket',
-      userId: map['userId'] as String? ?? '',
-      description: map['description'] as String?,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(
-        map['createdAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
-      ),
-      updatedAt:
-          map['updatedAt'] != null
-              ? DateTime.fromMillisecondsSinceEpoch(
-                map['updatedAt'] as int,
-              )
-              : null,
-    );
+  return ProjectModel(
+    id: docId ?? map['id'] as String? ?? '',
+    title: map['title'] as String? ?? '',
+    taskCount: map['taskCount'] as int? ?? 0,
+    color: Color(map['color'] as int? ?? 0xFF8B5CF6),
+    iconPath: map['iconPath'] as String? ?? 'assets/icons/rocket.png',
+    iconKey: map['iconKey'] as String? ?? 'rocket',
+    userId: map['userId'] as String? ?? '',
+    description: map['description'] as String?,
+    
+    // 🔥 แก้ไขการจัดการ DateTime จาก Firestore
+    createdAt: _parseDateTime(map['createdAt']) ?? DateTime.now(),
+    updatedAt: _parseDateTime(map['updatedAt']),
+  );
+}
+static DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  
+  if (value is Timestamp) {
+    return value.toDate();
+  } else if (value is int) {
+    return DateTime.fromMillisecondsSinceEpoch(value);
+  } else if (value is DateTime) {
+    return value;
   }
+  
+  return null;
+}
+
 
   // Convert to Map for Firestore
   Map<String, dynamic> toMap() {
-    return {
-      'title': title,
-      'taskCount': taskCount,
-      'color': color.value,
-      'iconPath': iconPath,
-      'iconKey': iconKey,
-      'userId': userId,
-      'description': description,
-      'createdAt': createdAt.millisecondsSinceEpoch,
-      'updatedAt': updatedAt?.millisecondsSinceEpoch,
-    };
-  }
+  return {
+    'title': title,
+    'taskCount': taskCount,
+    'color': color.value,
+    'iconPath': iconPath,
+    'iconKey': iconKey,
+    'userId': userId,
+    'description': description,
+    
+    // 🔥 ใช้ Timestamp สำหรับ Firestore
+    'createdAt': Timestamp.fromDate(createdAt),
+    'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+  };
+}
 
   // Validation methods
   bool get isValid => title.trim().isNotEmpty && userId.isNotEmpty;

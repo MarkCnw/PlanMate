@@ -5,10 +5,12 @@ import 'package:planmate/Services/firebase_project_service.dart';
 class UpdateProjectController {
   final ProjectModel project;
   final VoidCallback onStateChanged;
+  final VoidCallback? onSuccess; // เพิ่ม callback สำหรับสำเร็จ
 
   UpdateProjectController({
     required this.project,
     required this.onStateChanged,
+    this.onSuccess,
   }) {
     nameController.text = project.title;
     selectedIconKey = project.iconKey;
@@ -16,32 +18,25 @@ class UpdateProjectController {
   }
 
   final FirebaseProjectServices _projectService = FirebaseProjectServices();
-
   final TextEditingController nameController = TextEditingController();
 
-  List<Map<String, String>> iconOptions = [
-    {'key': 'arrow', 'path': 'assets/icons/arrow.png'},
-    {'key': 'book', 'path': 'assets/icons/book.png'},
-    {'key': 'check', 'path': 'assets/icons/check.png'},
-    {'key': 'check&cal', 'path': 'assets/icons/check&cal.png'},
-    {'key': 'Chess', 'path': 'assets/icons/Chess.png'},
-    {'key': 'computer', 'path': 'assets/icons/computer.png'},
-    {'key': 'crayons', 'path': 'assets/icons/crayons.png'},
-    {'key': 'Egg&Bacon', 'path': 'assets/icons/Egg&Bacon.png'},
-    {'key': 'esports', 'path': 'assets/icons/esports.png'},
-    {'key': 'Football', 'path': 'assets/icons/Football.png'},
-    {'key': 'Gymming', 'path': 'assets/icons/Gymming.png'},
-    {'key': 'pencil', 'path': 'assets/icons/pencil.png'},
-    {'key': 'Pizza', 'path': 'assets/icons/Pizza.png'},
-    {'key': 'rocket', 'path': 'assets/icons/rocket.png'},
-    {'key': 'ruler', 'path': 'assets/icons/ruler.png'},
-  ];
+  // ใช้ข้อมูลจาก ProjectModel แทน hardcode
+  Map<String, String> get iconOptionsMap {
+    final options = ProjectModel.getIconOptions();
+    return options.map((key, value) => MapEntry(key, value.iconPath));
+  }
+
+  List<Map<String, String>> get iconOptions {
+    final options = ProjectModel.getIconOptions();
+    return options.entries.map((entry) => {
+      'key': entry.key,
+      'path': entry.value.iconPath,
+    }).toList();
+  }
 
   String? selectedIconKey;
   String? selectedIconPath;
-
   bool isLoading = false;
-
   String? nameError;
   String? iconError;
 
@@ -60,16 +55,27 @@ class UpdateProjectController {
   void updateProject() async {
     final name = nameController.text.trim();
 
+    // Validation
     if (name.isEmpty) {
       nameError = 'Project name is required';
+    } else if (name.length > 50) {
+      nameError = 'Project name is too long (max 50 characters)';
     } else {
       nameError = null;
     }
 
-    if (selectedIconPath == null) {
+    if (selectedIconPath == null || selectedIconKey == null) {
       iconError = 'Icon selection is required';
     } else {
       iconError = null;
+    }
+
+    // ตรวจสอบว่ามีการเปลี่ยนแปลงหรือไม่
+    bool hasChanges = name != project.title || selectedIconKey != project.iconKey;
+    if (!hasChanges && nameError == null && iconError == null) {
+      // ไม่มีการเปลี่ยนแปลง แต่ให้ callback สำเร็จเพื่อปิด modal
+      onSuccess?.call();
+      return;
     }
 
     if (nameError != null || iconError != null) {
@@ -81,15 +87,24 @@ class UpdateProjectController {
     onStateChanged();
 
     try {
+      // ดึงข้อมูลสีที่ตรงกับ iconKey ใหม่
+      final iconOptions = ProjectModel.getIconOptions();
+      final iconData = iconOptions[selectedIconKey!] ?? iconOptions['rocket']!;
+
       await _projectService.updateProject(
         projectId: project.id,
         newTitle: name,
         newIconKey: selectedIconKey!,
-        newIconPath: selectedIconPath!,
+        newIconPath: iconData.iconPath,
+        newColor: iconData.color.value, // ส่งสีไปด้วย
       );
-      // อาจจะมี callback แจ้ง UI ว่า update สำเร็จ
+
+      print('✅ Project updated successfully');
+      onSuccess?.call(); // เรียก callback เมื่อสำเร็จ
+
     } catch (e) {
-      // handle error (optional)
+      print('❌ Failed to update project: $e');
+      // แสดง error แต่ไม่ต้องจัดการมากเพราะ UI จะแสดง loading = false
     } finally {
       isLoading = false;
       onStateChanged();

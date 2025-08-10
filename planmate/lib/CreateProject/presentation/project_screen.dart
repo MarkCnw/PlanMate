@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:planmate/CreateProject/Update/update_project_screen.dart';
 import 'package:planmate/Models/project_model.dart';
 import 'package:planmate/Services/firebase_project_service.dart';
 
@@ -14,12 +15,18 @@ class ShowProjectScreen extends StatefulWidget {
 }
 
 class _ShowProjectScreenState extends State<ShowProjectScreen> {
-  final FirebaseProjectServices _projectServices =
-      FirebaseProjectServices();
+  final FirebaseProjectServices _projectServices = FirebaseProjectServices();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   CollectionReference get projectRef => _firestore.collection('projects');
 
   bool _isDeleting = false;
+  late ProjectModel currentProject; // เก็บ project ล่าสุด
+
+  @override
+  void initState() {
+    super.initState();
+    currentProject = widget.project; // เริ่มต้นด้วย project ที่ส่งมา
+  }
 
   Future<void> deleteProject(String projectId) async {
     try {
@@ -37,15 +44,63 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildProjectHeader(),
-            const SizedBox(height: 20),
-            _buildTaskSection(),
-            const SizedBox(height: 20),
-          ],
-        ),
+      body: StreamBuilder<DocumentSnapshot>(
+        // 🔥 เพิ่ม StreamBuilder เพื่อฟัง real-time updates
+        stream: projectRef.doc(widget.project.id).snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error, color: Colors.red, size: 64),
+                  const SizedBox(height: 16),
+                  Text('Error loading project: ${snapshot.error}'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Go Back'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting && 
+              currentProject == widget.project) {
+            // แสดง loading เฉพาะครั้งแรก
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // อัพเดท currentProject ด้วยข้อมูลใหม่จาก Firestore
+          if (snapshot.hasData && snapshot.data!.exists) {
+            final data = snapshot.data!.data() as Map<String, dynamic>;
+            currentProject = ProjectModel.fromMap(data, snapshot.data!.id);
+          } else if (snapshot.hasData && !snapshot.data!.exists) {
+            // Project ถูกลบแล้ว
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Project has been deleted'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            });
+            return const SizedBox();
+          }
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildProjectHeader(),
+                const SizedBox(height: 20),
+                _buildTaskSection(),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -82,10 +137,10 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
       margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient:  LinearGradient(
+        gradient: LinearGradient(
           colors: [
-            widget.project.color.withOpacity(0.8), // 🆕 ใช้สีจาก project
-            widget.project.color, // 🆕 แทน hardcode
+            currentProject.color.withOpacity(0.8), // 🔥 ใช้ currentProject
+            currentProject.color,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -93,7 +148,7 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF8B5CF6).withOpacity(0.3),
+            color: currentProject.color.withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -109,16 +164,31 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Image.asset(
-              widget.project.iconPath,
+              currentProject.iconPath, // 🔥 ใช้ currentProject
               width: 60,
               height: 60,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.image_not_supported,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(height: 16),
 
           // Project Name
           Text(
-            widget.project.title,
+            currentProject.title, // 🔥 ใช้ currentProject
             style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -132,14 +202,29 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildInfoChip('0 Tasks', FontAwesomeIcons.listCheck),
+              _buildInfoChip('${currentProject.taskCount} Tasks', FontAwesomeIcons.listCheck),
               const SizedBox(width: 12),
-              _buildInfoChip('Just created', FontAwesomeIcons.clock),
+              _buildInfoChip(_getTimeAgoText(), FontAwesomeIcons.clock),
             ],
           ),
         ],
       ),
     );
+  }
+
+  String _getTimeAgoText() {
+    final now = DateTime.now();
+    final difference = now.difference(currentProject.createdAt);
+    
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just created';
+    }
   }
 
   Widget _buildInfoChip(String text, IconData icon) {
@@ -197,20 +282,17 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFF8B5CF6).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Total 0 Tasks',
-                  style: TextStyle(
+                  'Total ${currentProject.taskCount} Tasks', // 🔥 ใช้ currentProject
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF8B5CF6),
+                    color: Color(0xFF8B5CF6),
                   ),
                 ),
               ),
@@ -273,10 +355,7 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF8B5CF6),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -293,37 +372,36 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(
-                    FontAwesomeIcons.penToSquare,
-                    color: Color(0xFF3B82F6),
-                  ),
-                  title: const Text('Edit Project'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showEditProjectBottomSheet();
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(
-                    FontAwesomeIcons.trash,
-                    color: Colors.red,
-                  ),
-                  title: const Text('Delete Project'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showDeleteConfirmation();
-                  },
-                ),
-              ],
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(
+                FontAwesomeIcons.penToSquare,
+                color: Color(0xFF3B82F6),
+              ),
+              title: const Text('Edit Project'),
+              onTap: () {
+                Navigator.pop(context);
+                _showEditProjectBottomSheet();
+              },
             ),
-          ),
+            ListTile(
+              leading: const Icon(
+                FontAwesomeIcons.trash,
+                color: Colors.red,
+              ),
+              title: const Text('Delete Project'),
+              onTap: () {
+                Navigator.pop(context);
+                _showDeleteConfirmation();
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -334,52 +412,51 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              20,
-              20,
-              MediaQuery.of(context).viewInsets.bottom + 20,
+      builder: (context) => Container(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Add New Task',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade800,
+              ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Add New Task',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
-                  ),
+            const SizedBox(height: 20),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Task name',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 20),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Task name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Task feature coming soon!'),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Task feature coming soon!'),
-                        ),
-                      );
-                    },
-                    child: const Text('Add Task'),
-                  ),
-                ),
-              ],
+                  );
+                },
+                child: const Text('Add Task'),
+              ),
             ),
-          ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -390,179 +467,96 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              20,
-              20,
-              MediaQuery.of(context).viewInsets.bottom + 20,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Edit Project',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Project name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  controller: TextEditingController(
-                    text: widget.project.title,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Edit feature coming soon!'),
-                        ),
-                      );
-                    },
-                    child: const Text('Save Changes'),
-                  ),
-                ),
-              ],
-            ),
-          ),
+      builder: (context) => UpdateProjectScreen(project: currentProject), // 🔥 ใช้ currentProject
     );
   }
 
   void _showDeleteConfirmation() {
     showDialog(
       context: context,
-      barrierDismissible: !_isDeleting, // กันปิด dialog ตอนลบ
-      builder:
-          (context) => StatefulBuilder(
-            builder:
-                (context, setState) => AlertDialog(
-                  title: const Text('Delete Project'),
-                  content:
-                      _isDeleting
-                          ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              CircularProgressIndicator(),
-                              SizedBox(height: 16),
-                              Text('Deleting project...'),
-                            ],
-                          )
-                          : Text(
-                            'Are you sure you want to delete "${widget.project.title}"?\n\nThis action cannot be undone.',
-                          ),
-                  actions:
-                      _isDeleting
-                          ? []
-                          : [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                setState(() => _isDeleting = true);
-                                try {
-                                  await deleteProject(widget.project.id);
-
-                                  if (mounted) {
-                                    Navigator.of(
-                                      context,
-                                    ).pop(); // close dialog
-                                    Navigator.of(
-                                      context,
-                                    ).pop(); // close screen
-
-                                    ScaffoldMessenger.of(
-                                      context,
-                                    ).showSnackBar(
-                                      const SnackBar(
-                                        content: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.check_circle,
-                                              color: Colors.white,
-                                            ),
-                                            SizedBox(width: 12),
-                                            Text(
-                                              'Project deleted successfully',
-                                            ),
-                                          ],
-                                        ),
-                                        backgroundColor: Colors.green,
-                                        behavior:
-                                            SnackBarBehavior.floating,
-                                        margin: EdgeInsets.all(16),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.all(
-                                            Radius.circular(10),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  if (mounted) {
-                                    Navigator.of(
-                                      context,
-                                    ).pop(); // close dialog
-                                    ScaffoldMessenger.of(
-                                      context,
-                                    ).showSnackBar(
-                                      SnackBar(
-                                        content: Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.error,
-                                              color: Colors.white,
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Text(
-                                                'Failed to delete project: $e',
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        backgroundColor: Colors.red,
-                                        behavior:
-                                            SnackBarBehavior.floating,
-                                        margin: const EdgeInsets.all(16),
-                                        shape:
-                                            const RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.all(
-                                                    Radius.circular(10),
-                                                  ),
-                                            ),
-                                      ),
-                                    );
-                                  }
-                                } finally {
-                                  setState(() => _isDeleting = false);
-                                }
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
-                              ),
-                              child: const Text('Delete'),
-                            ),
-                          ],
+      barrierDismissible: !_isDeleting,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Delete Project'),
+          content: _isDeleting
+              ? const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Deleting project...'),
+                  ],
+                )
+              : Text(
+                  'Are you sure you want to delete "${currentProject.title}"?\n\nThis action cannot be undone.',
                 ),
-          ),
+          actions: _isDeleting
+              ? []
+              : [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      setState(() => _isDeleting = true);
+                      try {
+                        await deleteProject(currentProject.id);
+
+                        if (mounted) {
+                          
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Row(
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.white),
+                                  SizedBox(width: 12),
+                                  Text('Project deleted successfully'),
+                                ],
+                              ),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                              margin: EdgeInsets.all(16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(10)),
+                              ),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          Navigator.of(context).pop(); // close dialog
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(Icons.error, color: Colors.white),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text('Failed to delete project: $e'),
+                                  ),
+                                ],
+                              ),
+                              backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                              margin: const EdgeInsets.all(16),
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(10)),
+                              ),
+                            ),
+                          );
+                        }
+                      } finally {
+                        setState(() => _isDeleting = false);
+                      }
+                    },
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    child: const Text('Delete'),
+                  ),
+                ],
+        ),
+      ),
     );
   }
 }

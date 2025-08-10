@@ -20,6 +20,31 @@ class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
     controller = UpdateProjectController(
       project: widget.project,
       onStateChanged: () => setState(() {}),
+      onSuccess: _onUpdateSuccess, // เพิ่ม success callback
+    );
+  }
+
+  void _onUpdateSuccess() {
+    // ปิด modal
+    Navigator.pop(context);
+    
+    // แสดง success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 12),
+            Text('Project updated successfully'),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
+      ),
     );
   }
 
@@ -48,6 +73,7 @@ class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Handle bar
             Container(
               width: 40,
               height: 4,
@@ -57,6 +83,8 @@ class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // Title
             Text(
               'Update Project',
               style: TextStyle(
@@ -71,10 +99,10 @@ class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
               style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 30),
+
             Expanded(
               child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -101,12 +129,12 @@ class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
                         const SizedBox(height: 8),
                         TextField(
                           controller: controller.nameController,
+                          maxLength: 50, // เพิ่ม max length
                           decoration: InputDecoration(
                             hintText: 'Enter project name',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -117,12 +145,16 @@ class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
                             ),
                             errorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  const BorderSide(color: Colors.red, width: 2),
+                              borderSide: const BorderSide(color: Colors.red, width: 2),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.red, width: 2),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
                             errorText: controller.nameError,
+                            counterText: '', // ซ่อน character counter
                           ),
                           onChanged: (value) {
                             if (controller.nameError != null) {
@@ -179,8 +211,7 @@ class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
                             spacing: 12,
                             runSpacing: 12,
                             children: controller.iconOptions.map((icon) {
-                              final isSelected =
-                                  controller.selectedIconPath == icon['path'];
+                              final isSelected = controller.selectedIconPath == icon['path'];
                               return GestureDetector(
                                 onTap: () {
                                   controller.selectIcon(icon['key']!, icon['path']!);
@@ -204,6 +235,14 @@ class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
                                     icon['path']!,
                                     width: 32,
                                     height: 32,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 32,
+                                        height: 32,
+                                        color: Colors.grey.shade300,
+                                        child: const Icon(Icons.image_not_supported),
+                                      );
+                                    },
                                   ),
                                 ),
                               );
@@ -214,12 +253,12 @@ class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
                     ),
                     const SizedBox(height: 30),
 
+                    // Update Button
                     SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed:
-                            controller.isLoading ? null : () => controller.updateProject(),
+                        onPressed: controller.isLoading ? null : () => controller.updateProject(),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8B5CF6),
                           foregroundColor: Colors.white,
@@ -260,6 +299,7 @@ class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
                               ),
                       ),
                     ),
+                    const SizedBox(height: 20), // เพิ่ม space ล่างสุด
                   ],
                 ),
               ),

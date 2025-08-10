@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../Models/project_model.dart';
 
-class FirebaseProjectServices  {
+class FirebaseProjectServices {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -245,9 +245,12 @@ class FirebaseProjectServices  {
   required String newTitle,
   required String newIconKey,
   required String newIconPath,
+  required int newColor, // เพิ่ม parameter สำหรับสี
 }) async {
   print('📌 Received Title: $newTitle');
   print('📌 Received IconKey: $newIconKey');
+  print('📌 Received IconPath: $newIconPath');
+  print('📌 Received Color: $newColor');
   print('📌 Received ProjectId: $projectId');
 
   try {
@@ -259,6 +262,7 @@ class FirebaseProjectServices  {
       throw Exception('User not authenticated');
     }
 
+    // Validation
     final tempProject = ProjectModel.create(
       title: newTitle,
       iconKey: newIconKey,
@@ -270,18 +274,34 @@ class FirebaseProjectServices  {
       throw Exception(titleError);
     }
 
+    // ตรวจสอบว่า project นี้เป็นของ user ปัจจุบันหรือไม่
+    final projectDoc = await projectRef.doc(projectId).get();
+    if (!projectDoc.exists) {
+      throw Exception('Project not found');
+    }
+
+    final projectData = projectDoc.data() as Map<String, dynamic>;
+    if (projectData['userId'] != currentUserId) {
+      throw Exception('Not authorized to update this project');
+    }
+
+    // อัพเดทข้อมูล - เพิ่ม iconPath และ color
     final updateData = {
-      'title': newTitle,
+      'title': newTitle.trim(),
       'iconKey': newIconKey,
+      'iconPath': newIconPath, // 🔥 เพิ่ม iconPath
+      'color': newColor,       // 🔥 เพิ่ม color
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
+    print('📤 Update data: $updateData');
+
     await projectRef.doc(projectId).update(updateData);
-    print('✅ Project update successfully');
+    print('✅ Project updated successfully');
+    
   } catch (e) {
     print('❌ Failed to update project: $e');
     rethrow;
   }
 }
-
 }
