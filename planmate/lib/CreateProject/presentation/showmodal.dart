@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:planmate/Auth/services/google_service.dart';
+import 'package:planmate/CreateProject/Features/Banner/Controller/create_project_controller.dart';
 import 'package:planmate/CreateProject/presentation/project_screen.dart';
-import 'package:planmate/Models/project_model.dart';
-import 'package:planmate/Services/firebase_project_service.dart';
+
+
 
 class CreateProjectSheet extends StatefulWidget {
   final void Function(String name, String iconPath)? onSubmit;
@@ -14,130 +14,41 @@ class CreateProjectSheet extends StatefulWidget {
 }
 
 class _CreateProjectSheetState extends State<CreateProjectSheet> {
-  final TextEditingController _nameController = TextEditingController();
-  final FirebaseProjectServices _projectService =
-      FirebaseProjectServices();
-  final FirebaseServices _firebaseServices = FirebaseServices();
+  late CreateProjectController controller;
 
-  String? _selectedIconPath;
-  String? _selectedIconKey;
-  bool _isLoading = false;
-  String? _nameError;
-  String? _iconError;
-
-  final List<Map<String, String>> iconOptions = [
-    {'key': 'arrow', 'path': 'assets/icons/arrow.png'},
-    {'key': 'book', 'path': 'assets/icons/book.png'},
-    {'key': 'check', 'path': 'assets/icons/check.png'},
-    {'key': 'check&cal', 'path': 'assets/icons/check&cal.png'},
-    {'key': 'Chess', 'path': 'assets/icons/Chess.png'},
-    {'key': 'computer', 'path': 'assets/icons/computer.png'},
-    {'key': 'crayons', 'path': 'assets/icons/crayons.png'},
-    {'key': 'Egg&Bacon', 'path': 'assets/icons/Egg&Bacon.png'},
-    {'key': 'esports', 'path': 'assets/icons/esports.png'},
-    {'key': 'Football', 'path': 'assets/icons/Football.png'},
-    {'key': 'Gymming', 'path': 'assets/icons/Gymming.png'},
-    {'key': 'pencil', 'path': 'assets/icons/pencil.png'},
-    {'key': 'Pizza', 'path': 'assets/icons/Pizza.png'},
-    {'key': 'rocket', 'path': 'assets/icons/rocket.png'},
-    {'key': 'ruler', 'path': 'assets/icons/ruler.png'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    controller = CreateProjectController(
+      onStateChanged: () {
+        setState(() {}); // รีเฟรช UI เมื่อ controller เปลี่ยนแปลง
+      },
+      onSubmit: widget.onSubmit,
+    );
+  }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    controller.dispose();
     super.dispose();
   }
 
-  bool _validateForm() {
-    setState(() {
-      _nameError = null;
-      _iconError = null;
-    });
-
-    bool isValid = true;
-
-    // Validate project name
-    if (_nameController.text.trim().isEmpty) {
-      setState(() {
-        _nameError = 'Project name is required';
-      });
-      isValid = false;
-    } else if (_nameController.text.trim().length > 50) {
-      setState(() {
-        _nameError = 'Project name is too long (max 50 characters)';
-      });
-      isValid = false;
-    }
-
-    // Validate icon selection
-    if (_selectedIconPath == null) {
-      setState(() {
-        _iconError = 'Please select an icon';
-      });
-      isValid = false;
-    }
-
-    return isValid;
-  }
-
   Future<void> _handleCreateProject() async {
-    final currentUserId = _firebaseServices.getCurrentUser()?.uid;
-
-    if (currentUserId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Please Sign In first!!! ')));
+    final project = await controller.createProject();
+    if (project == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to create project or not signed in')),
+      );
       return;
     }
 
-    if (!_validateForm()) return;
+    if (!mounted) return;
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final projectId = await _projectService.createProject(
-        title: _nameController.text.trim(),
-        iconKey: _selectedIconKey!,
-        description: null,
-      );
-
-      final project = ProjectModel.create(
-        title: _nameController.text.trim(),
-        iconKey: _selectedIconKey!,
-        userId: currentUserId,
-      ).copyWith(id: projectId);
-
-      if (mounted) {
-        widget.onSubmit?.call(
-          _nameController.text.trim(),
-          _selectedIconPath!,
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ShowProjectScreen(project: project),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create project : ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    // นำทางไปหน้า ShowProjectScreen พร้อมส่ง project ที่สร้างสำเร็จ
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => ShowProjectScreen(project: project)),
+    );
   }
 
   @override
@@ -188,8 +99,7 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
 
             Expanded(
               child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -215,7 +125,7 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                         ),
                         const SizedBox(height: 8),
                         TextField(
-                          controller: _nameController,
+                          controller: controller.nameController,
                           decoration: InputDecoration(
                             hintText: 'Enter project name',
                             border: OutlineInputBorder(
@@ -242,12 +152,12 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                               horizontal: 16,
                               vertical: 12,
                             ),
-                            errorText: _nameError,
+                            errorText: controller.nameError,
                           ),
                           onChanged: (value) {
-                            if (_nameError != null) {
+                            if (controller.nameError != null) {
                               setState(() {
-                                _nameError = null;
+                                controller.nameError = null;
                               });
                             }
                           },
@@ -276,10 +186,10 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                             ],
                           ),
                         ),
-                        if (_iconError != null) ...[
+                        if (controller.iconError != null) ...[
                           const SizedBox(height: 4),
                           Text(
-                            _iconError!,
+                            controller.iconError!,
                             style: const TextStyle(
                               color: Colors.red,
                               fontSize: 12,
@@ -291,58 +201,48 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color:
-                                  _iconError != null
-                                      ? Colors.red
-                                      : Colors.grey.shade300,
+                              color: controller.iconError != null
+                                  ? Colors.red
+                                  : Colors.grey.shade300,
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Wrap(
                             spacing: 12,
                             runSpacing: 12,
-                            children:
-                                iconOptions.map((icon) {
-                                  final isSelected =
-                                      _selectedIconPath == icon['path'];
-                                  return GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedIconPath = icon['path'];
-                                        _selectedIconKey = icon['key'];
-                                        _iconError = null;
-                                      });
-                                    },
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 200,
-                                      ),
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            isSelected
-                                                ? const Color(
-                                                  0xFF8B5CF6,
-                                                ).withOpacity(0.1)
-                                                : Colors.grey.shade100,
-                                        borderRadius:
-                                            BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color:
-                                              isSelected
-                                                  ? const Color(0xFF8B5CF6)
-                                                  : Colors.transparent,
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: Image.asset(
-                                        icon['path']!,
-                                        width: 32,
-                                        height: 32,
-                                      ),
-                                    ),
+                            children: controller.iconOptions.map((icon) {
+                              final isSelected =
+                                  controller.selectedIconPath == icon['path'];
+                              return GestureDetector(
+                                onTap: () {
+                                  controller.selectIcon(
+                                    icon['key']!,
+                                    icon['path']!,
                                   );
-                                }).toList(),
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? const Color(0xFF8B5CF6).withOpacity(0.1)
+                                        : Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? const Color(0xFF8B5CF6)
+                                          : Colors.transparent,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Image.asset(
+                                    icon['path']!,
+                                    width: 32,
+                                    height: 32,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ),
                       ],
@@ -350,13 +250,12 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
 
                     const SizedBox(height: 30),
 
-                    // Create Button - ย้ายเข้ามาใน ScrollView
+                    // Create Button
                     SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed:
-                            _isLoading ? null : _handleCreateProject,
+                        onPressed: controller.isLoading ? null : _handleCreateProject,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8B5CF6),
                           foregroundColor: Colors.white,
@@ -366,37 +265,35 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child:
-                            _isLoading
-                                ? const Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
-                                  children: [
-                                    SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
+                        child: controller.isLoading
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
                                     ),
-                                    SizedBox(width: 12),
-                                    Text(
-                                      'Creating...',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                )
-                                : const Text(
-                                  'Create Project',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
                                   ),
+                                  SizedBox(width: 12),
+                                  Text(
+                                    'Creating...',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const Text(
+                                'Create Project',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
                                 ),
+                              ),
                       ),
                     ),
                   ],

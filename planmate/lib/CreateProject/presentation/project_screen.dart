@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:planmate/CreateProject/Update/update_project_screen.dart';
 import 'package:planmate/Models/project_model.dart';
-import 'package:planmate/Services/firebase_project_service.dart';
+
 
 class ShowProjectScreen extends StatefulWidget {
   final ProjectModel project;
@@ -15,7 +15,7 @@ class ShowProjectScreen extends StatefulWidget {
 }
 
 class _ShowProjectScreenState extends State<ShowProjectScreen> {
-  final FirebaseProjectServices _projectServices = FirebaseProjectServices();
+  
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   CollectionReference get projectRef => _firestore.collection('projects');
 
