@@ -20,12 +20,12 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
   CollectionReference get projectRef => _firestore.collection('projects');
 
   bool _isDeleting = false;
-  late ProjectModel currentProject; // เก็บ project ล่าสุด
+  late ProjectModel currentProject;
 
   @override
   void initState() {
     super.initState();
-    currentProject = widget.project; // เริ่มต้นด้วย project ที่ส่งมา
+    currentProject = widget.project;
   }
 
   Future<void> deleteProject(String projectId) async {
@@ -45,7 +45,6 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
       backgroundColor: Colors.grey.shade50,
       appBar: _buildAppBar(),
       body: StreamBuilder<DocumentSnapshot>(
-        // 🔥 เพิ่ม StreamBuilder เพื่อฟัง real-time updates
         stream: projectRef.doc(widget.project.id).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -68,25 +67,26 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
 
           if (snapshot.connectionState == ConnectionState.waiting && 
               currentProject == widget.project) {
-            // แสดง loading เฉพาะครั้งแรก
             return const Center(child: CircularProgressIndicator());
           }
 
-          // อัพเดท currentProject ด้วยข้อมูลใหม่จาก Firestore
+          // 🔥 แก้ปัญหาที่ 1: อัพเดท currentProject ด้วยข้อมูลใหม่จาก Firestore
           if (snapshot.hasData && snapshot.data!.exists) {
             final data = snapshot.data!.data() as Map<String, dynamic>;
-            currentProject = ProjectModel.fromMap(data, snapshot.data!.id);
+            
+            // แปลง Timestamp เป็น milliseconds
+            final fixedData = Map<String, dynamic>.from(data);
+            if (fixedData['createdAt'] is Timestamp) {
+              fixedData['createdAt'] = (fixedData['createdAt'] as Timestamp).millisecondsSinceEpoch;
+            }
+            if (fixedData['updatedAt'] is Timestamp) {
+              fixedData['updatedAt'] = (fixedData['updatedAt'] as Timestamp).millisecondsSinceEpoch;
+            }
+            
+            // อัพเดท currentProject ด้วยข้อมูลใหม่
+            currentProject = ProjectModel.fromMap(fixedData, snapshot.data!.id);
           } else if (snapshot.hasData && !snapshot.data!.exists) {
-            // Project ถูกลบแล้ว
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Project has been deleted'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            });
+            // Project ถูกลบแล้ว - แต่ไม่ต้องทำอะไรเพราะ delete confirmation จัดการแล้ว
             return const SizedBox();
           }
 
@@ -139,7 +139,7 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            currentProject.color.withOpacity(0.8), // 🔥 ใช้ currentProject
+            currentProject.color.withOpacity(0.8),
             currentProject.color,
           ],
           begin: Alignment.topLeft,
@@ -156,7 +156,6 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
       ),
       child: Column(
         children: [
-          // Project Icon
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -164,7 +163,7 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Image.asset(
-              currentProject.iconPath, // 🔥 ใช้ currentProject
+              currentProject.iconPath,
               width: 60,
               height: 60,
               errorBuilder: (context, error, stackTrace) {
@@ -186,9 +185,8 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Project Name
           Text(
-            currentProject.title, // 🔥 ใช้ currentProject
+            currentProject.title,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -198,7 +196,6 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Project Info
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -288,7 +285,7 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Total ${currentProject.taskCount} Tasks', // 🔥 ใช้ currentProject
+                  'Total ${currentProject.taskCount} Tasks',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -300,7 +297,6 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
           ),
           const SizedBox(height: 20),
 
-          // Empty state
           _buildEmptyTaskState(),
         ],
       ),
@@ -467,7 +463,7 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => UpdateProjectScreen(project: currentProject), // 🔥 ใช้ currentProject
+      builder: (context) => UpdateProjectScreen(project: currentProject),
     );
   }
 
@@ -499,13 +495,16 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
                   ),
                   TextButton(
                     onPressed: () async {
-                      setState(() => _isDeleting = true);
+                      setState(() => _isDeleting = true); 
                       try {
                         await deleteProject(currentProject.id);
 
                         if (mounted) {
+                          // 🔥 ปิด dialog ก่อน แล้วให้ StreamBuilder จัดการ navigation
+                          Navigator.of(context).pop(); // close dialog
+                          Navigator.of(context).pop(); // close screen
                           
-
+                          // แสดง SnackBar หลังจาก navigate แล้ว
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Row(
@@ -526,7 +525,7 @@ class _ShowProjectScreenState extends State<ShowProjectScreen> {
                         }
                       } catch (e) {
                         if (mounted) {
-                          Navigator.of(context).pop(); // close dialog
+                          Navigator.of(context).pop(); // close dialog only
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Row(
