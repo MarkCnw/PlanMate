@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:planmate/CreateProject/presentation/showmodal.dart';
+import 'package:planmate/CreateProject/Create/presentation/create_project_screen.dart';
 
 class BannerScreen extends StatelessWidget {
   const BannerScreen({super.key});

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:planmate/CreateProject/Features/Banner/Controller/create_project_controller.dart';
-import 'package:planmate/CreateProject/presentation/project_screen.dart';
+import 'package:planmate/CreateProject/Create/Controller/create_project_controller.dart';
+import 'package:planmate/CreateProject/Presentation/project_screen.dart';
+import 'package:planmate/Models/project_model.dart';
 
 
 
 class CreateProjectSheet extends StatefulWidget {
+  
   final void Function(String name, String iconPath)? onSubmit;
 
   const CreateProjectSheet({super.key, this.onSubmit});
@@ -20,10 +22,24 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
   void initState() {
     super.initState();
     controller = CreateProjectController(
-      onStateChanged: () {
-        setState(() {}); // รีเฟรช UI เมื่อ controller เปลี่ยนแปลง
-      },
-      onSubmit: widget.onSubmit,
+      onStateChanged: () => setState(() {}),
+      onSuccess: _onCreateSuccess,    // ✅ ส่ง callback
+      onError: _onCreateError,        // ✅ ส่ง callback  
+    );
+  }
+
+  void _onCreateSuccess(ProjectModel project) {
+    // ✅ UI จัดการ navigation
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => ShowProjectScreen(project: project)),
+    );
+  }
+
+    void _onCreateError() {
+    // ✅ UI จัดการ error
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to create project')),
     );
   }
 
@@ -33,23 +49,7 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
     super.dispose();
   }
 
-  Future<void> _handleCreateProject() async {
-    final project = await controller.createProject();
-    if (project == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to create project or not signed in')),
-      );
-      return;
-    }
-
-    if (!mounted) return;
-
-    // นำทางไปหน้า ShowProjectScreen พร้อมส่ง project ที่สร้างสำเร็จ
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => ShowProjectScreen(project: project)),
-    );
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -255,7 +255,7 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: controller.isLoading ? null : _handleCreateProject,
+                        onPressed: controller.isLoading ? null : controller.createProject,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8B5CF6),
                           foregroundColor: Colors.white,

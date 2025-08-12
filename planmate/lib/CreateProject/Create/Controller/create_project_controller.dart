@@ -1,4 +1,4 @@
-import 'dart:math';
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 
 import 'package:flutter/material.dart';
 import 'package:planmate/Auth/services/google_service.dart';
@@ -7,9 +7,14 @@ import 'package:planmate/Services/firebase_project_service.dart';
 
 class CreateProjectController {
   final VoidCallback onStateChanged;
-  final void Function(String name, String iconPath)? onSubmit;
+  final void Function(ProjectModel project)? onSuccess; // ✅ เพิ่มนี้
+  final VoidCallback? onError; // ✅ เพิ่มนี้
 
-  CreateProjectController({required this.onStateChanged, this.onSubmit});
+  CreateProjectController({
+    required this.onStateChanged,
+    this.onSuccess,
+    this.onError,
+  });
 
   final FirebaseProjectServices _projectService =
       FirebaseProjectServices();
@@ -70,20 +75,29 @@ class CreateProjectController {
     return isValid;
   }
 
-  Future<ProjectModel?> createProject() async {
+  Future<void> createProject() async { // ✅ เปลี่ยนเป็น void
     final uid = _firebaseServices.getCurrentUser()?.uid;
-    if (uid == null) return null;
-    if (!validateForm()) return null;
+    if (uid == null) {
+      onError?.call(); // ✅ เรียก callback แทน return
+      return;
+    }
+    
+    if (!validateForm()) return; // ✅ เอา return null ออก
 
     isLoading = true;
     onStateChanged();
+    
     try {
       final id = await _projectService.createProject(
         title: nameController.text.trim(),
         iconKey: selectedIconKey!,
         description: null,
       );
-      if (id.isEmpty) return null;
+      
+      if (id.isEmpty) {
+        onError?.call(); // ✅ เรียก callback แทน return
+        return;
+      }
 
       final project = ProjectModel.create(
         title: nameController.text.trim(),
@@ -91,14 +105,11 @@ class CreateProjectController {
         userId: uid,
       ).copyWith(id: id);
 
-      onSubmit?.call(
-        nameController.text.trim(),
-        iconOptionsMap[selectedIconKey!]!.iconPath,
-      );
-      return project;
-    } catch (_) {
-        debugPrint('createProject error: $e\n$st');
-      return null;
+      onSuccess?.call(project); // ✅ เรียก callback แทน return
+      
+    } catch (e) {
+      debugPrint('createProject error: $e'); // ✅ แก้ไข error handling
+      onError?.call(); // ✅ เรียก callback แทน return
     } finally {
       isLoading = false;
       onStateChanged();
@@ -108,13 +119,4 @@ class CreateProjectController {
   void dispose() {
     nameController.dispose();
   }
-}
-
-class IconDataModel {
-  final String iconPath;
-  final int colorValue;
-
-  IconDataModel({required this.iconPath, required this.colorValue});
-
-  Color get color => Color(colorValue);
 }

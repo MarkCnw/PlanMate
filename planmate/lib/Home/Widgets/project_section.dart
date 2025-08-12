@@ -7,7 +7,7 @@ import 'package:planmate/Home/Widgets/ProjectSection/project_section_config.dart
 import 'package:planmate/Home/Widgets/ProjectSection/project_section_header.dart';
 import 'package:planmate/Home/Widgets/ProjectSection/sized_container_wrapper.dart';
 import 'package:planmate/Models/project_model.dart';
-import 'package:planmate/CreateProject/presentation/project_screen.dart';
+import 'package:planmate/CreateProject/Presentation/project_screen.dart';
 
 class ProjectSection extends StatelessWidget {
   final AsyncSnapshot<List<ProjectModel>> projectStream;
