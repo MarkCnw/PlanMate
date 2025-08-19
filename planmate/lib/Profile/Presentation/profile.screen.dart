@@ -14,6 +14,7 @@ class ProfileScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
+       backgroundColor: Color(0xFFf9f4ef), 
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Center(

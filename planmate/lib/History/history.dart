@@ -8,13 +8,14 @@ class History extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
+    return Scaffold(
+       backgroundColor: Color(0xFFf9f4ef), 
+      body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Center(
             child: SvgPicture.asset(
-              'assets/avatar/hisssss.svg',
+              'assets/avatar/se.svg',
               width: 300,
               height: 300,
             ),

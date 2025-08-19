@@ -22,7 +22,7 @@ class ProjectSectionHeader extends StatelessWidget {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: Color(0xFF001858)
           ),
         ),
         GestureDetector(
@@ -31,7 +31,7 @@ class ProjectSectionHeader extends StatelessWidget {
             actionText,
             style: const TextStyle(
               fontSize: 14,
-              color: Colors.blue,
+              color: Color(0xFF172c66),
               fontWeight: FontWeight.w500,
             ),
           ),

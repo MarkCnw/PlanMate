@@ -25,27 +25,27 @@ class ProjectEmptyState extends StatelessWidget {
       padding: ProjectSectionConfig.emptyStatePadding,
       decoration: BoxDecoration(
         // 🆕 Gradient Background (ตาม trend)
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.white, Colors.grey.shade50],
-        ),
+        // gradient: LinearGradient(
+        //   begin: Alignment.topLeft,
+        //   end: Alignment.bottomRight,
+        //   colors: [Colors.white, Colors.grey.shade50],
+        // ),
         borderRadius: BorderRadius.circular(20), // 🆕 เพิ่มความโค้งมน
         // 🆕 Modern Shadow (neumorphism trend)
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            offset: const Offset(8, 8),
-            blurRadius: 20,
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.white,
-            offset: const Offset(-8, -8),
-            blurRadius: 20,
-            spreadRadius: 0,
-          ),
-        ],
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Colors.grey.shade200,
+        //     offset: const Offset(8, 8),
+        //     blurRadius: 20,
+        //     spreadRadius: 0,
+        //   ),
+        //   BoxShadow(
+        //     color: Colors.white,
+        //     offset: const Offset(-8, -8),
+        //     blurRadius: 20,
+        //     spreadRadius: 0,
+        //   ),
+        // ],
         // เอา border ออก (minimalist trend)
       ),
       child: Center(
@@ -66,13 +66,13 @@ class ProjectEmptyState extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
+                color: Color(0xFF001858),
               ),
             ),
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+              style: TextStyle(fontSize: 14, color: Color(0xFF172c66)),
             ),
             if (onCreateProject != null) ...[
               const SizedBox(height: 16),

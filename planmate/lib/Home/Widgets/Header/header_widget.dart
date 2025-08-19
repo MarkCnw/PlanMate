@@ -31,12 +31,12 @@ class HeaderSection extends StatelessWidget {
                 children: [
                   const Text(
                     'Welcome,',
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(color: Color(0xFF172c66)),
                   ),
                   Text(
                     user?.displayName ?? 'Ronalldo',
                     style: AppTypography.heading2.copyWith(
-                      color: Colors.white,
+                      color: Color(0xFF001858)
                     ),
                   ),
                 ],
@@ -50,11 +50,11 @@ class HeaderSection extends StatelessWidget {
                 padding: const EdgeInsets.all(10),
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white24,
+                  color: Color.fromARGB(59, 215, 179, 179),
                 ),
                 child: const Icon(
                   FontAwesomeIcons.solidBell,
-                  color: Colors.white,
+                  color: Color(0xFF001858),
                   size: 20,
                 ),
               ),

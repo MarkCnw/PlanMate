@@ -10,7 +10,7 @@ class AppbarWidget extends StatelessWidget {
       style: TextStyle(
         fontWeight: FontWeight.w700,
         fontSize: 24,
-        color: Color(0xFF1E293B),
+        color: Color(0xFF232946),
       ),
     );
   }
