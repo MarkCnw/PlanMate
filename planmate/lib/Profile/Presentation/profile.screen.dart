@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:planmate/Auth/presentation/login_screen.dart';
 import 'package:planmate/Auth/services/google_service.dart';
-
 import 'package:planmate/Widgets/bunton.dart';
 
 
@@ -28,7 +27,7 @@ class ProfileScreen extends StatelessWidget {
               _buildLogoutButton(context),
             ],
           ),
-        ),
+        ), 
       ),
     );
   }

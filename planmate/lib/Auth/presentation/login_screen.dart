@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lottie/lottie.dart';
 import 'package:planmate/Auth/services/google_service.dart';
 import 'package:planmate/Navigation/presentation/navigation_screen.dart';
 import 'package:planmate/Widgets/snackbar.dart';
@@ -51,7 +52,7 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xFFf9f4ef),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -65,6 +66,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 style: GoogleFonts.chakraPetch(
                   fontSize: 37,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFF001858),
                 ),
               ),
               const SizedBox(height: 8),
@@ -73,15 +75,18 @@ class _SignInScreenState extends State<SignInScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.normal,
                   fontSize: 20,
+                  color: Color(0xFF172c66),
                 ),
               ),
               const SizedBox(height: 20),
 
               Center(
-                child: SvgPicture.asset(
-                  'assets/avatar/team_profile.svg',
+                child: Lottie.asset(
+                  'assets/lottie/2.json',
                   width: 500,
                   height: 500,
+                  repeat: true,
+                  animate: true,
                 ),
               ),
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:planmate/Auth/presentation/login_screen.dart';
 import 'package:planmate/theme/app_theme.dart';
@@ -25,7 +26,15 @@ class OnboardingScreen extends StatelessWidget {
               flex: 3,
               child: Stack(
                 children: [
-                  Center(child: SvgPicture.asset('assets/onboarding.svg')),
+                  Center(
+                    child: Lottie.asset(
+                      'assets/lottie/power.json',
+                      width: 500,
+                      height: 500,
+                      repeat: true,
+                      animate: true,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -68,7 +77,7 @@ class OnboardingScreen extends StatelessWidget {
                         onPressed: () async {
                           // บันทึกว่าเคยเห็น Onboarding แล้ว
                           await _markOnboardingAsSeen();
-                          
+
                           // นำทางไปหน้า Login
                           if (context.mounted) {
                             Navigator.pushReplacement(

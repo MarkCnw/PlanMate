@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+
+import 'package:lottie/lottie.dart';
 import 'package:planmate/Home/Widgets/ProjectSection/project_section_config.dart';
-import 'package:planmate/gen/assets.gen.dart';
+
 
 class ProjectEmptyState extends StatelessWidget {
   final String title;
@@ -54,8 +55,8 @@ class ProjectEmptyState extends StatelessWidget {
           children: [
             Flexible(
               flex: 2,
-              child: SvgPicture.asset(
-                Assets.avatar.noProject,
+              child: Lottie.asset(
+                'assets/lottie/hero.json',
                 height: ProjectSectionConfig.emptyStateSvgHeight,
                 fit: BoxFit.contain,
               ),

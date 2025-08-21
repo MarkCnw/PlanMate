@@ -32,7 +32,7 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
     // ✅ UI จัดการ navigation
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => ShowProjectScreen(project: project)),
+      MaterialPageRoute(builder: (_) => ProjectScreenDetail(project: project)),
     );
   }
 

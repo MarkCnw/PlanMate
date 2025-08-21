@@ -107,7 +107,7 @@ class ProjectSection extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder:
-            (context) => ShowProjectScreen(project: project)
+            (context) => ProjectScreenDetail(project: project)
       ),
     );
   }
