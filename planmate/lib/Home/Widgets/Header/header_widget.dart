@@ -1,16 +1,20 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:planmate/Themes/apptypography.dart';
+import 'package:planmate/provider/auth_provider.dart';
+import 'package:provider/provider.dart';
+
 
 class HeaderSection extends StatelessWidget {
-  final User? user;
-
-  const HeaderSection({super.key, required this.user});
+  const HeaderSection({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ฟังเฉพาะ field ที่ใช้ เพื่อลด rebuild
+    final photoURL    = context.select<AuthProvider, String?>((p) => p.photoURL);
+    final displayName = context.select<AuthProvider, String>((p) => p.displayName);
+
+    final name = (displayName.isNotEmpty) ? displayName : 'Guest';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -18,33 +22,31 @@ class HeaderSection extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundImage:
-                  user?.photoURL != null
-                      ? NetworkImage(user!.photoURL!)
-                      : const AssetImage('assets/avatar/NogoogleImage.png')
-                          as ImageProvider,
+              backgroundImage: (photoURL != null && photoURL.isNotEmpty)
+                  ? NetworkImage(photoURL)
+                  : const AssetImage('assets/avatar/NogoogleImage.png') as ImageProvider,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Welcome,',
-                    style: TextStyle(color: Color(0xFF172c66)),
-                  ),
+                  const Text('Welcome,', style: TextStyle(color: Color(0xFF172c66))),
                   Text(
-                    user?.displayName ?? 'Ronalldo',
-                    style: AppTypography.heading2.copyWith(
-                      color: Color(0xFF001858)
+                    name,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF001858),
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
             GestureDetector(
               onTap: () {
-                // handle tap
+                // TODO: handle notification tap
               },
               child: Container(
                 padding: const EdgeInsets.all(10),

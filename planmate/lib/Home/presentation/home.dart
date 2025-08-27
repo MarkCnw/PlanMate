@@ -1,11 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:planmate/provider/project_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:planmate/Home/Widgets/Header/header_widget.dart';
 import 'package:planmate/Home/Widgets/Progress/progress_widget.dart';
 import 'package:planmate/Home/Widgets/project_section.dart';
 
-import 'package:planmate/Models/project_model.dart';
-import 'package:planmate/Services/firebase_project_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,13 +14,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final User? user = FirebaseAuth.instance.currentUser;
-  final FirebaseProjectServices _projectService = FirebaseProjectServices();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFf9f4ef), 
+      backgroundColor: const Color(0xFFf9f4ef), 
       body: SafeArea(
         child: SizedBox(
           height: MediaQuery.of(context).size.height,
@@ -31,17 +27,13 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 height: 260,
                 decoration: const BoxDecoration(
-                  // gradient: LinearGradient(
-                  //   colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-                  //   begin: Alignment.topLeft,
-                  //   end: Alignment.bottomRight,
-                  // ),
+                  // Gradient can be added back if needed
                 ),
                 padding: const EdgeInsets.all(20),
-                child: HeaderSection(user: user),
+                child: const HeaderSection(),
               ),
       
-              // Chart section ลอยออกมาด้านล่าง
+              // Chart section
               Positioned(
                 top: 120,
                 left: 20,
@@ -63,16 +55,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
       
-              // Project section ใช้ Firebase Stream
+              // Project section using ProjectProvider
               Positioned(
                 top: 450,
                 left: 15,
                 right: 15,
-                child: StreamBuilder<List<ProjectModel>>(
-                  stream: _projectService.getUserProjectsSimple(),
-                  builder: (context, snapshot) {
+                child: Consumer<ProjectProvider>(
+                  builder: (context, projectProvider, child) {
                     return ProjectSection(
-                      projectStream: snapshot,
+                      projectProvider: projectProvider,
                     );
                   },
                 ),

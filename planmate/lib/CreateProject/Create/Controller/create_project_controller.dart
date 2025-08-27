@@ -1,24 +1,23 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-
 import 'package:flutter/material.dart';
-import 'package:planmate/Auth/services/google_service.dart';
+import 'package:planmate/provider/auth_provider.dart';
+import 'package:planmate/provider/project_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:planmate/Models/project_model.dart';
-import 'package:planmate/Services/firebase_project_service.dart';
+
 
 class CreateProjectController {
+  final BuildContext context;
   final VoidCallback onStateChanged;
-  final void Function(ProjectModel project)? onSuccess; // ✅ เพิ่มนี้
-  final VoidCallback? onError; // ✅ เพิ่มนี้
+  final void Function(ProjectModel project)? onSuccess;
+  final VoidCallback? onError;
 
   CreateProjectController({
+    required this.context,
     required this.onStateChanged,
     this.onSuccess,
     this.onError,
   });
 
-  final FirebaseProjectServices _projectService =
-      FirebaseProjectServices();
-  final FirebaseServices _firebaseServices = FirebaseServices();
   final TextEditingController nameController = TextEditingController();
 
   Map<String, ProjectIconData> get iconOptionsMap {
@@ -75,41 +74,40 @@ class CreateProjectController {
     return isValid;
   }
 
-  Future<void> createProject() async { // ✅ เปลี่ยนเป็น void
-    final uid = _firebaseServices.getCurrentUser()?.uid;
-    if (uid == null) {
-      onError?.call(); // ✅ เรียก callback แทน return
-      return;
-    }
-    
-    if (!validateForm()) return; // ✅ เอา return null ออก
+  Future<void> createProject() async {
+    if (!validateForm()) return;
 
     isLoading = true;
     onStateChanged();
     
     try {
-      final id = await _projectService.createProject(
+      final projectProvider = Provider.of<ProjectProvider>(context, listen: false);
+      
+      final projectId = await projectProvider.createProject(
         title: nameController.text.trim(),
         iconKey: selectedIconKey!,
         description: null,
       );
       
-      if (id.isEmpty) {
-        onError?.call(); // ✅ เรียก callback แทน return
+      if (projectId == null) {
+        // Error is already set in ProjectProvider
+        onError?.call();
         return;
       }
 
+      // Create project model for success callback
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final project = ProjectModel.create(
         title: nameController.text.trim(),
         iconKey: selectedIconKey!,
-        userId: uid,
-      ).copyWith(id: id);
+        userId: authProvider.userId!,
+      ).copyWith(id: projectId);
 
-      onSuccess?.call(project); // ✅ เรียก callback แทน return
+      onSuccess?.call(project);
       
     } catch (e) {
-      debugPrint('createProject error: $e'); // ✅ แก้ไข error handling
-      onError?.call(); // ✅ เรียก callback แทน return
+      debugPrint('createProject error: $e');
+      onError?.call();
     } finally {
       isLoading = false;
       onStateChanged();

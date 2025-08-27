@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:planmate/provider/project_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:planmate/Home/Widgets/ProjectSection/project_empty_state.dart';
 import 'package:planmate/Home/Widgets/ProjectSection/project_error_state.dart';
 import 'package:planmate/Home/Widgets/ProjectSection/project_list_view.dart';
@@ -8,19 +10,17 @@ import 'package:planmate/Home/Widgets/ProjectSection/project_section_header.dart
 import 'package:planmate/Home/Widgets/ProjectSection/sized_container_wrapper.dart';
 import 'package:planmate/Models/project_model.dart';
 import 'package:planmate/CreateProject/Presentation/project_screen.dart';
+import 'package:planmate/CreateProject/Create/presentation/create_project_screen.dart';
+
 
 class ProjectSection extends StatelessWidget {
-  final AsyncSnapshot<List<ProjectModel>> projectStream;
+  final ProjectProvider? projectProvider; // Optional - can use context.watch
   final VoidCallback? onSeeDetail;
-  final VoidCallback? onCreateProject;
-  final VoidCallback? onRetry;
 
   const ProjectSection({
     super.key,
-    required this.projectStream,
+    this.projectProvider,
     this.onSeeDetail,
-    this.onCreateProject,
-    this.onRetry,
   });
 
   @override
@@ -36,79 +36,85 @@ class ProjectSection extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context) {
-    _logStreamState();
+    return Consumer<ProjectProvider>(
+      builder: (context, projectProvider, child) {
+        _logProviderState(projectProvider);
 
-    // Loading state
-    if (projectStream.connectionState == ConnectionState.waiting) {
-      return SizedContainerWrapper(
-        height: ProjectSectionConfig.loadingErrorHeight,
-        child: const ProjectLoadingState(),
-      );
-    }
+        // Initial loading state
+        if (projectProvider.isInitialLoading) {
+          return SizedContainerWrapper(
+            height: ProjectSectionConfig.loadingErrorHeight,
+            child: const ProjectLoadingState(),
+          );
+        }
 
-    // Error state
-    if (projectStream.hasError) {
-      return SizedContainerWrapper(
-        height: ProjectSectionConfig.loadingErrorHeight,
-        child: ProjectErrorState(
-          error: projectStream.error.toString(),
-          onRetry: onRetry,
-        ),
-      );
-    }
+        // Error state
+        if (projectProvider.error != null) {
+          return SizedContainerWrapper(
+            height: ProjectSectionConfig.loadingErrorHeight,
+            child: ProjectErrorState(
+              error: projectProvider.error!,
+              onRetry: () => projectProvider.refreshProjects(),
+            ),
+          );
+        }
 
-    // Data state
-    if (projectStream.hasData) {
-      final projects = projectStream.data!;
+        final projects = projectProvider.projects;
 
-      // Empty state
-      if (projects.isEmpty) {
+        // Empty state
+        if (projects.isEmpty) {
+          return SizedContainerWrapper(
+            height: ProjectSectionConfig.emptyStateHeight,
+            child: ProjectEmptyState(
+              onCreateProject: () => _showCreateProjectSheet(context),
+            ),
+          );
+        }
+
+        // Projects list
         return SizedContainerWrapper(
-          height: ProjectSectionConfig.emptyStateHeight,
-          child: ProjectEmptyState(onCreateProject: onCreateProject),
+          height: ProjectSectionConfig.projectListHeight,
+          child: ProjectListView(
+            projects: projects,
+            onProjectTap: (project) => _handleProjectTap(context, project),
+          ),
         );
-      }
-
-      // Projects list
-      return SizedContainerWrapper(
-        height: ProjectSectionConfig.projectListHeight,
-        child: ProjectListView(
-          projects: projects,
-          onProjectTap: (project) => _handleProjectTap(context, project),
-        ),
-      );
-    }
-
-    // Default loading
-    return SizedContainerWrapper(
-      height: ProjectSectionConfig.loadingErrorHeight,
-      child: const ProjectLoadingState(),
+      },
     );
   }
 
-  void _logStreamState() {
-    print(
-      '🎯 ProjectSection - Connection State: ${projectStream.connectionState}',
-    );
-    print('🎯 ProjectSection - Has Error: ${projectStream.hasError}');
-    print('🎯 ProjectSection - Has Data: ${projectStream.hasData}');
+  void _logProviderState(ProjectProvider projectProvider) {
+    debugPrint('🎯 ProjectSection - Provider State:');
+    debugPrint('   - Initial Loading: ${projectProvider.isInitialLoading}');
+    debugPrint('   - Loading: ${projectProvider.isLoading}');
+    debugPrint('   - Has Error: ${projectProvider.error != null}');
+    debugPrint('   - Project Count: ${projectProvider.projects.length}');
 
-    if (projectStream.hasError) {
-      print('❌ ProjectSection Error: ${projectStream.error}');
-    }
-    if (projectStream.hasData) {
-      print('📊 ProjectSection Data Count: ${projectStream.data?.length}');
+    if (projectProvider.error != null) {
+      debugPrint('❌ ProjectSection Error: ${projectProvider.error}');
     }
   }
 
   void _handleProjectTap(BuildContext context, ProjectModel project) {
-    print('🎯 Tapped project: ${project.title}');
+    debugPrint('🎯 Tapped project: ${project.title}');
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => ProjectScreenDetail(project: project)
+        builder: (context) => ProjectScreenDetail(project: project),
       ),
+    );
+  }
+
+  void _showCreateProjectSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
+      ),
+      builder: (context) => const CreateProjectSheet(),
     );
   }
 }

@@ -18,9 +18,10 @@ class _UpdateProjectScreenState extends State<UpdateProjectScreen> {
   void initState() {
     super.initState();
     controller = UpdateProjectController(
+      context: context,              // ✅ เพิ่ม context
       project: widget.project,
       onStateChanged: () => setState(() {}),
-      onSuccess: _onUpdateSuccess, // เพิ่ม success callback
+      onSuccess: _onUpdateSuccess,
     );
   }
 

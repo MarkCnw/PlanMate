@@ -75,13 +75,13 @@ class ProjectEmptyState extends StatelessWidget {
               subtitle,
               style: TextStyle(fontSize: 14, color: Color(0xFF172c66)),
             ),
-            if (onCreateProject != null) ...[
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: onCreateProject,
-                child: const Text('Create Project'),
-              ),
-            ],
+            // if (onCreateProject != null) ...[
+            //   const SizedBox(height: 16),
+            //   ElevatedButton(
+            //     onPressed: onCreateProject,
+            //     child: const Text('Create Project'),
+            //   ),
+            // ],
           ],
         ),
       ),

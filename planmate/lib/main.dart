@@ -1,22 +1,25 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; // เพิ่มบรรทัดนี้
-import 'package:planmate/Navigation/presentation/navigation_screen.dart';
-import 'package:planmate/Onboarding/Presentation/onboarding_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:planmate/Auth/presentation/login_screen.dart';
 
 import 'firebase_options.dart';
 
+// ==== Layers ====
+import 'package:planmate/provider/auth_provider.dart';
+import 'package:planmate/provider/project_provider.dart';
+
+// ==== Screens ====
+import 'package:planmate/Navigation/presentation/navigation_screen.dart';
+import 'package:planmate/Onboarding/Presentation/onboarding_screen.dart';
+import 'package:planmate/Auth/presentation/login_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
   runApp(const MyApp());
 }
 
@@ -25,92 +28,100 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'PlanMate',
-      
-      // เพิ่ม theme configuration
-      theme: ThemeData(
-        // ตั้งค่าฟอนต์ Inter สำหรับทั้งแอป
-        textTheme: GoogleFonts.interTextTheme(
-          Theme.of(context).textTheme,
+    return MultiProvider(
+      providers: [
+        // 1) Repo ก่อน
+       
+        // 2) Auth
+        ChangeNotifierProvider<AuthProvider>(
+          create: (_) => AuthProvider(),
         ),
-        
-        // ตั้งค่าสีหลักของแอป
-        primarySwatch: Colors.purple,
-        primaryColor: const Color(0xFF8B5CF6),
-        
-        // ตั้งค่าสี AppBar
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
-          elevation: 0,
-          titleTextStyle: GoogleFonts.inter(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
+        // 3) ProjectProvider อ่าน repo จาก context
+        ChangeNotifierProvider(
+          create: (context) => ProjectProvider(),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'PlanMate',
+        // คุณใช้ธีมเดิมได้เลย; ถ้าอยากใช้ M3 ก็เปลี่ยนเป็น colorSchemeSeed
+        theme: ThemeData(
+          textTheme: GoogleFonts.interTextTheme(
+            Theme.of(context).textTheme,
           ),
-        ),
-        
-        // ตั้งค่าสี ElevatedButton
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF8B5CF6),
-            foregroundColor: Colors.white,
-            textStyle: GoogleFonts.inter(
-              fontSize: 16,
+          primarySwatch: Colors.purple,
+          primaryColor: const Color(0xFF8B5CF6),
+          appBarTheme: AppBarTheme(
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black87,
+            elevation: 0,
+            titleTextStyle: GoogleFonts.inter(
+              fontSize: 18,
               fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
+              color: Colors.black87,
             ),
-            shape: RoundedRectangleBorder(
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8B5CF6),
+              foregroundColor: Colors.white,
+              textStyle: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF8B5CF6),
+              textStyle: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
-          ),
-        ),
-        
-        // ตั้งค่าสี TextButton
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFF8B5CF6),
-            textStyle: GoogleFonts.inter(
+            focusedBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+              borderSide: BorderSide(color: Color(0xFF8B5CF6), width: 2),
+            ),
+            labelStyle: GoogleFonts.inter(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
+              fontWeight: FontWeight.w400,
+            ),
+            hintStyle: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: Colors.grey.shade500,
             ),
           ),
         ),
-        
-        // ตั้งค่า InputDecoration
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 2),
-          ),
-          labelStyle: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-          ),
-          hintStyle: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: Colors.grey.shade500,
-          ),
-        ),
+        home: const AuthWrapper(),
       ),
-      
-      home: AuthWrapper(),
     );
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+/// ทำ Stateful เพื่อ memoize future ของ onboarding
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
-  // เช็คว่าเคยเห็น Onboarding แล้วหรือยัง
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  late final Future<bool> _seenFuture = _hasSeenOnboarding();
+
   Future<bool> _hasSeenOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('has_seen_onboarding') ?? false;
@@ -118,32 +129,29 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        // แสดง loading ขณะกำลังเช็คสถานะ
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Theme.of(context).primaryColor,
-                ),
-              ),
-            ),
-          );
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        // ถ้า AuthProvider มี isLoading จริง ให้ใช้; ถ้าไม่มีก็ตัดบล็อกนี้ออก
+        if (authProvider.isLoading) {
+          // return Scaffold(
+          //   body: Center(
+          //     child: CircularProgressIndicator(
+          //       valueColor: AlwaysStoppedAnimation<Color>(
+          //         Theme.of(context).primaryColor,
+          //       ),
+          //     ),
+          //   ),
+          // );
         }
-        
-        // ถ้ามี user แสดงว่าเข้าสู่ระบบแล้ว -> ไปหน้า Home
-        if (snapshot.hasData && snapshot.data != null) {
+
+        if (authProvider.isAuthenticated) {
           return const CustomBottomNavBarApp();
         }
-        
-        // ถ้าไม่มี user -> เช็คว่าเคยเห็น Onboarding หรือยัง
+
         return FutureBuilder<bool>(
-          future: _hasSeenOnboarding(),
-          builder: (context, onboardingSnapshot) {
-            if (onboardingSnapshot.connectionState == ConnectionState.waiting) {
+          future: _seenFuture, // ✅ ใช้ future เดิม ไม่สร้างใหม่ทุก build
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
               return Scaffold(
                 body: Center(
                   child: CircularProgressIndicator(
@@ -154,13 +162,10 @@ class AuthWrapper extends StatelessWidget {
                 ),
               );
             }
-            
-            // ถ้าเคยเห็น Onboarding แล้ว -> ไปหน้า Login
-            if (onboardingSnapshot.data == true) {
+
+            if (snap.data == true) {
               return const SignInScreen();
             }
-            
-            // ถ้าไม่เคยเห็น Onboarding -> ไปหน้า Onboarding
             return const OnboardingScreen();
           },
         );

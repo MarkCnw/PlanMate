@@ -1,8 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:planmate/Auth/presentation/login_screen.dart';
-import 'package:planmate/Auth/services/google_service.dart';
-import 'package:planmate/Widgets/bunton.dart';
+import 'package:planmate/provider/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 
 class ProfileScreen extends StatelessWidget {
@@ -10,114 +8,130 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    // ฟังเฉพาะค่าแต่ละตัวด้วย select เพื่อลดการรีบิลด์
+    final displayName = context.select<AuthProvider, String>((p) => p.displayName);
+    final email       = context.select<AuthProvider, String>((p) => p.email);
+    final photoURL    = context.select<AuthProvider, String?>((p) => p.photoURL);
+    final isLoading   = context.select<AuthProvider, bool>((p) => p.isLoading);
 
     return Scaffold(
-       backgroundColor: Color(0xFFf9f4ef), 
+      backgroundColor: const Color(0xFFf9f4ef),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildWelcomeText(),
+              const _WelcomeText(),
               const SizedBox(height: 30),
-              _buildUserInfoSection(user),
+              _UserInfoSection(
+                displayName: displayName,
+                email: email,
+                photoURL: photoURL,
+              ),
               const SizedBox(height: 30),
-              _buildLogoutButton(context),
+              SizedBox(
+                width: 220,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : () => _handleLogout(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 22, height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ),
+              // แสดง error ถ้ามี (ฟังเฉพาะ error)
+              Selector<AuthProvider, String?>(
+                selector: (_, p) => p.error,
+                builder: (context, error, _) {
+                  if (error == null) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text(error, style: const TextStyle(color: Colors.red)),
+                  );
+                },
+              ),
             ],
           ),
-        ), 
+        ),
       ),
     );
   }
 
-  Widget _buildWelcomeText() {
+  Future<void> _handleLogout(BuildContext context) async {
+    final auth = context.read<AuthProvider>();
+    await auth.signOut();
+
+    // ถ้ามี error ให้แจ้งและเคลียร์
+    final err = auth.error;
+    if (err != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Logout failed: $err'), backgroundColor: Colors.red),
+      );
+      auth.clearError();
+    }
+    // ไม่ต้อง navigate เอง ให้ AuthWrapper จัดการ
+  }
+}
+
+class _WelcomeText extends StatelessWidget {
+  const _WelcomeText();
+
+  @override
+  Widget build(BuildContext context) {
     return const Text(
       "Congratulations!\nYou have successfully logged in",
       textAlign: TextAlign.center,
       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
     );
   }
+}
 
-  Widget _buildUserInfoSection(User? user) {
+class _UserInfoSection extends StatelessWidget {
+  final String displayName;
+  final String email;
+  final String? photoURL;
+
+  const _UserInfoSection({
+    required this.displayName,
+    required this.email,
+    this.photoURL,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
-        // แสดงรูปโปรไฟล์ (ถ้ามีจาก Google)
-        if (user?.photoURL != null) ...[
-          CircleAvatar(
-            radius: 40,
-            backgroundImage: NetworkImage(user!.photoURL!),
-          ),
+        if (photoURL != null && photoURL!.isNotEmpty) ...[
+          CircleAvatar(radius: 40, backgroundImage: NetworkImage(photoURL!)),
           const SizedBox(height: 10),
         ],
-
-        // แสดงชื่อผู้ใช้ (ถ้ามี)
-        if (user?.displayName != null) ...[
-          Text(
-            user!.displayName!,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        if (displayName.isNotEmpty) ...[
+          Text(displayName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
         ],
-
-        // แสดงอีเมล (ถ้ามี)
-        if (user?.email != null)
+        if (email.isNotEmpty)
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Text(
-              user!.email!,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
+              email,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.grey),
             ),
           ),
       ],
     );
-  }
-
-  Widget _buildLogoutButton(BuildContext context) {
-    return MyButton(
-      onTab: () async {
-        await _handleLogout(context);
-      },
-      text: "Log Out",
-    );
-  }
-
-  Future<void> _handleLogout(BuildContext context) async {
-    try {
-      // ออกจากระบบ
-      await FirebaseServices().googleSignOut();
-
-      // นำทางกลับไปหน้า Login
-      if (context.mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const SignInScreen()),
-        );
-      }
-    } catch (e) {
-      // Handle logout error
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Logout failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 }

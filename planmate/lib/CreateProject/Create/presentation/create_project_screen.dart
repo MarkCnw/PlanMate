@@ -22,9 +22,10 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
   void initState() {
     super.initState();
     controller = CreateProjectController(
+      context: context,              // ✅ ส่ง context
       onStateChanged: () => setState(() {}),
-      onSuccess: _onCreateSuccess,    // ✅ ส่ง callback
-      onError: _onCreateError,        // ✅ ส่ง callback  
+      onSuccess: _onCreateSuccess,
+      onError: _onCreateError,        
     );
   }
 

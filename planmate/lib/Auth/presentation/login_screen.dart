@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lottie/lottie.dart';
-import 'package:planmate/Auth/services/google_service.dart';
-import 'package:planmate/Navigation/presentation/navigation_screen.dart';
-import 'package:planmate/Widgets/snackbar.dart';
+import 'package:planmate/provider/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -15,44 +12,23 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  bool isLoading = false;
-
-  Future<void> signInWithGoogle() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      await FirebaseServices().signInWithGoogle();
-
-      // เช็คว่า user ได้เข้าสู่ระบบแล้วหรือไม่
-      final User? user = FirebaseAuth.instance.currentUser;
-
-      if (user != null && mounted) {
-        // นำทางไปหน้า Home
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const CustomBottomNavBarApp(),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        showSnackbar(context, 'Sign in failed: ${e.toString()}');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+  Future<void> _handleGoogleSignIn() async {
+    final auth = context.read<AuthProvider>(); // อ่านครั้งเดียว
+    final success = await auth.signInWithGoogle();
+    if (!success && mounted) {
+      final msg = auth.error ?? 'Sign in failed';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: Colors.red),
+      );
+      auth.clearError(); // เคลียร์ error หลังแจ้งแล้ว (ป้องกันขึ้นซ้ำ)
     }
+    // ไม่ต้อง navigate เอง: AuthWrapper จะจัดการ
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFf9f4ef),
+      backgroundColor: const Color(0xFFf9f4ef),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -66,7 +42,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 style: GoogleFonts.chakraPetch(
                   fontSize: 37,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF001858),
+                  color: const Color(0xFF001858),
                 ),
               ),
               const SizedBox(height: 8),
@@ -92,63 +68,92 @@ class _SignInScreenState extends State<SignInScreen> {
 
               const SizedBox(height: 40),
 
-              Center(
-                child: SizedBox(
-                  width: 330,
-                  height: 60,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : signInWithGoogle,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isLoading ? Colors.grey : Colors.black,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+              // ปุ่ม Sign in (ฟังเฉพาะ isLoading)
+              Selector<AuthProvider, bool>(
+                selector: (_, p) => p.isLoading,
+                builder: (context, isLoading, _) {
+                  return Center(
+                    child: SizedBox(
+                      width: 330,
+                      height: 60,
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : _handleGoogleSignIn,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              isLoading ? Colors.grey : Colors.black,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        child:
+                            isLoading
+                                ? Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  children: const [
+                                    SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      "Signing In...",
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                                : Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/icons/google.png',
+                                      scale: 3,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      "Sign in with Google",
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                       ),
                     ),
-                    child:
-                        isLoading
-                            ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  "Signing In...",
-                                  style: GoogleFonts.chakraPetch(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            )
-                            : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Image.asset(
-                                  'assets/icons/google.png',
-                                  scale: 3,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  "Sign in with Google",
-                                  style: GoogleFonts.chakraPetch(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                  ),
-                ),
+                  );
+                },
+              ),
+
+              // แสดง error (ฟังเฉพาะ error)
+              Selector<AuthProvider, String?>(
+                selector: (_, p) => p.error,
+                builder: (context, error, _) {
+                  if (error == null) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Center(
+                      child: Text(
+                        error,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),

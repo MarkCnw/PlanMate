@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:planmate/provider/project_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:planmate/Models/project_model.dart';
-import 'package:planmate/Services/firebase_project_service.dart';
+
 
 class UpdateProjectController {
+  final BuildContext context;
   final ProjectModel project;
   final VoidCallback onStateChanged;
-  final VoidCallback? onSuccess; // เพิ่ม callback สำหรับสำเร็จ
+  final VoidCallback? onSuccess;
 
   UpdateProjectController({
+    required this.context,
     required this.project,
     required this.onStateChanged,
     this.onSuccess,
@@ -17,10 +21,9 @@ class UpdateProjectController {
     selectedIconPath = project.iconPath;
   }
 
-  final FirebaseProjectServices _projectService = FirebaseProjectServices();
   final TextEditingController nameController = TextEditingController();
 
-  // ใช้ข้อมูลจาก ProjectModel แทน hardcode
+  // Use data from ProjectModel instead of hardcode
   Map<String, String> get iconOptionsMap {
     final options = ProjectModel.getIconOptions();
     return options.map((key, value) => MapEntry(key, value.iconPath));
@@ -52,7 +55,7 @@ class UpdateProjectController {
     onStateChanged();
   }
 
-  void updateProject() async {
+  Future<void> updateProject() async {
     final name = nameController.text.trim();
 
     // Validation
@@ -70,10 +73,10 @@ class UpdateProjectController {
       iconError = null;
     }
 
-    // ตรวจสอบว่ามีการเปลี่ยนแปลงหรือไม่
+    // Check if there are changes
     bool hasChanges = name != project.title || selectedIconKey != project.iconKey;
     if (!hasChanges && nameError == null && iconError == null) {
-      // ไม่มีการเปลี่ยนแปลง แต่ให้ callback สำเร็จเพื่อปิด modal
+      // No changes but successful validation - close modal
       onSuccess?.call();
       return;
     }
@@ -87,24 +90,25 @@ class UpdateProjectController {
     onStateChanged();
 
     try {
-      // ดึงข้อมูลสีที่ตรงกับ iconKey ใหม่
-      final iconOptions = ProjectModel.getIconOptions();
-      final iconData = iconOptions[selectedIconKey!] ?? iconOptions['rocket']!;
-
-      await _projectService.updateProject(
+      final projectProvider = Provider.of<ProjectProvider>(context, listen: false);
+      
+      final success = await projectProvider.updateProject(
         projectId: project.id,
         newTitle: name,
         newIconKey: selectedIconKey!,
-        newIconPath: iconData.iconPath,
-        newColor: iconData.color.value, // ส่งสีไปด้วย
       );
 
-      print('✅ Project updated successfully');
-      onSuccess?.call(); // เรียก callback เมื่อสำเร็จ
+      if (success) {
+        debugPrint('✅ Project updated successfully');
+        onSuccess?.call();
+      } else {
+        debugPrint('❌ Failed to update project: ${projectProvider.error}');
+        // Error is already set in ProjectProvider
+      }
 
     } catch (e) {
-      print('❌ Failed to update project: $e');
-      // แสดง error แต่ไม่ต้องจัดการมากเพราะ UI จะแสดง loading = false
+      debugPrint('❌ Failed to update project: $e');
+      // ProjectProvider handles error setting
     } finally {
       isLoading = false;
       onStateChanged();
