@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:planmate/provider/task_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,15 +31,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // 1) Repo ก่อน
-       
-        // 2) Auth
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(),
         ),
         // 3) ProjectProvider อ่าน repo จาก context
         ChangeNotifierProvider(
           create: (context) => ProjectProvider(),
+        ),
+
+        ChangeNotifierProvider<TaskProvider>(
+          create: (_) => TaskProvider(),
         ),
       ],
       child: MaterialApp(

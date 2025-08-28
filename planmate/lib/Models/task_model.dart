@@ -1,103 +1,204 @@
-// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-// class TaskModel {
-//   final String id;
-//   final String title;
-//   final String? description; 
-//   final bool done;
+class TaskModel {
+  final String id;
+  final String title;
+  final String? description;
+  final bool isDone;
+  final String projectId;
+  final String userId;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final DateTime? dueDate;
+  final DateTime? completedAt;
+  final int priority; // 1-3 (1=high, 2=medium, 3=low)
+
+  TaskModel({
+    required this.id,
+    required this.title,
+    this.description,
+    required this.isDone,
+    required this.projectId,
+    required this.userId,
+    required this.createdAt,
+    this.updatedAt,
+    this.dueDate,
+    this.completedAt,
+    this.priority = 2, // default medium
+  });
+
+  // Factory method สำหรับสร้าง task ใหม่
+  factory TaskModel.create({
+    required String title,
+    required String projectId,
+    required String userId,
+    String? description,
+    DateTime? dueDate,
+    int priority = 2,
+  }) {
+    return TaskModel(
+      id: '', // Firestore จะ generate ให้
+      title: title.trim(),
+      description: description?.trim(),
+      isDone: false,
+      projectId: projectId,
+      userId: userId,
+      createdAt: DateTime.now(),
+      dueDate: dueDate,
+      priority: priority,
+    );
+  }
+
+  // Factory method จาก Firestore
+  factory TaskModel.fromMap(Map<String, dynamic> map, [String? docId]) {
+    return TaskModel(
+      id: docId ?? map['id'] as String? ?? '',
+      title: map['title'] as String? ?? '',
+      description: map['description'] as String?,
+      isDone: map['isDone'] as bool? ?? false,
+      projectId: map['projectId'] as String? ?? '',
+      userId: map['userId'] as String? ?? '',
+      createdAt: _parseDateTime(map['createdAt']) ?? DateTime.now(),
+      updatedAt: _parseDateTime(map['updatedAt']),
+      dueDate: _parseDateTime(map['dueDate']),
+      completedAt: _parseDateTime(map['completedAt']),
+      priority: map['priority'] as int? ?? 2,
+    );
+  }
+
+  // Helper method สำหรับ parse DateTime
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is DateTime) return value;
+    return null;
+  }
+
+  // Convert to Map สำหรับ Firestore
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'description': description,
+      'isDone': isDone,
+      'projectId': projectId,
+      'userId': userId,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+      'dueDate': dueDate != null ? Timestamp.fromDate(dueDate!) : null,
+      'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+      'priority': priority,
+    };
+  }
+
+  // Validation methods
+  bool get isValid => title.trim().isNotEmpty && projectId.isNotEmpty && userId.isNotEmpty;
+
+  String? validateTitle() {
+    if (title.trim().isEmpty) return 'Task title is required';
+    if (title.length > 100) return 'Task title is too long (max 100 characters)';
+    return null;
+  }
+
+  String? validateDescription() {
+    if (description != null && description!.length > 500) {
+      return 'Description is too long (max 500 characters)';
+    }
+    return null;
+  }
+
+  // Helper getters
+  bool get hasDescription => description != null && description!.trim().isNotEmpty;
+  bool get hasDueDate => dueDate != null;
+  bool get isOverdue {
+    if (dueDate == null || isDone) return false;
+    return DateTime.now().isAfter(dueDate!);
+  }
   
-//   final DateTime? dueDate;
-//   final DateTime createdAt;
-//   final String userId;
-//   final DateTime? completedAt; 
-//   final String? projectId; // เพิ่ม Project ID
+  bool get isDueToday {
+    if (dueDate == null) return false;
+    final now = DateTime.now();
+    return now.year == dueDate!.year &&
+           now.month == dueDate!.month &&
+           now.day == dueDate!.day;
+  }
 
-//   TaskModel({
-//     required this.id,
-//     required this.title,
-//     this.description,
-//     this.done = false,
-//     this.dueDate,
-//     required this.createdAt,
-//     required this.userId,
-//     this.completedAt,
-//     this.projectId, // เพิ่มใน constructor
-//   });
+  String get priorityText {
+    switch (priority) {
+      case 1: return 'High';
+      case 2: return 'Medium';
+      case 3: return 'Low';
+      default: return 'Medium';
+    }
+  }
 
-//   // Getter methods
-//   bool get isOverdue {
-//     if (dueDate == null || done) return false;
-//     return DateTime.now().isAfter(dueDate!);
-//   }
+  String get statusText => isDone ? 'Completed' : 'Pending';
 
-//   bool get isToday {
-//     final now = DateTime.now();
-//     final taskDate = createdAt;
-//     return now.year == taskDate.year &&
-//            now.month == taskDate.month &&
-//            now.day == taskDate.day;
-//   }
+  // Copy with method
+  TaskModel copyWith({
+    String? id,
+    String? title,
+    String? description,
+    bool? isDone,
+    String? projectId,
+    String? userId,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    DateTime? dueDate,
+    DateTime? completedAt,
+    int? priority,
+  }) {
+    return TaskModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      isDone: isDone ?? this.isDone,
+      projectId: projectId ?? this.projectId,
+      userId: userId ?? this.userId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? DateTime.now(),
+      dueDate: dueDate ?? this.dueDate,
+      completedAt: completedAt ?? this.completedAt,
+      priority: priority ?? this.priority,
+    );
+  }
 
-//   bool get isDueToday {
-//     if (dueDate == null) return false;
-//     final now = DateTime.now();
-//     return now.year == dueDate!.year &&
-//            now.month == dueDate!.month &&
-//            now.day == dueDate!.day;
-//   }
+  // Toggle completion status
+  TaskModel toggleComplete() {
+    return copyWith(
+      isDone: !isDone,
+      completedAt: !isDone ? DateTime.now() : null,
+      updatedAt: DateTime.now(),
+    );
+  }
 
-//   factory TaskModel.fromMap(Map<String, dynamic> map, String docId) {
-//     return TaskModel(
-//       id: docId,
-//       title: map['title'] ?? '',
-//       description: map['description'],
-//       done: map['done'] ?? false,
-//       dueDate: map['dueDate'] != null
-//           ? (map['dueDate'] as Timestamp).toDate()
-//           : null,
-//       createdAt: (map['createdAt'] as Timestamp).toDate(),
-//       userId: map['userId'] ?? '',
-//       completedAt: map['completedAt'] != null
-//           ? (map['completedAt'] as Timestamp).toDate()
-//           : null,
-//       projectId: map['projectId'], // Handle projectId
-//     );
-//   }
+  // Update task info
+  TaskModel updateInfo({
+    String? title,
+    String? description,
+    DateTime? dueDate,
+    int? priority,
+  }) {
+    return copyWith(
+      title: title,
+      description: description,
+      dueDate: dueDate,
+      priority: priority,
+      updatedAt: DateTime.now(),
+    );
+  }
 
-//   Map<String, dynamic> toMap() {
-//     return {
-//       'title': title,
-//       'description': description,
-//       'done': done,
-//       'dueDate': dueDate != null ? Timestamp.fromDate(dueDate!) : null,
-//       'createdAt': Timestamp.fromDate(createdAt),
-//       'userId': userId,
-//       'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
-//       'projectId': projectId, // Add projectId to map
-//     };
-//   }
+  @override
+  String toString() {
+    return 'TaskModel(id: $id, title: $title, isDone: $isDone, projectId: $projectId)';
+  }
 
-//   TaskModel copyWith({
-//     String? id,
-//     String? title,
-//     String? description,
-//     bool? done,
-//     DateTime? dueDate,
-//     DateTime? createdAt,
-//     String? userId,
-//     DateTime? completedAt,
-//     String? projectId, // Add projectId to copyWith
-//   }) {
-//     return TaskModel(
-//       id: id ?? this.id,
-//       title: title ?? this.title,
-//       description: description ?? this.description,
-//       done: done ?? this.done,
-//       dueDate: dueDate ?? this.dueDate,
-//       createdAt: createdAt ?? this.createdAt,
-//       userId: userId ?? this.userId,
-//       completedAt: completedAt ?? this.completedAt,
-//       projectId: projectId ?? this.projectId, // Handle projectId
-//     );
-//   }
-// }
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is TaskModel && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+}
