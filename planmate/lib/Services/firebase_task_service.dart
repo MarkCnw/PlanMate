@@ -87,50 +87,35 @@ class FirebaseTaskService {
 
   /// ดึง Tasks ของ Project เฉพาะ (Real-time)
   Stream<List<TaskModel>> getProjectTasks(String projectId) {
-    try {
-      print('🔄 Getting tasks for project: $projectId');
-      print('📍 User ID: $currentUserId');
+  return taskRef
+      .where('projectId', isEqualTo: projectId)
+      .where('userId', isEqualTo: currentUserId)
+      // .orderBy('createdAt', descending: false) // ❌ ลบบรรทัดนี้
+      .snapshots()
+      .map((snapshot) {
+        print('📦 Received ${snapshot.docs.length} tasks from Firestore');
 
-      if (currentUserId == null) {
-        print('⚠️ No user logged in, returning empty stream');
-        return Stream.value([]);
-      }
+        final tasks = snapshot.docs
+            .map((doc) {
+              try {
+                final data = doc.data() as Map<String, dynamic>;
+                return TaskModel.fromMap(data, doc.id);
+              } catch (e) {
+                print('❌ Error parsing task ${doc.id}: $e');
+                return null;
+              }
+            })
+            .where((task) => task != null)
+            .cast<TaskModel>()
+            .toList();
 
-      return taskRef
-          .where('projectId', isEqualTo: projectId)
-          .where('userId', isEqualTo: currentUserId)
-          .orderBy('createdAt', descending: false) // เก่าก่อน (task order)
-          .snapshots()
-          .map((snapshot) {
-            print('📦 Received ${snapshot.docs.length} tasks from Firestore');
+        // ✅ เรียงลำดับใน Dart แทน
+        tasks.sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
-            final tasks = snapshot.docs
-                .map((doc) {
-                  try {
-                    final data = doc.data() as Map<String, dynamic>;
-                    return TaskModel.fromMap(data, doc.id);
-                  } catch (e) {
-                    print('❌ Error parsing task ${doc.id}: $e');
-                    return null;
-                  }
-                })
-                .where((task) => task != null)
-                .cast<TaskModel>()
-                .toList();
-
-            print('✅ Successfully parsed ${tasks.length} tasks');
-            return tasks;
-          })
-          .handleError((error) {
-            print('❌ Tasks stream error: $error');
-            throw error;
-          });
-    } catch (e) {
-      print('❌ Failed to get project tasks: $e');
-      return Stream.error(e);
-    }
-  }
-
+        print('✅ Successfully parsed ${tasks.length} tasks');
+        return tasks;
+      });
+}
   /// อัปเดต Task status (Toggle complete)
   Future<void> toggleTaskComplete(String taskId) async {
     try {

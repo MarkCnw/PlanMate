@@ -19,18 +19,19 @@ class ProjectCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [project.color.withOpacity(0.8), project.color],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: project.color,
+          // gradient: LinearGradient(
+          //   colors: [project.color.withOpacity(0.8), project.color],
+          //   begin: Alignment.topLeft,
+          //   end: Alignment.bottomRight,
+          // ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(
-              color: project.color.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
+            // BoxShadow(
+            //   color: project.color.withOpacity(0.3),
+            //   blurRadius: 8,
+            //   offset: const Offset(0, 4),
+            // ),
           ],
         ),
         child: Column(
@@ -44,7 +45,7 @@ class ProjectCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Image.asset(
@@ -87,7 +88,7 @@ class ProjectCard extends StatelessWidget {
                 Text(
                   project.taskCountText,
                   style: const TextStyle(
-                    color: Colors.white70,
+                    color: Colors.white,
                     fontSize: 12,
                   ),
                 ),
@@ -97,13 +98,13 @@ class ProjectCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
                     'Detail',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),

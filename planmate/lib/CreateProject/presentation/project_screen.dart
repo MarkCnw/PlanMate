@@ -156,20 +156,20 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: currentProject.color.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: currentProject.color.withOpacity(0.3),
+        //     blurRadius: 20,
+        //     offset: const Offset(0, 8),
+        //   ),
+        // ],
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Image.asset(

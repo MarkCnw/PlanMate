@@ -166,14 +166,15 @@ class TaskListView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF8B5CF6).withOpacity(0.1),
-            const Color(0xFF8B5CF6).withOpacity(0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Color(0xFFFDDE67),
+        // gradient: LinearGradient(
+        //   colors: [
+        //     const Color(0xFF8B5CF6).withOpacity(0.1),
+        //     const Color(0xFF8B5CF6).withOpacity(0.05),
+        //   ],
+        //   begin: Alignment.topLeft,
+        //   end: Alignment.bottomRight,
+        // ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: const Color(0xFF8B5CF6).withOpacity(0.2),
@@ -189,7 +190,7 @@ class TaskListView extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
+                  color: Color(0xFF030202),
                 ),
               ),
               Text(
@@ -197,7 +198,7 @@ class TaskListView extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF8B5CF6),
+                  color: Color(0xFF202430),
                 ),
               ),
             ],
@@ -208,7 +209,7 @@ class TaskListView extends StatelessWidget {
           LinearProgressIndicator(
             value: completionRate,
             backgroundColor: Colors.grey.shade200,
-            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8B5CF6)),
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF202430)),
             minHeight: 6,
           ),
           const SizedBox(height: 16),
@@ -217,8 +218,8 @@ class TaskListView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem('Total', totalTasks, Colors.grey),
-              _buildStatItem('Completed', completedTasks, Colors.green),
+              _buildStatItem('Total', totalTasks, const Color(0xFF202430)),
+              _buildStatItem('Completed', completedTasks, Color(0xFF202430)),
               if (overdueTasks > 0)
                 _buildStatItem('Overdue', overdueTasks, Colors.red),
             ],
