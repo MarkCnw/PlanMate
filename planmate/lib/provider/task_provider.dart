@@ -11,7 +11,8 @@ class TaskProvider extends ChangeNotifier {
   // State variables
   Map<String, List<TaskModel>> _projectTasks = {}; // projectId -> tasks
   Map<String, bool> _projectLoading = {}; // projectId -> loading state
-  Map<String, StreamSubscription<List<TaskModel>>?> _taskSubscriptions = {};
+  Map<String, StreamSubscription<List<TaskModel>>?> _taskSubscriptions =
+      {};
   bool _isOperating = false; // สำหรับ CRUD operations
   String? _error;
 
@@ -127,10 +128,14 @@ class TaskProvider extends ChangeNotifier {
             _projectLoading[projectId] = false;
             _error = null;
             notifyListeners();
-            debugPrint('✅ Received ${tasks.length} tasks for project $projectId');
+            debugPrint(
+              '✅ Received ${tasks.length} tasks for project $projectId',
+            );
           },
           onError: (error) {
-            debugPrint('❌ Tasks stream error for project $projectId: $error');
+            debugPrint(
+              '❌ Tasks stream error for project $projectId: $error',
+            );
             _projectLoading[projectId] = false;
             _setError('Failed to load tasks: $error');
           },
@@ -174,10 +179,9 @@ class TaskProvider extends ChangeNotifier {
       );
 
       debugPrint('✅ Task created successfully with ID: $taskId');
-      
+
       _setOperating(false);
       return taskId;
-
     } catch (e) {
       debugPrint('❌ Failed to create task: $e');
       _setError('Failed to create task: $e');
@@ -205,7 +209,7 @@ class TaskProvider extends ChangeNotifier {
       final projectId = task.projectId;
       final tasks = List<TaskModel>.from(_projectTasks[projectId] ?? []);
       final taskIndex = tasks.indexWhere((t) => t.id == taskId);
-      
+
       if (taskIndex != -1) {
         tasks[taskIndex] = task.toggleComplete();
         _projectTasks[projectId] = tasks;
@@ -217,11 +221,10 @@ class TaskProvider extends ChangeNotifier {
 
       debugPrint('✅ Task completion toggled successfully');
       return true;
-
     } catch (e) {
       debugPrint('❌ Failed to toggle task: $e');
       _setError('Failed to update task: $e');
-      
+
       // Revert optimistic update on error
       // The stream will eventually fix the state, but we can be more explicit
       notifyListeners();
@@ -256,10 +259,9 @@ class TaskProvider extends ChangeNotifier {
       );
 
       debugPrint('✅ Task updated successfully');
-      
+
       _setOperating(false);
       return true;
-
     } catch (e) {
       debugPrint('❌ Failed to update task: $e');
       _setError('Failed to update task: $e');
@@ -283,10 +285,9 @@ class TaskProvider extends ChangeNotifier {
       await _taskService.deleteTask(taskId);
 
       debugPrint('✅ Task deleted successfully');
-      
+
       _setOperating(false);
       return true;
-
     } catch (e) {
       debugPrint('❌ Failed to delete task: $e');
       _setError('Failed to delete task: $e');
@@ -313,10 +314,9 @@ class TaskProvider extends ChangeNotifier {
       stopListeningToProject(projectId);
 
       debugPrint('✅ All project tasks deleted successfully');
-      
+
       _setOperating(false);
       return true;
-
     } catch (e) {
       debugPrint('❌ Failed to delete project tasks: $e');
       _setError('Failed to delete project tasks: $e');
@@ -326,7 +326,9 @@ class TaskProvider extends ChangeNotifier {
   }
 
   // Get task statistics from server (for accurate counts)
-  Future<Map<String, int>?> getTaskStatsFromServer(String projectId) async {
+  Future<Map<String, int>?> getTaskStatsFromServer(
+    String projectId,
+  ) async {
     try {
       return await _taskService.getTaskStats(projectId);
     } catch (e) {
@@ -350,17 +352,23 @@ class TaskProvider extends ChangeNotifier {
 
   // Get overdue tasks for a project
   List<TaskModel> getOverdueTasks(String projectId) {
-    return getProjectTasks(projectId).where((task) => task.isOverdue).toList();
+    return getProjectTasks(
+      projectId,
+    ).where((task) => task.isOverdue).toList();
   }
 
   // Get tasks due today for a project
   List<TaskModel> getTasksDueToday(String projectId) {
-    return getProjectTasks(projectId).where((task) => task.isDueToday).toList();
+    return getProjectTasks(
+      projectId,
+    ).where((task) => task.isDueToday).toList();
   }
 
   // Get tasks by priority
   List<TaskModel> getTasksByPriority(String projectId, int priority) {
-    return getProjectTasks(projectId).where((task) => task.priority == priority).toList();
+    return getProjectTasks(
+      projectId,
+    ).where((task) => task.priority == priority).toList();
   }
 
   // Check if project has any tasks
@@ -372,7 +380,7 @@ class TaskProvider extends ChangeNotifier {
   double getProjectCompletionRate(String projectId) {
     final tasks = getProjectTasks(projectId);
     if (tasks.isEmpty) return 0.0;
-    
+
     final completed = tasks.where((task) => task.isDone).length;
     return completed / tasks.length;
   }

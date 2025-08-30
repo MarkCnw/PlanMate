@@ -8,7 +8,6 @@ import 'package:provider/provider.dart';
 import 'package:planmate/CreateProject/Update/Presentation/update_project_screen.dart';
 import 'package:planmate/Models/project_model.dart';
 
-
 class ProjectScreenDetail extends StatefulWidget {
   final ProjectModel project;
 
@@ -22,15 +21,19 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
   bool _isDeleting = false;
   late ProjectModel currentProject;
   String? _loadingTaskId; // Track which task is being updated
+  final ValueNotifier<String?> _loadingTaskIdVN = ValueNotifier<String?>(
+    null,
+  );
 
   @override
   void initState() {
     super.initState();
     currentProject = widget.project;
-    
     // ✅ เริ่มฟัง tasks ของ project นี้
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<TaskProvider>().startListeningToProject(widget.project.id);
+      context.read<TaskProvider>().startListeningToProject(
+        widget.project.id,
+      );
     });
   }
 
@@ -38,6 +41,7 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
   void dispose() {
     // ✅ หยุดฟัง tasks เมื่อออกจากหน้า
     context.read<TaskProvider>().stopListeningToProject(widget.project.id);
+    _loadingTaskIdVN.dispose();
     super.dispose();
   }
 
@@ -49,15 +53,21 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
       body: Consumer<ProjectProvider>(
         builder: (context, projectProvider, child) {
           // Find current project from provider
-          final project = projectProvider.getProjectById(widget.project.id);
-          
+          final project = projectProvider.getProjectById(
+            widget.project.id,
+          );
+
           // If project not found (deleted), show empty or navigate back
           if (project == null) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.folder_off, color: Colors.grey, size: 64),
+                  const Icon(
+                    Icons.folder_off,
+                    color: Colors.grey,
+                    size: 64,
+                  ),
                   const SizedBox(height: 16),
                   const Text('Project not found'),
                   const SizedBox(height: 16),
@@ -77,7 +87,7 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
             children: [
               _buildProjectHeader(),
               const SizedBox(height: 20),
-              
+
               // ✅ แทนที่ด้วย Task List
               Expanded(child: _buildTaskSection()),
             ],
@@ -88,7 +98,8 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
         width: 300,
         height: 55,
         child: FloatingActionButton.extended(
-          onPressed: () => _showAddTaskBottomSheet(), // ✅ เปลี่ยนเป็น add task
+          onPressed:
+              () => _showAddTaskBottomSheet(), // ✅ เปลี่ยนเป็น add task
           backgroundColor: const Color(0xFF6C63FF),
           foregroundColor: Colors.white,
           elevation: 0,
@@ -111,7 +122,8 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -212,10 +224,12 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
               // ✅ แสดง task count จริงจาก TaskProvider
               Consumer<TaskProvider>(
                 builder: (context, taskProvider, _) {
-                  final taskStats = taskProvider.getProjectTaskStats(currentProject.id);
+                  final taskStats = taskProvider.getProjectTaskStats(
+                    currentProject.id,
+                  );
                   final totalTasks = taskStats['total'] ?? 0;
                   final completedTasks = taskStats['completed'] ?? 0;
-                  
+
                   return _buildInfoChip(
                     '$completedTasks/$totalTasks Tasks',
                     FontAwesomeIcons.listCheck,
@@ -236,7 +250,9 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
       child: Consumer<TaskProvider>(
         builder: (context, taskProvider, child) {
           final tasks = taskProvider.getProjectTasks(currentProject.id);
-          final isLoading = taskProvider.isProjectLoading(currentProject.id);
+          final isLoading = taskProvider.isProjectLoading(
+            currentProject.id,
+          );
           final error = taskProvider.error;
 
           return TaskListView(
@@ -247,7 +263,8 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
             onToggleTask: _handleToggleTask,
             onEditTask: _handleEditTask,
             onDeleteTask: _handleDeleteTask,
-            onRetry: () => taskProvider.refreshProjectTasks(currentProject.id),
+            onRetry:
+                () => taskProvider.refreshProjectTasks(currentProject.id),
           );
         },
       ),
@@ -320,9 +337,7 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
   void _handleEditTask(task) {
     // TODO: Implement edit task functionality
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Edit task feature coming soon!'),
-      ),
+      const SnackBar(content: Text('Edit task feature coming soon!')),
     );
   }
 
@@ -366,36 +381,37 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(
-                FontAwesomeIcons.penToSquare,
-                color: Color(0xFF3B82F6),
-              ),
-              title: const Text('Edit Project'),
-              onTap: () {
-                Navigator.pop(context);
-                _showEditProjectBottomSheet();
-              },
+      builder:
+          (context) => Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(
+                    FontAwesomeIcons.penToSquare,
+                    color: Color(0xFF3B82F6),
+                  ),
+                  title: const Text('Edit Project'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showEditProjectBottomSheet();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    FontAwesomeIcons.trash,
+                    color: Colors.red,
+                  ),
+                  title: const Text('Delete Project'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showDeleteConfirmation();
+                  },
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(
-                FontAwesomeIcons.trash,
-                color: Colors.red,
-              ),
-              title: const Text('Delete Project'),
-              onTap: () {
-                Navigator.pop(context);
-                _showDeleteConfirmation();
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -407,10 +423,11 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => CreateTaskSheet(
-        projectId: currentProject.id,
-        projectTitle: currentProject.title,
-      ),
+      builder:
+          (context) => CreateTaskSheet(
+            projectId: currentProject.id,
+            projectTitle: currentProject.title,
+          ),
     );
   }
 
@@ -429,110 +446,152 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
     showDialog(
       context: context,
       barrierDismissible: !_isDeleting,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Delete Project'),
-          content: _isDeleting
-              ? const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Deleting project and all tasks...'),
-                  ],
-                )
-              : Text(
-                  'Are you sure you want to delete "${currentProject.title}"?\n\nThis will also delete all tasks in this project. This action cannot be undone.',
-                ),
-          actions: _isDeleting
-              ? []
-              : [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      setState(() => _isDeleting = true);
-                      
-                      // ✅ ลบ tasks ก่อนแล้วค่อยลบ project
-                      final taskProvider = context.read<TaskProvider>();
-                      final projectProvider = context.read<ProjectProvider>();
-                      
-                      // Delete all tasks first
-                      final tasksDeleted = await taskProvider.deleteAllProjectTasks(currentProject.id);
-                      
-                      if (tasksDeleted) {
-                        // Then delete project
-                        final projectDeleted = await projectProvider.deleteProject(currentProject.id);
-                        
-                        if (mounted) {
-                          Navigator.of(context).pop(); // Close dialog
-                          
-                          if (projectDeleted) {
-                            Navigator.of(context).pop(); // Close screen
-                            
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Row(
-                                  children: [
-                                    Icon(Icons.check_circle, color: Colors.white),
-                                    SizedBox(width: 12),
-                                    Text('Project and all tasks deleted successfully'),
-                                  ],
-                                ),
-                                backgroundColor: Colors.green,
-                                behavior: SnackBarBehavior.floating,
-                                margin: EdgeInsets.all(16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                                ),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Row(
-                                  children: [
-                                    const Icon(Icons.error, color: Colors.white),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        'Failed to delete project: ${projectProvider.error ?? "Unknown error"}',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                                margin: const EdgeInsets.all(16),
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                                ),
-                              ),
-                            );
-                          }
-                        }
-                      } else {
-                        if (mounted) {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Failed to delete tasks: ${taskProvider.error}'),
-                              backgroundColor: Colors.red,
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setState) => AlertDialog(
+                  title: const Text('Delete Project'),
+                  content:
+                      _isDeleting
+                          ? const Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Deleting project and all tasks...'),
+                            ],
+                          )
+                          : Text(
+                            'Are you sure you want to delete "${currentProject.title}"?\n\nThis will also delete all tasks in this project. This action cannot be undone.',
+                          ),
+                  actions:
+                      _isDeleting
+                          ? []
+                          : [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
                             ),
-                          );
-                        }
-                      }
-                      
-                      setState(() => _isDeleting = false);
-                    },
-                    style: TextButton.styleFrom(foregroundColor: Colors.red),
-                    child: const Text('Delete'),
-                  ),
-                ],
-        ),
-      ),
+                            TextButton(
+                              onPressed: () async {
+                                setState(() => _isDeleting = true);
+
+                                // ✅ ลบ tasks ก่อนแล้วค่อยลบ project
+                                final taskProvider =
+                                    context.read<TaskProvider>();
+                                final projectProvider =
+                                    context.read<ProjectProvider>();
+
+                                // Delete all tasks first
+                                final tasksDeleted = await taskProvider
+                                    .deleteAllProjectTasks(
+                                      currentProject.id,
+                                    );
+
+                                if (tasksDeleted) {
+                                  // Then delete project
+                                  final projectDeleted =
+                                      await projectProvider.deleteProject(
+                                        currentProject.id,
+                                      );
+
+                                  if (mounted) {
+                                    Navigator.of(
+                                      context,
+                                    ).pop(); // Close dialog
+
+                                    if (projectDeleted) {
+                                      Navigator.of(
+                                        context,
+                                      ).pop(); // Close screen
+
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.check_circle,
+                                                color: Colors.white,
+                                              ),
+                                              SizedBox(width: 12),
+                                              Text(
+                                                'Project and all tasks deleted successfully',
+                                              ),
+                                            ],
+                                          ),
+                                          backgroundColor: Colors.green,
+                                          behavior:
+                                              SnackBarBehavior.floating,
+                                          margin: EdgeInsets.all(16),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.all(
+                                              Radius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.error,
+                                                color: Colors.white,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text(
+                                                  'Failed to delete project: ${projectProvider.error ?? "Unknown error"}',
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          backgroundColor: Colors.red,
+                                          behavior:
+                                              SnackBarBehavior.floating,
+                                          margin: const EdgeInsets.all(16),
+                                          shape:
+                                              const RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.all(
+                                                      Radius.circular(10),
+                                                    ),
+                                              ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                } else {
+                                  if (mounted) {
+                                    Navigator.of(context).pop();
+                                    ScaffoldMessenger.of(
+                                      context,
+                                    ).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Failed to delete tasks: ${taskProvider.error}',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+
+                                setState(() => _isDeleting = false);
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                ),
+          ),
     );
   }
 }

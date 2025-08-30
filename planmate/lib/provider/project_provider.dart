@@ -17,6 +17,7 @@ class ProjectProvider extends ChangeNotifier {
 
   // Getters
   List<ProjectModel> get projects => _projects;
+  List<ProjectModel> get allProjects => _projects;
   bool get isLoading => _isLoading;
   bool get isInitialLoading => _isInitialLoading;
   String? get error => _error;
@@ -55,11 +56,15 @@ class ProjectProvider extends ChangeNotifier {
   // Start listening to projects real-time
   void _startListeningToProjects() {
     if (currentUserId == null) {
-      debugPrint('⚠️ No user logged in, cannot start listening to projects');
+      debugPrint(
+        '⚠️ No user logged in, cannot start listening to projects',
+      );
       return;
     }
 
-    debugPrint('🔄 Starting to listen to projects for user: $currentUserId');
+    debugPrint(
+      '🔄 Starting to listen to projects for user: $currentUserId',
+    );
 
     _projectsSubscription?.cancel(); // Cancel existing subscription
 
@@ -88,21 +93,24 @@ class ProjectProvider extends ChangeNotifier {
   // Handle projects snapshot from Firestore
   void _handleProjectsSnapshot(QuerySnapshot snapshot) {
     try {
-      debugPrint('📦 Received ${snapshot.docs.length} projects from Firestore');
+      debugPrint(
+        '📦 Received ${snapshot.docs.length} projects from Firestore',
+      );
 
-      final projects = snapshot.docs
-          .map((doc) {
-            try {
-              final data = doc.data() as Map<String, dynamic>;
-              return ProjectModel.fromMap(data, doc.id);
-            } catch (e) {
-              debugPrint('❌ Error parsing project ${doc.id}: $e');
-              return null;
-            }
-          })
-          .where((project) => project != null)
-          .cast<ProjectModel>()
-          .toList();
+      final projects =
+          snapshot.docs
+              .map((doc) {
+                try {
+                  final data = doc.data() as Map<String, dynamic>;
+                  return ProjectModel.fromMap(data, doc.id);
+                } catch (e) {
+                  debugPrint('❌ Error parsing project ${doc.id}: $e');
+                  return null;
+                }
+              })
+              .where((project) => project != null)
+              .cast<ProjectModel>()
+              .toList();
 
       // Sort projects by creation date (newest first)
       projects.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -110,7 +118,7 @@ class ProjectProvider extends ChangeNotifier {
       _projects = projects;
       _error = null;
       _setInitialLoading(false);
-      
+
       debugPrint('✅ Successfully loaded ${projects.length} projects');
       notifyListeners();
     } catch (e) {
@@ -199,10 +207,9 @@ class ProjectProvider extends ChangeNotifier {
       final docRef = await projectRef.add(project.toMap());
 
       debugPrint('✅ Project created successfully with ID: ${docRef.id}');
-      
+
       _setLoading(false);
       return docRef.id;
-
     } catch (e) {
       debugPrint('❌ Failed to create project: $e');
       _setError('Failed to create project: $e');
@@ -269,10 +276,9 @@ class ProjectProvider extends ChangeNotifier {
 
       await projectRef.doc(projectId).update(updateData);
       debugPrint('✅ Project updated successfully');
-      
+
       _setLoading(false);
       return true;
-
     } catch (e) {
       debugPrint('❌ Failed to update project: $e');
       _setError('Failed to update project: $e');
@@ -308,10 +314,9 @@ class ProjectProvider extends ChangeNotifier {
       // Delete project
       await projectRef.doc(projectId).delete();
       debugPrint('✅ Project deleted successfully');
-      
+
       _setLoading(false);
       return true;
-
     } catch (e) {
       debugPrint('❌ Failed to delete project: $e');
       _setError('Failed to delete project: $e');
@@ -331,7 +336,9 @@ class ProjectProvider extends ChangeNotifier {
 
   // Get projects by icon key
   List<ProjectModel> getProjectsByIcon(String iconKey) {
-    return _projects.where((project) => project.iconKey == iconKey).toList();
+    return _projects
+        .where((project) => project.iconKey == iconKey)
+        .toList();
   }
 
   // Get recent projects (last 5)
@@ -361,16 +368,27 @@ class ProjectProvider extends ChangeNotifier {
   Future<bool> checkConnection() async {
     try {
       debugPrint('🔄 Checking Firestore connection...');
-      
+
       // Try to get a single document to test connection
       await _firestore.collection('test').limit(1).get();
-      
+
       debugPrint('✅ Firestore connection OK');
       return true;
     } catch (e) {
       debugPrint('❌ Firestore connection failed: $e');
       return false;
     }
+  }
+
+  List<ProjectModel> searchProjects(String query) {
+    if (query.trim().isEmpty) {
+      return _projects;
+    }
+    final searchQuery = query.toLowerCase().trim();
+
+    return _projects.where((projects) {
+      return projects.title.toLowerCase().contains(searchQuery);
+    }).toList();
   }
 
   @override

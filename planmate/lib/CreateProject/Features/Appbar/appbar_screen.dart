@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppbarWidget extends StatelessWidget {
   const AppbarWidget({super.key});
@@ -7,10 +8,10 @@ class AppbarWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       "Create your Project",
-      style: TextStyle(
-        fontWeight: FontWeight.w700,
-        fontSize: 24,
-        color: Color(0xFF232946),
+      style: GoogleFonts.chakraPetch(
+        fontSize: 30,
+        fontWeight: FontWeight.bold,
+        color: const Color(0xFF001858),
       ),
     );
   }

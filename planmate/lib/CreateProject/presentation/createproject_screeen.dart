@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:planmate/CreateProject/Features/Appbar/Screen/appbar_screen.dart';
-import 'package:planmate/CreateProject/Features/Banner/Screen/Banner_screen.dart';
+import 'package:planmate/CreateProject/Features/Appbar/appbar_screen.dart';
+import 'package:planmate/CreateProject/Features/Banner/Banner_screen.dart';
 import 'package:planmate/CreateProject/Features/Inspiration/Screen/inspiration.dart';
 
 class CreateProjectScreen extends StatefulWidget {

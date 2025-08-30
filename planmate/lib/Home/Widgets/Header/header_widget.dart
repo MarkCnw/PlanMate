@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:planmate/Search/Presentation/search_screen.dart';
 import 'package:planmate/provider/auth_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -9,10 +10,8 @@ class HeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ฟังเฉพาะ field ที่ใช้ เพื่อลด rebuild
-    final photoURL    = context.select<AuthProvider, String?>((p) => p.photoURL);
+    final photoURL = context.select<AuthProvider, String?>((p) => p.photoURL);
     final displayName = context.select<AuthProvider, String>((p) => p.displayName);
-
     final name = (displayName.isNotEmpty) ? displayName : 'Guest';
 
     return Column(
@@ -44,6 +43,33 @@ class HeaderSection extends StatelessWidget {
                 ],
               ),
             ),
+            
+            // ✅ เพิ่ม Search Button
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SearchScreen(),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                margin: const EdgeInsets.only(right: 8),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color.fromARGB(59, 215, 179, 179),
+                ),
+                child: const Icon(
+                  Icons.search,
+                  color: Color(0xFF001858),
+                  size: 20,
+                ),
+              ),
+            ),
+            
+            // Notification Button (เดิม)
             GestureDetector(
               onTap: () {
                 // TODO: handle notification tap
