@@ -37,6 +37,7 @@ class ActivityHistoryModel {
   final String description;
   final DateTime timestamp;
   final Map<String, dynamic>? metadata;
+  final String? userId; // ✅ เพิ่ม userId field
 
   ActivityHistoryModel({
     required this.id,
@@ -46,6 +47,7 @@ class ActivityHistoryModel {
     required this.description,
     required this.timestamp,
     this.metadata,
+    this.userId, // ✅ เพิ่ม userId parameter
   });
 
   ActivityHistoryModel copyWith({
@@ -56,6 +58,7 @@ class ActivityHistoryModel {
     String? description,
     DateTime? timestamp,
     Map<String, dynamic>? metadata,
+    String? userId, // ✅ เพิ่ม userId parameter
   }) {
     return ActivityHistoryModel(
       id: id ?? this.id,
@@ -65,6 +68,7 @@ class ActivityHistoryModel {
       description: description ?? this.description,
       timestamp: timestamp ?? this.timestamp,
       metadata: metadata ?? this.metadata,
+      userId: userId ?? this.userId, // ✅ เพิ่ม userId
     );
   }
 
@@ -77,6 +81,7 @@ class ActivityHistoryModel {
       'description': description,
       'timestamp': timestamp.toIso8601String(),
       'metadata': metadata,
+      'userId': userId, // ✅ เพิ่ม userId ใน toMap
     };
   }
 
@@ -94,6 +99,7 @@ class ActivityHistoryModel {
                 map['metadata'] as Map<String, dynamic>,
               )
               : null,
+      userId: map['userId'] != null ? map['userId'] as String : null, // ✅ เพิ่ม userId
     );
   }
 
@@ -106,7 +112,7 @@ class ActivityHistoryModel {
 
   @override
   String toString() {
-    return 'ActivityHistoryModel(id: $id, type: $type, projectId: $projectId, taskId: $taskId, description: $description, timestamp: $timestamp, metadata: $metadata)';
+    return 'ActivityHistoryModel(id: $id, type: $type, projectId: $projectId, taskId: $taskId, description: $description, timestamp: $timestamp, metadata: $metadata, userId: $userId)';
   }
 
   @override
@@ -118,7 +124,8 @@ class ActivityHistoryModel {
         other.projectId == projectId &&
         other.taskId == taskId &&
         other.description == description &&
-        other.timestamp == timestamp;
+        other.timestamp == timestamp &&
+        other.userId == userId; // ✅ เพิ่ม userId
   }
 
   @override
@@ -128,7 +135,8 @@ class ActivityHistoryModel {
         projectId.hashCode ^
         taskId.hashCode ^
         description.hashCode ^
-        timestamp.hashCode;
+        timestamp.hashCode ^
+        userId.hashCode; // ✅ เพิ่ม userId
   }
 
   String get formattedTime {
@@ -154,6 +162,7 @@ class ActivityHistoryModel {
     String? taskId,
     required String description,
     Map<String, dynamic>? metadata,
+    String? userId, // ✅ เพิ่ม userId parameter
   }) {
     return ActivityHistoryModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -163,6 +172,7 @@ class ActivityHistoryModel {
       description: description,
       timestamp: DateTime.now(),
       metadata: metadata,
+      userId: userId, // ✅ เพิ่ม userId
     );
   }
 }
