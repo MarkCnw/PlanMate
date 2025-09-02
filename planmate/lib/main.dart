@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:planmate/History/Provider/history_provider.dart';
 import 'package:planmate/provider/task_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,12 +36,18 @@ class MyApp extends StatelessWidget {
           create: (_) => AuthProvider(),
         ),
         // 3) ProjectProvider อ่าน repo จาก context
-        ChangeNotifierProvider(
-          create: (context) => ProjectProvider(),
-        ),
+        ChangeNotifierProvider(create: (context) => ProjectProvider()),
 
         ChangeNotifierProvider<TaskProvider>(
           create: (_) => TaskProvider(),
+        ),
+
+        ChangeNotifierProvider<HistoryProvider>(
+          create: (_) => HistoryProvider(),
+        ),
+
+        ChangeNotifierProvider<HistoryProvider>(
+          create: (_) => HistoryProvider(),
         ),
       ],
       child: MaterialApp(
