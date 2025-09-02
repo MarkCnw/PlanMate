@@ -6,7 +6,7 @@ import 'package:planmate/Navigation/Widgets/buttonappbar.dart';
 import 'package:planmate/Navigation/Widgets/customfab.dart';
 import 'package:planmate/Profile/Presentation/profile.screen.dart';
 import 'package:planmate/Search/Presentation/search_screen.dart';
-import 'package:planmate/Search/search.dart';
+
 
 class CustomBottomNavBarApp extends StatefulWidget {
   const CustomBottomNavBarApp({super.key});
