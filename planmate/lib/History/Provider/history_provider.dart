@@ -51,7 +51,7 @@ class HistoryProvider extends ChangeNotifier {
           .limit(100); // Limit for performance
       
       if (userId != null) {
-        query = query.where('userid', isEqualTo: userId);
+        query = query.where('userId', isEqualTo: userId); // ✅ เปลี่ยนจาก 'userid' เป็น 'userId'
       }
       
       final QuerySnapshot snapshot = await query.get();
@@ -72,7 +72,6 @@ class HistoryProvider extends ChangeNotifier {
   Future<void> addActivity(ActivityHistoryModel activity, {String? userId}) async {
     try {
       final data = activity.toMap();
-      
       
       await _firestore.collection('activities').doc(activity.id).set(data);
       
@@ -135,9 +134,9 @@ class HistoryProvider extends ChangeNotifier {
       taskId: taskId,
       description: description,
       metadata: metadata,
-      userId: userId
+      userId: userId, // ✅ ส่ง userId
     );
     
-    await historyProvider.addActivity(activity, userId: userId);
+    await historyProvider.addActivity(activity);
   }
 }
