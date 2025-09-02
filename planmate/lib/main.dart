@@ -1,10 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:planmate/Domain/Activity/activity_log_repository.dart';
-import 'package:planmate/Domain/Data/Activity/firestore_activity_log_repository.dart';
-import 'package:planmate/Domain/usecases/watch_activity_logs.dart';
-import 'package:planmate/provider/activity_log_provider.dart';
 import 'package:planmate/provider/task_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,11 +31,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-           Provider<ActivityLogRepository>(create: (_) => FirestoreActivityLogRepository()),
-    ProxyProvider<ActivityLogRepository, WatchActivityLogs>(
-      update: (_, repo, __) => WatchActivityLogs(repo),
-    ),
-    ChangeNotifierProvider(create: (c) => ActivityLogProvider(c.read<WatchActivityLogs>())),
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(),
         ),
