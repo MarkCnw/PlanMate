@@ -1,15 +1,18 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 class ProjectSearchWidget extends StatefulWidget {
   final String hintText;
   final Function(String) onSearchChanged;
   final VoidCallback? onClear;
-  
+  final Duration debounceDuration;
+
   const ProjectSearchWidget({
     super.key,
     this.hintText = 'Search projects...',
     required this.onSearchChanged,
     this.onClear,
+    this.debounceDuration = const Duration(milliseconds: 300),
   });
 
   @override
@@ -19,6 +22,7 @@ class ProjectSearchWidget extends StatefulWidget {
 class _ProjectSearchWidgetState extends State<ProjectSearchWidget> {
   final TextEditingController _controller = TextEditingController();
   bool _hasText = false;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -26,22 +30,31 @@ class _ProjectSearchWidgetState extends State<ProjectSearchWidget> {
     _controller.addListener(() {
       final hasText = _controller.text.isNotEmpty;
       if (hasText != _hasText) {
-        setState(() {
-          _hasText = hasText;
-        });
+        setState(() => _hasText = hasText);
       }
-      widget.onSearchChanged(_controller.text);
+
+      // Debounce: ยกเลิกตัวเก่า แล้วเริ่มนับใหม่ทุกครั้งที่พิมพ์
+      _debounce?.cancel();
+      _debounce = Timer(widget.debounceDuration, () {
+        if (!mounted) return;
+        widget.onSearchChanged(_controller.text);
+      });
     });
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   void _clearSearch() {
+    _debounce?.cancel();
     _controller.clear();
+    setState(() => _hasText = false);
+    // แจ้งค้นหาว่างทันทีหลังเคลียร์ + callback onClear ถ้ามี
+    widget.onSearchChanged('');
     widget.onClear?.call();
   }
 

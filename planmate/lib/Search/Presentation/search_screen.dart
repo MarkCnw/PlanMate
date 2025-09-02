@@ -39,7 +39,7 @@ class _SearchScreenState extends State<SearchScreen> {
         // ),
       ),
       body: Column(
-        children: [//_onSearchChanged
+        children: [
           // Search Input
           ProjectSearchWidget(onSearchChanged: _onSearchChanged),
           
