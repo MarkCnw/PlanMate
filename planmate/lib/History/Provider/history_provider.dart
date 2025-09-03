@@ -13,9 +13,9 @@ class HistoryProvider extends ChangeNotifier {
   ActivityType? _selectedFilter;
   String? _selectedProjectId;
 
-  // Getters
-  List<ActivityHistoryModel> get activities => _activities;
-  bool get isLoading => _isLoading;
+// Getters
+// Removed duplicate filteredActivities getter with debug logs to resolve name conflict.
+bool get isLoading => _isLoading;
   String? get error => _error;
   ActivityType? get selectedFilter => _selectedFilter;
   String? get selectedProjectId => _selectedProjectId;
@@ -51,54 +51,59 @@ class HistoryProvider extends ChangeNotifier {
   // Fetch activities from Firestore
   // ใน history_provider.dart - เพิ่ม debug logging
 
-Future<void> fetchActivities({String? userId}) async {
-  try {
-    _setLoading(true);
-    _error = null;
+  Future<void> fetchActivities({String? userId}) async {
+    try {
+      _setLoading(true);
+      _error = null;
 
-    print('🔍 DEBUG: Starting fetchActivities');
-    print('🔍 DEBUG: userId = $userId');
-    print('🔍 DEBUG: currentUser = ${FirebaseAuth.instance.currentUser?.uid}');
+      print('🔍 DEBUG: Starting fetchActivities');
+      print('🔍 DEBUG: userId = $userId');
+      print(
+        '🔍 DEBUG: currentUser = ${FirebaseAuth.instance.currentUser?.uid}',
+      );
 
-    Query query = _firestore.collection('activities');
+      Query query = _firestore.collection('activities');
 
-    // ✅ where ต้องมาก่อน orderBy
-    if (userId != null) {
-      query = query.where('userId', isEqualTo: userId);
-      print('🔍 DEBUG: Added where clause for userId');
+      // ✅ where ต้องมาก่อน orderBy
+      if (userId != null) {
+        query = query.where('userId', isEqualTo: userId);
+        print('🔍 DEBUG: Added where clause for userId');
+      }
+
+      // ❌ ลบ orderBy ออกชั่วคราวเพื่อหลีกเลี่ยงปัญหา index
+      // query = query.orderBy('timestamp', descending: true).limit(100);
+      query = query.limit(100);
+
+      print('🔍 DEBUG: Executing query...');
+      final QuerySnapshot snapshot = await query.get();
+      print('🔍 DEBUG: Query completed');
+      print('🔍 DEBUG: Found ${snapshot.docs.length} documents');
+
+      // Debug: แสดงข้อมูลแต่ละ document
+      for (var doc in snapshot.docs) {
+        print('🔍 DEBUG: Document ${doc.id}: ${doc.data()}');
+      }
+
+      _activities =
+          snapshot.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            print('🔍 DEBUG: Parsing document: $data');
+            return ActivityHistoryModel.fromMap(data);
+          }).toList();
+
+      // เรียงลำดับใน Dart
+      _activities.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+      print(
+        '🔍 DEBUG: Successfully loaded ${_activities.length} activities',
+      );
+      _setLoading(false);
+    } catch (e) {
+      print('❌ DEBUG: Error in fetchActivities: $e');
+      _error = 'เกิดข้อผิดพลาดในการโหลดประวัติ: $e';
+      _setLoading(false);
     }
-
-    // ❌ ลบ orderBy ออกชั่วคราวเพื่อหลีกเลี่ยงปัญหา index
-    // query = query.orderBy('timestamp', descending: true).limit(100);
-    query = query.limit(100);
-
-    print('🔍 DEBUG: Executing query...');
-    final QuerySnapshot snapshot = await query.get();
-    print('🔍 DEBUG: Query completed');
-    print('🔍 DEBUG: Found ${snapshot.docs.length} documents');
-
-    // Debug: แสดงข้อมูลแต่ละ document
-    for (var doc in snapshot.docs) {
-      print('🔍 DEBUG: Document ${doc.id}: ${doc.data()}');
-    }
-
-    _activities = snapshot.docs.map((doc) {
-      final data = doc.data() as Map<String, dynamic>;
-      print('🔍 DEBUG: Parsing document: $data');
-      return ActivityHistoryModel.fromMap(data);
-    }).toList();
-
-    // เรียงลำดับใน Dart
-    _activities.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    
-    print('🔍 DEBUG: Successfully loaded ${_activities.length} activities');
-    _setLoading(false);
-  } catch (e) {
-    print('❌ DEBUG: Error in fetchActivities: $e');
-    _error = 'เกิดข้อผิดพลาดในการโหลดประวัติ: $e';
-    _setLoading(false);
   }
-}
 
   // Add new activity
   Future<void> addActivity(
