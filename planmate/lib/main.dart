@@ -32,42 +32,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        
-         // ==== Core Firebase singletons ====
-    Provider<FirebaseFirestore>((_) => FirebaseFirestore.instance),
-    Provider<FirebaseAuth>((_) => FirebaseAuth.instance),
-
-    // ==== Existing Providers (ของคุณเดิม) ====
-    ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
-    ChangeNotifierProvider<ProjectProvider>(create: (_) => ProjectProvider()),
-    ChangeNotifierProvider<HistoryProvider>(create: (_) => HistoryProvider()),
-    // (ลบตัว HistoryProvider ที่ซ้ำ)
-
-    // ==== Tasks: DataSource -> Repo ====
-    Provider<TaskRemoteDataSource>((ctx) =>
-        TaskRemoteDataSource(ctx.read<FirebaseFirestore>(), ctx.read<FirebaseAuth>())),
-    Provider<TaskRepositoryImpl>((ctx) =>
-        TaskRepositoryImpl(ctx.read<TaskRemoteDataSource>())),
-
-    // ==== Tasks: UseCases ====
-    Provider<CreateTask>((ctx) => CreateTask(ctx.read<TaskRepositoryImpl>())),
-    Provider<WatchTasksByProject>((ctx) => WatchTasksByProject(ctx.read<TaskRepositoryImpl>())),
-    Provider<ToggleTaskComplete>((ctx) => ToggleTaskComplete(ctx.read<TaskRepositoryImpl>())),
-    Provider<UpdateTask>((ctx) => UpdateTask(ctx.read<TaskRepositoryImpl>())),
-    Provider<DeleteTask>((ctx) => DeleteTask(ctx.read<TaskRepositoryImpl>())),
-    Provider<DeleteAllProjectTasks>((ctx) => DeleteAllProjectTasks(ctx.read<TaskRepositoryImpl>())),
-    Provider<GetTaskStats>((ctx) => GetTaskStats(ctx.read<TaskRepositoryImpl>())),
-
-    // ==== Tasks: Controller (แทน TaskProvider เก่า) ====
-    ChangeNotifierProvider<TaskController>((ctx) => TaskController(
-          createTask: ctx.read<CreateTask>(),
-          watch: ctx.read<WatchTasksByProject>(),
-          toggle: ctx.read<ToggleTaskComplete>(),
-          update: ctx.read<UpdateTask>(),
-          delete: ctx.read<DeleteTask>(),
-          deleteAll: ctx.read<DeleteAllProjectTasks>(),
-          stats: ctx.read<GetTaskStats>(),
-        )),
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(),
         ),
@@ -82,7 +46,9 @@ class MyApp extends StatelessWidget {
           create: (_) => HistoryProvider(),
         ),
 
-        
+        ChangeNotifierProvider<HistoryProvider>(
+          create: (_) => HistoryProvider(),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
