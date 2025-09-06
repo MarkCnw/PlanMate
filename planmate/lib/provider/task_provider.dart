@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:planmate/History/Models/activity_history_model.dart';
+import 'package:planmate/History/Provider/history_provider.dart';
 import '../Models/task_model.dart';
 import '../Services/firebase_task_service.dart';
 
@@ -271,6 +274,7 @@ class TaskProvider extends ChangeNotifier {
   }
 
   // Delete task
+  // ใน lib/provider/task_provider.dart
   Future<bool> deleteTask(String taskId) async {
     try {
       debugPrint('🔄 Deleting task: $taskId');
@@ -282,10 +286,36 @@ class TaskProvider extends ChangeNotifier {
       _setOperating(true);
       clearError();
 
-      await _taskService.deleteTask(taskId);
+      // ดึงข้อมูล task ก่อนลบ เพื่อใช้ในการบันทึกประวัติ
+      final taskSnapshot =
+          await FirebaseFirestore.instance
+              .collection('tasks')
+              .doc(taskId)
+              .get();
+
+      if (taskSnapshot.exists) {
+        final taskData = taskSnapshot.data()!;
+
+        // ลบ task
+        await _taskService.deleteTask(taskId);
+
+        // บันทึกประวัติการลบ (ไม่ใช้ context)
+        final activity = ActivityHistoryModel.create(
+          type: ActivityType.delete,
+          projectId: taskData['projectId'],
+          taskId: taskId,
+          description: 'ลบงาน: ${taskData['title']}',
+          userId: currentUserId,
+        );
+
+        // เพิ่มกิจกรรมโดยตรงไปยัง Firestore
+        await FirebaseFirestore.instance
+            .collection('activities')
+            .doc(activity.id)
+            .set(activity.toMap());
+      }
 
       debugPrint('✅ Task deleted successfully');
-
       _setOperating(false);
       return true;
     } catch (e) {

@@ -13,9 +13,9 @@ class HistoryProvider extends ChangeNotifier {
   ActivityType? _selectedFilter;
   String? _selectedProjectId;
 
-// Getters
-// Removed duplicate filteredActivities getter with debug logs to resolve name conflict.
-bool get isLoading => _isLoading;
+  // Getters
+  // Removed duplicate filteredActivities getter with debug logs to resolve name conflict.
+  bool get isLoading => _isLoading;
   String? get error => _error;
   ActivityType? get selectedFilter => _selectedFilter;
   String? get selectedProjectId => _selectedProjectId;

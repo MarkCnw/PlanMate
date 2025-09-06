@@ -139,38 +139,38 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
 
           // เพิ่มในหน้า HistoryScreen เพื่อทดสอบ
-          FloatingActionButton(
-            onPressed: () async {
-              print('🧪 Testing: Creating sample activity');
+          // FloatingActionButton(
+          //   onPressed: () async {
+          //     print('🧪 Testing: Creating sample activity');
 
-              try {
-                final authProvider = context.read<AuthProvider>();
-                final historyProvider = context.read<HistoryProvider>();
+          //     try {
+          //       final authProvider = context.read<AuthProvider>();
+          //       final historyProvider = context.read<HistoryProvider>();
 
-                if (authProvider.currentUser == null) {
-                  print('❌ No user logged in');
-                  return;
-                }
+          //       if (authProvider.currentUser == null) {
+          //         print('❌ No user logged in');
+          //         return;
+          //       }
 
-                // สร้าง activity ทดสอบ
-                final activity = ActivityHistoryModel.create(
-                  type: ActivityType.create,
-                  projectId: 'test_project_123',
-                  description: 'ทดสอบสร้างกิจกรรม',
-                  userId: authProvider.currentUser!.uid,
-                );
+          //       // สร้าง activity ทดสอบ
+          //       final activity = ActivityHistoryModel.create(
+          //         type: ActivityType.create,
+          //         projectId: 'test_project_123',
+          //         description: 'ทดสอบสร้างกิจกรรม',
+          //         userId: authProvider.currentUser!.uid,
+          //       );
 
-                print('🧪 Activity data: ${activity.toMap()}');
+          //       print('🧪 Activity data: ${activity.toMap()}');
 
-                await historyProvider.addActivity(activity);
-                print('✅ Test activity added successfully');
-              } catch (e) {
-                print('❌ Error adding test activity: $e');
-              }
-            },
-            child: Icon(Icons.add),
-            backgroundColor: Colors.purple,
-          ),
+          //       await historyProvider.addActivity(activity);
+          //       print('✅ Test activity added successfully');
+          //     } catch (e) {
+          //       print('❌ Error adding test activity: $e');
+          //     }
+          //   },
+          //   child: Icon(Icons.add),
+          //   backgroundColor: Colors.purple,
+          // ),
         ],
       ),
     );

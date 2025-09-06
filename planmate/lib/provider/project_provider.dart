@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:planmate/History/Models/activity_history_model.dart';
+import 'package:planmate/History/Provider/history_provider.dart';
 import 'package:planmate/Models/project_model.dart';
 
 class ProjectProvider extends ChangeNotifier {
@@ -161,6 +163,44 @@ class ProjectProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Helper method to log activity with error handling
+  Future<void> _logActivity({
+    required ActivityType type,
+    required String projectId,
+    required String description,
+    String? taskId,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      if (currentUserId == null) {
+        debugPrint('⚠️ Cannot log activity: No user logged in');
+        return;
+      }
+
+      final activity = ActivityHistoryModel.create(
+        type: type,
+        projectId: projectId,
+        taskId: taskId,
+        description: description,
+        metadata: metadata,
+        userId: currentUserId,
+      );
+
+      await FirebaseFirestore.instance
+          .collection('activities')
+          .doc(activity.id)
+          .set(activity.toMap());
+
+      debugPrint('✅ ${type.displayName} activity logged successfully');
+    } catch (historyError) {
+      debugPrint(
+        '⚠️ Failed to log ${type.displayName} activity: $historyError',
+      );
+      // ไม่ throw error เพราะการดำเนินการหลักอาจสำเร็จแล้ว
+      // แค่การบันทึกประวัติที่ล้มเหลว
+    }
+  }
+
   // Create new project
   Future<String?> createProject({
     required String title,
@@ -205,6 +245,13 @@ class ProjectProvider extends ChangeNotifier {
 
       // Create document in Firestore
       final docRef = await projectRef.add(project.toMap());
+
+      // บันทึกประวัติการสร้าง
+      await _logActivity(
+        type: ActivityType.create,
+        projectId: docRef.id,
+        description: 'สร้างโปรเจค: ${project.title}',
+      );
 
       debugPrint('✅ Project created successfully with ID: ${docRef.id}');
 
@@ -274,9 +321,23 @@ class ProjectProvider extends ChangeNotifier {
 
       debugPrint('📤 Update data: $updateData');
 
+      // อัปเดต project ใน Firestore
       await projectRef.doc(projectId).update(updateData);
-      debugPrint('✅ Project updated successfully');
 
+      // บันทึกประวัติการแก้ไข
+      await _logActivity(
+        type: ActivityType.update,
+        projectId: projectId,
+        description: 'แก้ไขโปรเจค: ${newTitle}',
+        metadata: {
+          'oldTitle': projectData['title'],
+          'newTitle': newTitle,
+          'oldIconKey': projectData['iconKey'],
+          'newIconKey': newIconKey,
+        },
+      );
+
+      debugPrint('✅ Project updated successfully');
       _setLoading(false);
       return true;
     } catch (e) {
@@ -292,6 +353,7 @@ class ProjectProvider extends ChangeNotifier {
     try {
       debugPrint('🔄 Deleting project...');
       debugPrint('📍 Project ID: $projectId');
+      debugPrint('📍 User ID: $currentUserId');
 
       if (currentUserId == null) {
         throw Exception('User not authenticated');
@@ -300,7 +362,7 @@ class ProjectProvider extends ChangeNotifier {
       _setLoading(true);
       clearError();
 
-      // Check if project exists and belongs to current user
+      // ดึงข้อมูล project ก่อนลบ เพื่อใช้ในการบันทึกประวัติ
       final projectDoc = await projectRef.doc(projectId).get();
       if (!projectDoc.exists) {
         throw Exception('Project not found');
@@ -311,10 +373,25 @@ class ProjectProvider extends ChangeNotifier {
         throw Exception('Not authorized to delete this project');
       }
 
-      // Delete project
-      await projectRef.doc(projectId).delete();
-      debugPrint('✅ Project deleted successfully');
+      final projectTitle = projectData['title'] ?? 'ไม่ทราบชื่อ';
+      final taskCount = projectData['taskCount'] ?? 0;
 
+      // ลบ project จาก Firestore
+      await projectRef.doc(projectId).delete();
+
+      // บันทึกประวัติการลบ
+      await _logActivity(
+        type: ActivityType.delete,
+        projectId: projectId,
+        description: 'ลบโปรเจค: $projectTitle',
+        metadata: {
+          'deletedTitle': projectTitle,
+          'taskCount': taskCount,
+          'deletedAt': DateTime.now().toIso8601String(),
+        },
+      );
+
+      debugPrint('✅ Project deleted successfully');
       _setLoading(false);
       return true;
     } catch (e) {
