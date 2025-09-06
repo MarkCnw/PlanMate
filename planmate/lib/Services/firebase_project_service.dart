@@ -241,67 +241,66 @@ class FirebaseProjectServices {
   }
 
   Future<void> updateProject({
-  required String projectId,
-  required String newTitle,
-  required String newIconKey,
-  required String newIconPath,
-  required int newColor, // เพิ่ม parameter สำหรับสี
-}) async {
-  print('📌 Received Title: $newTitle');
-  print('📌 Received IconKey: $newIconKey');
-  print('📌 Received IconPath: $newIconPath');
-  print('📌 Received Color: $newColor');
-  print('📌 Received ProjectId: $projectId');
+    required String projectId,
+    required String newTitle,
+    required String newIconKey,
+    required String newIconPath,
+    required int newColor, // เพิ่ม parameter สำหรับสี
+  }) async {
+    print('📌 Received Title: $newTitle');
+    print('📌 Received IconKey: $newIconKey');
+    print('📌 Received IconPath: $newIconPath');
+    print('📌 Received Color: $newColor');
+    print('📌 Received ProjectId: $projectId');
 
-  try {
-    print('🔄 Editing project...');
-    print('📍 Project ID: $projectId');
-    print('📍 User ID: $currentUserId');
+    try {
+      print('🔄 Editing project...');
+      print('📍 Project ID: $projectId');
+      print('📍 User ID: $currentUserId');
 
-    if (currentUserId == null) {
-      throw Exception('User not authenticated');
+      if (currentUserId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Validation
+      final tempProject = ProjectModel.create(
+        title: newTitle,
+        iconKey: newIconKey,
+        userId: currentUserId!,
+      );
+
+      final titleError = tempProject.validateTitle();
+      if (titleError != null) {
+        throw Exception(titleError);
+      }
+
+      // ตรวจสอบว่า project นี้เป็นของ user ปัจจุบันหรือไม่
+      final projectDoc = await projectRef.doc(projectId).get();
+      if (!projectDoc.exists) {
+        throw Exception('Project not found');
+      }
+
+      final projectData = projectDoc.data() as Map<String, dynamic>;
+      if (projectData['userId'] != currentUserId) {
+        throw Exception('Not authorized to update this project');
+      }
+
+      // อัพเดทข้อมูล - เพิ่ม iconPath และ color
+      final updateData = {
+        'title': newTitle.trim(),
+        'iconKey': newIconKey,
+        'iconPath': newIconPath, // 🔥 เพิ่ม iconPath
+        'color': newColor, // 🔥 เพิ่ม color
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      print('📤 Update data: $updateData');
+
+      await projectRef.doc(projectId).update(updateData);
+      print('✅ Project updated successfully');
+    } catch (e) {
+      print('❌ Failed to update project: $e');
+      rethrow;
     }
-
-    // Validation
-    final tempProject = ProjectModel.create(
-      title: newTitle,
-      iconKey: newIconKey,
-      userId: currentUserId!,
-    );
-
-    final titleError = tempProject.validateTitle();
-    if (titleError != null) {
-      throw Exception(titleError);
-    }
-
-    // ตรวจสอบว่า project นี้เป็นของ user ปัจจุบันหรือไม่
-    final projectDoc = await projectRef.doc(projectId).get();
-    if (!projectDoc.exists) {
-      throw Exception('Project not found');
-    }
-
-    final projectData = projectDoc.data() as Map<String, dynamic>;
-    if (projectData['userId'] != currentUserId) {
-      throw Exception('Not authorized to update this project');
-    }
-
-    // อัพเดทข้อมูล - เพิ่ม iconPath และ color
-    final updateData = {
-      'title': newTitle.trim(),
-      'iconKey': newIconKey,
-      'iconPath': newIconPath, // 🔥 เพิ่ม iconPath
-      'color': newColor,       // 🔥 เพิ่ม color
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
-
-    print('📤 Update data: $updateData');
-
-    await projectRef.doc(projectId).update(updateData);
-    print('✅ Project updated successfully');
-    
-  } catch (e) {
-    print('❌ Failed to update project: $e');
-    rethrow;
   }
-}
 }
