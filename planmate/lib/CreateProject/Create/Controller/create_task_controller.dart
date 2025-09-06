@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:planmate/provider/task_provider.dart';
 import 'package:provider/provider.dart';
@@ -21,10 +22,14 @@ class CreateTaskController {
   // Form controllers
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController hoursController = TextEditingController();
+  final TextEditingController minutesController = TextEditingController();
 
   // Form state
   DateTime? selectedDueDate;
   int selectedPriority = 2; // Default: Medium
+  Duration? estimatedDuration;
+  double initialProgress = 0.0;
   bool isLoading = false;
 
   // Validation errors
@@ -79,6 +84,46 @@ class CreateTaskController {
     onStateChanged();
   }
 
+  // ✅ Time estimation methods
+  void calculateEstimatedTime() {
+    final hours = int.tryParse(hoursController.text) ?? 0;
+    final minutes = int.tryParse(minutesController.text) ?? 0;
+    
+    if (hours > 0 || minutes > 0) {
+      estimatedDuration = Duration(hours: hours, minutes: minutes);
+    } else {
+      estimatedDuration = null;
+    }
+    onStateChanged();
+  }
+
+  void setQuickTime(int totalMinutes) {
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    
+    hoursController.text = hours > 0 ? hours.toString() : '';
+    minutesController.text = minutes > 0 ? minutes.toString() : '';
+    
+    calculateEstimatedTime();
+  }
+
+  String get estimatedTimeText {
+    if (estimatedDuration == null) return 'No estimate';
+    final hours = estimatedDuration!.inHours;
+    final minutes = estimatedDuration!.inMinutes % 60;
+    
+    if (hours > 0) {
+      return minutes > 0 ? '${hours}h ${minutes}m' : '${hours}h';
+    }
+    return '${minutes}m';
+  }
+
+  // ✅ Progress methods
+  void setInitialProgress(double progress) {
+    initialProgress = progress.clamp(0.0, 1.0);
+    onStateChanged();
+  }
+
   // Validate form
   bool validateForm() {
     titleError = null;
@@ -114,11 +159,19 @@ class CreateTaskController {
       }
     }
 
+    // Validate time estimation (optional but should be reasonable)
+    if (estimatedDuration != null) {
+      if (estimatedDuration!.inMinutes > 24 * 60) {
+        // More than 24 hours might be unrealistic for a single task
+        debugPrint('⚠️ Estimated time is more than 24 hours');
+      }
+    }
+
     onStateChanged();
     return isValid;
   }
 
-  // Create task
+  // Create task with enhanced features
   Future<void> createTask() async {
     if (!validateForm()) return;
 
@@ -131,12 +184,15 @@ class CreateTaskController {
       final title = titleController.text.trim();
       final description = descriptionController.text.trim();
 
-      final taskId = await taskProvider.createTask(
+      // ✅ สร้าง task พร้อม time estimation และ initial progress
+      final taskId = await taskProvider.createTaskEnhanced(
         title: title,
         projectId: projectId,
         description: description.isEmpty ? null : description,
         dueDate: selectedDueDate,
         priority: selectedPriority,
+        estimatedDuration: estimatedDuration,
+        initialProgress: initialProgress,
       );
 
       if (taskId == null) {
@@ -153,7 +209,13 @@ class CreateTaskController {
         description: description.isEmpty ? null : description,
         dueDate: selectedDueDate,
         priority: selectedPriority,
-      ).copyWith(id: taskId);
+        estimatedDuration: estimatedDuration,
+      ).copyWith(
+        id: taskId,
+        progress: initialProgress,
+        status: initialProgress > 0 ? TaskStatus.inProgress : TaskStatus.pending,
+        startedAt: initialProgress > 0 ? DateTime.now() : null,
+      );
 
       onSuccess?.call(task);
 
@@ -170,8 +232,12 @@ class CreateTaskController {
   void resetForm() {
     titleController.clear();
     descriptionController.clear();
+    hoursController.clear();
+    minutesController.clear();
     selectedDueDate = null;
     selectedPriority = 2;
+    estimatedDuration = null;
+    initialProgress = 0.0;
     titleError = null;
     descriptionError = null;
     dueDateError = null;
@@ -205,11 +271,158 @@ class CreateTaskController {
     return titleController.text.trim().isNotEmpty ||
            descriptionController.text.trim().isNotEmpty ||
            selectedDueDate != null ||
-           selectedPriority != 2;
+           selectedPriority != 2 ||
+           estimatedDuration != null ||
+           initialProgress > 0.0;
+  }
+
+  // ✅ Helper methods for UI
+  String getProgressText() {
+    return '${(initialProgress * 100).round()}%';
+  }
+
+  Color getProgressColor() {
+    if (initialProgress == 0.0) return Colors.grey.shade400;
+    if (initialProgress < 0.3) return Colors.red;
+    if (initialProgress < 0.7) return Colors.orange;
+    if (initialProgress < 1.0) return Colors.blue;
+    return Colors.green;
+  }
+
+  String getProgressStatusText() {
+    if (initialProgress == 0.0) return 'Not started';
+    if (initialProgress < 1.0) return 'In progress';
+    return 'Completed';
+  }
+
+  // ✅ Validation helpers
+  bool get hasValidTimeEstimation {
+    return estimatedDuration != null && estimatedDuration!.inMinutes > 0;
+  }
+
+  bool get isReasonableTimeEstimate {
+    if (estimatedDuration == null) return true;
+    return estimatedDuration!.inMinutes <= 24 * 60; // Max 24 hours
+  }
+
+  // ✅ Quick actions for common scenarios
+  void setQuickTask() {
+    // Quick 30-minute task
+    setQuickTime(30);
+    setInitialProgress(0.0);
+    selectedPriority = 2; // Medium priority
+    onStateChanged();
+  }
+
+  void setUrgentTask() {
+    // Urgent task due today
+    selectedDueDate = DateTime.now().add(const Duration(hours: 4));
+    selectedPriority = 1; // High priority
+    onStateChanged();
+  }
+
+  void setLongTermTask() {
+    // Long-term project task
+    setQuickTime(240); // 4 hours
+    selectedDueDate = DateTime.now().add(const Duration(days: 7));
+    selectedPriority = 3; // Low priority
+    onStateChanged();
   }
 
   void dispose() {
     titleController.dispose();
     descriptionController.dispose();
+    hoursController.dispose();
+    minutesController.dispose();
+  }
+}
+
+// ✅ Extension สำหรับ TaskProvider เพื่อรองรับ enhanced features
+extension TaskProviderEnhanced on TaskProvider {
+  Future<String?> createTaskEnhanced({
+    required String title,
+    required String projectId,
+    String? description,
+    DateTime? dueDate,
+    int priority = 2,
+    Duration? estimatedDuration,
+    double initialProgress = 0.0,
+  }) async {
+    try {
+      debugPrint('🔄 Creating enhanced task for project: $projectId');
+      debugPrint('📊 Initial progress: ${(initialProgress * 100).round()}%');
+      debugPrint('⏱️ Estimated duration: $estimatedDuration');
+
+      if (currentUserId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // สร้าง task พื้นฐานก่อน
+      final taskId = await createTask(
+        title: title,
+        projectId: projectId,
+        description: description,
+        dueDate: dueDate,
+        priority: priority,
+      );
+
+      if (taskId == null) return null;
+
+      // อัปเดตด้วยข้อมูลเพิ่มเติม
+      if (estimatedDuration != null || initialProgress > 0.0) {
+        await updateTaskEnhanced(
+          taskId: taskId,
+          estimatedDuration: estimatedDuration,
+          progress: initialProgress,
+        );
+      }
+
+      debugPrint('✅ Enhanced task created successfully');
+      return taskId;
+    } catch (e) {
+      debugPrint('❌ Failed to create enhanced task: $e');
+      return null;
+    }
+  }
+
+  Future<bool> updateTaskEnhanced({
+    required String taskId,
+    Duration? estimatedDuration,
+    double? progress,
+  }) async {
+    try {
+      // อัปเดตข้อมูลเพิ่มเติมใน Firestore
+      final updateData = <String, dynamic>{};
+      
+      if (estimatedDuration != null) {
+        updateData['estimatedDuration'] = estimatedDuration.inMinutes;
+      }
+      
+      if (progress != null) {
+        updateData['progress'] = progress.clamp(0.0, 1.0);
+        if (progress > 0.0 && progress < 1.0) {
+          updateData['status'] = 'in_progress';
+          updateData['startedAt'] = FieldValue.serverTimestamp();
+        } else if (progress >= 1.0) {
+          updateData['status'] = 'completed';
+          updateData['isDone'] = true;
+          updateData['completedAt'] = FieldValue.serverTimestamp();
+        }
+      }
+
+      if (updateData.isNotEmpty) {
+        updateData['updatedAt'] = FieldValue.serverTimestamp();
+        
+        await FirebaseFirestore.instance
+            .collection('tasks')
+            .doc(taskId)
+            .update(updateData);
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('❌ Failed to update enhanced task: $e');
+      return false;
+    }
   }
 }

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:planmate/History/Models/activity_history_model.dart';
-import 'package:planmate/History/Provider/history_provider.dart';
+
 import 'package:planmate/Models/project_model.dart';
 
 class ProjectProvider extends ChangeNotifier {
