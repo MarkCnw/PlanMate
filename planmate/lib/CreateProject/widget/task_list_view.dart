@@ -54,7 +54,11 @@ class TaskListView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, color: Colors.red.shade400, size: 48),
+          Icon(
+            Icons.error_outline,
+            color: Colors.red.shade400,
+            size: 48,
+          ),
           const SizedBox(height: 16),
           Text(
             'Failed to load tasks',
@@ -67,7 +71,10 @@ class TaskListView extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             error!,
-            style: TextStyle(fontSize: 14, color: Colors.red.shade600),
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.red.shade600,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
@@ -97,7 +104,10 @@ class TaskListView extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Loading tasks...',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+            ),
           ),
         ],
       ),
@@ -152,8 +162,7 @@ class TaskListView extends StatelessWidget {
     final totalTasks = tasks.length;
     final completedTasks = tasks.where((task) => task.isDone).length;
     final overdueTasks = tasks.where((task) => task.isOverdue).length;
-    final completionRate =
-        totalTasks > 0 ? (completedTasks / totalTasks) : 0.0;
+    final completionRate = totalTasks > 0 ? (completedTasks / totalTasks) : 0.0;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -188,28 +197,22 @@ class TaskListView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-
+          
           // Progress bar
           LinearProgressIndicator(
             value: completionRate,
             backgroundColor: Colors.grey.shade200,
-            valueColor: const AlwaysStoppedAnimation<Color>(
-              Color(0xFF202430),
-            ),
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF202430)),
             minHeight: 6,
           ),
           const SizedBox(height: 16),
-
+          
           // Stats row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildStatItem('Total', totalTasks, const Color(0xFF202430)),
-              _buildStatItem(
-                'Completed',
-                completedTasks,
-                Color(0xFF202430),
-              ),
+              _buildStatItem('Completed', completedTasks, Color(0xFF202430)),
               if (overdueTasks > 0)
                 _buildStatItem('Overdue', overdueTasks, Colors.red),
             ],
@@ -232,7 +235,10 @@ class TaskListView extends StatelessWidget {
         ),
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey.shade600,
+          ),
         ),
       ],
     );
@@ -280,7 +286,7 @@ class TaskListView extends StatelessWidget {
 
   Widget _buildTaskItem(BuildContext context, TaskModel task) {
     final isTaskLoading = loadingTaskId == task.id;
-
+    
     return Consumer<TaskProvider>(
       builder: (context, taskProvider, child) {
         return TaskItem(
@@ -302,19 +308,16 @@ class TaskListView extends StatelessWidget {
               }
             }
           },
-
+          
           // ✅ Edit task callback
           onEdit: () {
             onEditTask?.call(task);
           },
-
+          
           // ✅ Delete task callback
           onDelete: () async {
             try {
-              final confirmed = await _showDeleteConfirmation(
-                context,
-                task,
-              );
+              final confirmed = await _showDeleteConfirmation(context, task);
               if (confirmed) {
                 final success = await taskProvider.deleteTask(task.id);
                 if (context.mounted) {
@@ -332,18 +335,14 @@ class TaskListView extends StatelessWidget {
                         behavior: SnackBarBehavior.floating,
                         margin: EdgeInsets.all(16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(10),
-                          ),
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                       ),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(
-                          'Failed to delete task: ${taskProvider.error}',
-                        ),
+                        content: Text('Failed to delete task: ${taskProvider.error}'),
                         backgroundColor: Colors.red,
                         behavior: SnackBarBehavior.floating,
                       ),
@@ -369,33 +368,26 @@ class TaskListView extends StatelessWidget {
   }
 
   // ✅ Delete confirmation dialog
-  Future<bool> _showDeleteConfirmation(
-    BuildContext context,
-    TaskModel task,
-  ) async {
+  Future<bool> _showDeleteConfirmation(BuildContext context, TaskModel task) async {
     return await showDialog<bool>(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Delete Task'),
-                content: Text(
-                  'Are you sure you want to delete "${task.title}"?\n\nThis action cannot be undone.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
-                    child: const Text('Delete'),
-                  ),
-                ],
-              ),
-        ) ??
-        false;
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Task'),
+        content: Text(
+          'Are you sure you want to delete "${task.title}"?\n\nThis action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 }

@@ -26,6 +26,7 @@ class _CustomBottomNavBarAppState extends State<CustomBottomNavBarApp> {
     Test(),
     CreateProjectScreen(),
     Test(),
+
     // HistoryScreen(),
     ProfileScreen(),
   ];

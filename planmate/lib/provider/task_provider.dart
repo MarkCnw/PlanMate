@@ -14,7 +14,8 @@ class TaskProvider extends ChangeNotifier {
   // State variables
   Map<String, List<TaskModel>> _projectTasks = {}; // projectId -> tasks
   Map<String, bool> _projectLoading = {}; // projectId -> loading state
-  Map<String, StreamSubscription<List<TaskModel>>?> _taskSubscriptions = {};
+  Map<String, StreamSubscription<List<TaskModel>>?> _taskSubscriptions =
+      {};
   bool _isOperating = false; // สำหรับ CRUD operations
   String? _error;
 
@@ -39,7 +40,8 @@ class TaskProvider extends ChangeNotifier {
     final completed = tasks.where((task) => task.isDone).length;
     final pending = tasks.where((task) => !task.isDone).length;
     final overdue = tasks.where((task) => task.isOverdue).length;
-    final inProgress = tasks.where((task) => task.status == TaskStatus.inProgress).length;
+    final inProgress =
+        tasks.where((task) => task.status == TaskStatus.inProgress).length;
 
     return {
       'total': tasks.length,
@@ -194,7 +196,7 @@ class TaskProvider extends ChangeNotifier {
   }
 
   // ===== Enhanced Task Creation =====
-  
+
   /// สร้าง Task พร้อมฟีเจอร์เพิ่มเติม
   Future<String?> createTaskEnhanced({
     required String title,
@@ -207,7 +209,9 @@ class TaskProvider extends ChangeNotifier {
   }) async {
     try {
       debugPrint('🔄 Creating enhanced task for project: $projectId');
-      debugPrint('📊 Initial progress: ${(initialProgress * 100).round()}%');
+      debugPrint(
+        '📊 Initial progress: ${(initialProgress * 100).round()}%',
+      );
       debugPrint('⏱️ Estimated duration: $estimatedDuration');
 
       if (currentUserId == null) {
@@ -307,7 +311,10 @@ class TaskProvider extends ChangeNotifier {
         type: ActivityType.update,
         projectId: projectId,
         taskId: taskId,
-        description: task.isDone ? 'ยกเลิกการทำเสร็จ: ${task.title}' : 'ทำงานเสร็จ: ${task.title}',
+        description:
+            task.isDone
+                ? 'ยกเลิกการทำเสร็จ: ${task.title}'
+                : 'ทำงานเสร็จ: ${task.title}',
       );
 
       debugPrint('✅ Task completion toggled successfully');
@@ -328,7 +335,9 @@ class TaskProvider extends ChangeNotifier {
     required double progress,
   }) async {
     try {
-      debugPrint('🔄 Updating task progress: $taskId to ${(progress * 100).round()}%');
+      debugPrint(
+        '🔄 Updating task progress: $taskId to ${(progress * 100).round()}%',
+      );
 
       if (currentUserId == null) {
         throw Exception('User not authenticated');
@@ -352,18 +361,19 @@ class TaskProvider extends ChangeNotifier {
       }
 
       // Actual update to Firestore
-      await _taskService.updateTaskProgress(taskId: taskId, progress: progress);
+      await _taskService.updateTaskProgress(
+        taskId: taskId,
+        progress: progress,
+      );
 
       // บันทึกประวัติ
       await _logActivity(
         type: ActivityType.update,
         projectId: projectId,
         taskId: taskId,
-        description: 'อัปเดตความคืบหน้า: ${task.title} (${(progress * 100).round()}%)',
-        metadata: {
-          'oldProgress': task.progress,
-          'newProgress': progress,
-        },
+        description:
+            'อัปเดตความคืบหน้า: ${task.title} (${(progress * 100).round()}%)',
+        metadata: {'oldProgress': task.progress, 'newProgress': progress},
       );
 
       debugPrint('✅ Task progress updated successfully');
@@ -371,7 +381,7 @@ class TaskProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('❌ Failed to update task progress: $e');
       _setError('Failed to update task progress: $e');
-      
+
       // Revert optimistic update
       notifyListeners();
       return false;
@@ -420,7 +430,7 @@ class TaskProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('❌ Failed to start task: $e');
       _setError('Failed to start task: $e');
-      
+
       // Revert optimistic update
       notifyListeners();
       return false;
@@ -469,7 +479,7 @@ class TaskProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('❌ Failed to pause task: $e');
       _setError('Failed to pause task: $e');
-      
+
       // Revert optimistic update
       notifyListeners();
       return false;
@@ -514,9 +524,12 @@ class TaskProvider extends ChangeNotifier {
       if (task != null) {
         final changes = <String>[];
         if (title != null && title != task.title) changes.add('ชื่อ');
-        if (description != null && description != task.description) changes.add('รายละเอียด');
-        if (priority != null && priority != task.priority) changes.add('ความสำคัญ');
-        if (progress != null && progress != task.progress) changes.add('ความคืบหน้า');
+        if (description != null && description != task.description)
+          changes.add('รายละเอียด');
+        if (priority != null && priority != task.priority)
+          changes.add('ความสำคัญ');
+        if (progress != null && progress != task.progress)
+          changes.add('ความคืบหน้า');
 
         await _logActivity(
           type: ActivityType.update,
@@ -632,7 +645,9 @@ class TaskProvider extends ChangeNotifier {
   // ===== Data Fetching & Analysis =====
 
   /// Get task statistics from server (for accurate counts)
-  Future<Map<String, int>?> getTaskStatsFromServer(String projectId) async {
+  Future<Map<String, int>?> getTaskStatsFromServer(
+    String projectId,
+  ) async {
     try {
       return await _taskService.getTaskStats(projectId);
     } catch (e) {
@@ -656,22 +671,30 @@ class TaskProvider extends ChangeNotifier {
 
   /// Get overdue tasks for a project
   List<TaskModel> getOverdueTasks(String projectId) {
-    return getProjectTasks(projectId).where((task) => task.isOverdue).toList();
+    return getProjectTasks(
+      projectId,
+    ).where((task) => task.isOverdue).toList();
   }
 
   /// Get tasks due today for a project
   List<TaskModel> getTasksDueToday(String projectId) {
-    return getProjectTasks(projectId).where((task) => task.isDueToday).toList();
+    return getProjectTasks(
+      projectId,
+    ).where((task) => task.isDueToday).toList();
   }
 
   /// Get tasks by priority
   List<TaskModel> getTasksByPriority(String projectId, int priority) {
-    return getProjectTasks(projectId).where((task) => task.priority == priority).toList();
+    return getProjectTasks(
+      projectId,
+    ).where((task) => task.priority == priority).toList();
   }
 
   /// Get tasks by status
   List<TaskModel> getTasksByStatus(String projectId, TaskStatus status) {
-    return getProjectTasks(projectId).where((task) => task.status == status).toList();
+    return getProjectTasks(
+      projectId,
+    ).where((task) => task.status == status).toList();
   }
 
   /// Check if project has any tasks
@@ -693,14 +716,20 @@ class TaskProvider extends ChangeNotifier {
     final tasks = getProjectTasks(projectId);
     if (tasks.isEmpty) return 0.0;
 
-    final totalProgress = tasks.fold<double>(0.0, (sum, task) => sum + task.progress);
+    final totalProgress = tasks.fold<double>(
+      0.0,
+      (sum, task) => sum + task.progress,
+    );
     return totalProgress / tasks.length;
   }
 
   /// Get time efficiency for project (estimated vs actual)
   Map<String, dynamic> getProjectTimeAnalysis(String projectId) {
-    final tasks = getProjectTasks(projectId).where((task) => task.hasEstimatedTime).toList();
-    
+    final tasks =
+        getProjectTasks(
+          projectId,
+        ).where((task) => task.hasEstimatedTime).toList();
+
     if (tasks.isEmpty) {
       return {
         'hasData': false,
@@ -721,9 +750,10 @@ class TaskProvider extends ChangeNotifier {
       (sum, task) => sum + task.totalTimeSpent,
     );
 
-    final efficiency = totalActual.inMinutes > 0 
-        ? totalEstimated.inMinutes / totalActual.inMinutes 
-        : 0.0;
+    final efficiency =
+        totalActual.inMinutes > 0
+            ? totalEstimated.inMinutes / totalActual.inMinutes
+            : 0.0;
 
     return {
       'hasData': true,
@@ -743,18 +773,21 @@ class TaskProvider extends ChangeNotifier {
     final searchQuery = query.toLowerCase().trim();
     return getProjectTasks(projectId).where((task) {
       return task.title.toLowerCase().contains(searchQuery) ||
-             (task.hasDescription && task.description!.toLowerCase().contains(searchQuery));
+          (task.hasDescription &&
+              task.description!.toLowerCase().contains(searchQuery));
     }).toList();
   }
 
   /// Get tasks summary for multiple projects
-  Map<String, Map<String, int>> getMultiProjectTasksSummary(List<String> projectIds) {
+  Map<String, Map<String, int>> getMultiProjectTasksSummary(
+    List<String> projectIds,
+  ) {
     final summary = <String, Map<String, int>>{};
-    
+
     for (final projectId in projectIds) {
       summary[projectId] = getProjectTaskStats(projectId);
     }
-    
+
     return summary;
   }
 
