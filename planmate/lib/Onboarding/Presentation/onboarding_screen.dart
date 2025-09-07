@@ -28,7 +28,7 @@ class OnboardingScreen extends StatelessWidget {
                 children: [
                   Center(
                     child: Lottie.asset(
-                      'assets/lottie/power.json',
+                      'assets/lottie/1.json',
                       width: 600,
                       height: 600,
                       repeat: true,
