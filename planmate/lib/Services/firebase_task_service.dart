@@ -14,22 +14,21 @@ class FirebaseTaskService {
   // Current user ID
   String? get currentUserId => _auth.currentUser?.uid;
 
-  /// สร้าง Task ใหม่ (Enhanced version)
+  /// สร้าง Task ใหม่ (Simplified version)
   Future<String> createTaskEnhanced({
     required String title,
     required String projectId,
     String? description,
     DateTime? dueDate,
     int priority = 2,
-    Duration? estimatedDuration,
+    Duration? estimatedDuration, // เก็บไว้เพื่อ compatibility แต่จะ ignore
     double initialProgress = 0.0,
   }) async {
     try {
-      debugPrint('🔄 Creating enhanced task for project: $projectId');
+      debugPrint('🔄 Creating task for project: $projectId');
       debugPrint(
         '📊 Initial progress: ${(initialProgress * 100).round()}%',
       );
-      debugPrint('⏱️ Estimated duration: $estimatedDuration');
 
       if (currentUserId == null) {
         throw Exception('User not authenticated');
@@ -38,7 +37,7 @@ class FirebaseTaskService {
       // ตรวจสอบว่า project นี้เป็นของ user หรือไม่
       await _verifyProjectOwnership(projectId);
 
-      // สร้าง TaskModel พร้อมข้อมูล enhanced
+      // สร้าง TaskModel แบบง่าย (ไม่มี time estimation)
       final task = TaskModel(
         id: '', // Firestore จะ generate ให้
         title: title.trim(),
@@ -49,15 +48,13 @@ class FirebaseTaskService {
         createdAt: DateTime.now(),
         dueDate: dueDate,
         priority: priority,
-        estimatedDuration: estimatedDuration,
         progress: initialProgress,
         status: _getStatusFromProgress(initialProgress),
         startedAt: initialProgress > 0.0 ? DateTime.now() : null,
         completedAt: initialProgress >= 1.0 ? DateTime.now() : null,
-        timeEntries: [],
       );
 
-      debugPrint('📋 Enhanced task data: ${task.toMap()}');
+      debugPrint('📋 Task data: ${task.toMap()}');
 
       // Validate ข้อมูล
       final titleError = _validateTitle(title);
@@ -92,12 +89,10 @@ class FirebaseTaskService {
       // Execute batch
       await batch.commit();
 
-      debugPrint(
-        '✅ Enhanced task created successfully with ID: ${taskDocRef.id}',
-      );
+      debugPrint('✅ Task created successfully with ID: ${taskDocRef.id}');
       return taskDocRef.id;
     } catch (e) {
-      debugPrint('❌ Failed to create enhanced task: $e');
+      debugPrint('❌ Failed to create task: $e');
       rethrow;
     }
   }
@@ -155,7 +150,7 @@ class FirebaseTaskService {
         });
   }
 
-  /// อัปเดต Task status (Toggle complete) - Enhanced
+  /// อัปเดต Task status (Toggle complete)
   Future<void> toggleTaskComplete(String taskId) async {
     try {
       debugPrint('🔄 Toggling task completion: $taskId');
@@ -193,8 +188,14 @@ class FirebaseTaskService {
         updateData['completedAt'] = FieldValue.serverTimestamp();
       } else {
         // เมื่อ uncomplete: reset ค่าต่าง ๆ
-        updateData['progress'] = 0.0;
-        updateData['status'] = TaskStatus.pending.value;
+        final currentProgress =
+            (taskData['progress'] as num?)?.toDouble() ?? 0.0;
+        updateData['progress'] =
+            currentProgress > 0.0 ? currentProgress : 0.0;
+        updateData['status'] =
+            currentProgress > 0.0
+                ? TaskStatus.inProgress.value
+                : TaskStatus.pending.value;
         updateData['completedAt'] = null;
       }
 
@@ -270,81 +271,14 @@ class FirebaseTaskService {
     }
   }
 
-  /// Start Task (เปลี่ยน status เป็น in progress)
-  Future<void> startTask(String taskId) async {
-    try {
-      debugPrint('🔄 Starting task: $taskId');
-
-      if (currentUserId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // ตรวจสอบ ownership
-      final taskDoc = await taskRef.doc(taskId).get();
-      if (!taskDoc.exists) {
-        throw Exception('Task not found');
-      }
-
-      final taskData = taskDoc.data() as Map<String, dynamic>;
-      if (taskData['userId'] != currentUserId) {
-        throw Exception('Not authorized to update this task');
-      }
-
-      // อัปเดต task
-      await taskRef.doc(taskId).update({
-        'status': TaskStatus.inProgress.value,
-        'startedAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      debugPrint('✅ Task started successfully');
-    } catch (e) {
-      debugPrint('❌ Failed to start task: $e');
-      rethrow;
-    }
-  }
-
-  /// Pause Task
-  Future<void> pauseTask(String taskId) async {
-    try {
-      debugPrint('🔄 Pausing task: $taskId');
-
-      if (currentUserId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // ตรวจสอบ ownership
-      final taskDoc = await taskRef.doc(taskId).get();
-      if (!taskDoc.exists) {
-        throw Exception('Task not found');
-      }
-
-      final taskData = taskDoc.data() as Map<String, dynamic>;
-      if (taskData['userId'] != currentUserId) {
-        throw Exception('Not authorized to update this task');
-      }
-
-      // อัปเดต task
-      await taskRef.doc(taskId).update({
-        'status': TaskStatus.paused.value,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      debugPrint('✅ Task paused successfully');
-    } catch (e) {
-      debugPrint('❌ Failed to pause task: $e');
-      rethrow;
-    }
-  }
-
-  /// อัปเดต Task ทั่วไป (Enhanced)
+  /// อัปเดต Task ทั่วไป (Simplified)
   Future<void> updateTask({
     required String taskId,
     String? title,
     String? description,
     DateTime? dueDate,
     int? priority,
-    Duration? estimatedDuration,
+    Duration? estimatedDuration, // จะถูก ignore
     double? progress,
   }) async {
     try {
@@ -396,10 +330,6 @@ class FirebaseTaskService {
           throw Exception('Priority must be between 1-3');
         }
         updateData['priority'] = priority;
-      }
-
-      if (estimatedDuration != null) {
-        updateData['estimatedDuration'] = estimatedDuration.inMinutes;
       }
 
       if (progress != null) {
@@ -563,7 +493,7 @@ class FirebaseTaskService {
 
   // ===== Helper Methods =====
 
-  /// กำหนด TaskStatus จาก progress
+  /// กำหนด TaskStatus จาก progress (Simplified)
   TaskStatus _getStatusFromProgress(double progress) {
     if (progress >= 1.0) return TaskStatus.completed;
     if (progress > 0.0) return TaskStatus.inProgress;

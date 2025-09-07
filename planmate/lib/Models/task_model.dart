@@ -13,12 +13,9 @@ class TaskModel {
   final DateTime? completedAt;
   final int priority; // 1-3 (1=high, 2=medium, 3=low)
   
-  // ✅ เพิ่มฟีเจอร์ใหม่
-  final Duration? estimatedDuration; // เวลาที่ประมาณการ
-  final Duration? actualDuration; // เวลาที่ใช้จริง
+  // ✅ Features ที่เหลือ (ลบ time tracking)
   final DateTime? startedAt; // เวลาที่เริ่มทำ
   final double progress; // ความคืบหน้า 0.0-1.0
-  final List<TimeEntry> timeEntries; // รายการบันทึกเวลา
   final TaskStatus status; // สถานะของ task
 
   TaskModel({
@@ -33,11 +30,8 @@ class TaskModel {
     this.dueDate,
     this.completedAt,
     this.priority = 2,
-    this.estimatedDuration,
-    this.actualDuration,
     this.startedAt,
     this.progress = 0.0,
-    this.timeEntries = const [],
     this.status = TaskStatus.pending,
   });
 
@@ -49,7 +43,7 @@ class TaskModel {
     String? description,
     DateTime? dueDate,
     int priority = 2,
-    Duration? estimatedDuration,
+    Duration? estimatedDuration, // เก็บไว้เพื่อ compatibility แต่จะไม่ใช้
   }) {
     return TaskModel(
       id: '', // Firestore จะ generate ให้
@@ -61,10 +55,8 @@ class TaskModel {
       createdAt: DateTime.now(),
       dueDate: dueDate,
       priority: priority,
-      estimatedDuration: estimatedDuration,
       progress: 0.0,
       status: TaskStatus.pending,
-      timeEntries: [],
     );
   }
 
@@ -83,11 +75,8 @@ class TaskModel {
       completedAt: _parseDateTime(map['completedAt']),
       startedAt: _parseDateTime(map['startedAt']),
       priority: map['priority'] as int? ?? 2,
-      estimatedDuration: _parseDuration(map['estimatedDuration']),
-      actualDuration: _parseDuration(map['actualDuration']),
       progress: (map['progress'] as num?)?.toDouble() ?? 0.0,
       status: TaskStatus.fromString(map['status'] as String? ?? 'pending'),
-      timeEntries: _parseTimeEntries(map['timeEntries'] as List?),
     );
   }
 
@@ -98,27 +87,6 @@ class TaskModel {
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
     if (value is DateTime) return value;
     return null;
-  }
-
-  static Duration? _parseDuration(dynamic value) {
-    if (value == null) return null;
-    if (value is int) return Duration(minutes: value);
-    if (value is Map) {
-      final minutes = value['minutes'] as int?;
-      final hours = value['hours'] as int?;
-      return Duration(
-        hours: hours ?? 0,
-        minutes: minutes ?? 0,
-      );
-    }
-    return null;
-  }
-
-  static List<TimeEntry> _parseTimeEntries(List? entries) {
-    if (entries == null) return [];
-    return entries
-        .map((e) => TimeEntry.fromMap(e as Map<String, dynamic>))
-        .toList();
   }
 
   // Convert to Map สำหรับ Firestore
@@ -135,22 +103,17 @@ class TaskModel {
       'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
       'startedAt': startedAt != null ? Timestamp.fromDate(startedAt!) : null,
       'priority': priority,
-      'estimatedDuration': estimatedDuration?.inMinutes,
-      'actualDuration': actualDuration?.inMinutes,
       'progress': progress,
       'status': status.value,
-      'timeEntries': timeEntries.map((e) => e.toMap()).toList(),
     };
   }
 
   // Helper getters
   bool get hasDescription => description != null && description!.trim().isNotEmpty;
   bool get hasDueDate => dueDate != null;
-  bool get hasEstimatedTime => estimatedDuration != null;
   bool get isStarted => startedAt != null;
   bool get isInProgress => status == TaskStatus.inProgress;
   bool get isCompleted => isDone;
-  bool get isPaused => status == TaskStatus.paused;
   
   bool get isOverdue {
     if (dueDate == null || isDone) return false;
@@ -178,7 +141,6 @@ class TaskModel {
     switch (status) {
       case TaskStatus.pending: return 'Pending';
       case TaskStatus.inProgress: return 'In Progress';
-      case TaskStatus.paused: return 'Paused';
       case TaskStatus.completed: return 'Completed';
       default: return 'Pending';
     }
@@ -188,44 +150,8 @@ class TaskModel {
   String get progressText => '${(progress * 100).toInt()}%';
   
   bool get hasProgress => progress > 0.0;
-  
-  // ✅ Time tracking helpers
-  Duration get totalTimeSpent {
-    return timeEntries.fold(Duration.zero, (total, entry) => total + entry.duration);
-  }
 
-  String get estimatedTimeText {
-    if (estimatedDuration == null) return 'No estimate';
-    final hours = estimatedDuration!.inHours;
-    final minutes = estimatedDuration!.inMinutes % 60;
-    
-    if (hours > 0) {
-      return minutes > 0 ? '${hours}h ${minutes}m' : '${hours}h';
-    }
-    return '${minutes}m';
-  }
-
-  String get actualTimeText {
-    final spent = totalTimeSpent;
-    final hours = spent.inHours;
-    final minutes = spent.inMinutes % 60;
-    
-    if (hours > 0) {
-      return minutes > 0 ? '${hours}h ${minutes}m' : '${hours}h';
-    }
-    return '${minutes}m';
-  }
-
-  // Time efficiency
-  double? get timeEfficiency {
-    if (estimatedDuration == null) return null;
-    final spent = totalTimeSpent;
-    if (spent.inMinutes == 0) return null;
-    
-    return estimatedDuration!.inMinutes / spent.inMinutes;
-  }
-
-  // Copy with method (enhanced)
+  // Copy with method (simplified)
   TaskModel copyWith({
     String? id,
     String? title,
@@ -239,11 +165,8 @@ class TaskModel {
     DateTime? completedAt,
     DateTime? startedAt,
     int? priority,
-    Duration? estimatedDuration,
-    Duration? actualDuration,
     double? progress,
     TaskStatus? status,
-    List<TimeEntry>? timeEntries,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -258,30 +181,12 @@ class TaskModel {
       completedAt: completedAt ?? this.completedAt,
       startedAt: startedAt ?? this.startedAt,
       priority: priority ?? this.priority,
-      estimatedDuration: estimatedDuration ?? this.estimatedDuration,
-      actualDuration: actualDuration ?? this.actualDuration,
       progress: progress ?? this.progress,
       status: status ?? this.status,
-      timeEntries: timeEntries ?? this.timeEntries,
     );
   }
 
-  // ✅ Enhanced actions
-  TaskModel startTask() {
-    return copyWith(
-      status: TaskStatus.inProgress,
-      startedAt: startedAt ?? DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-  }
-
-  TaskModel pauseTask() {
-    return copyWith(
-      status: TaskStatus.paused,
-      updatedAt: DateTime.now(),
-    );
-  }
-
+  // ✅ Simplified actions (ไม่มี pause/start)
   TaskModel completeTask() {
     return copyWith(
       isDone: true,
@@ -312,15 +217,6 @@ class TaskModel {
     );
   }
 
-  TaskModel addTimeEntry(TimeEntry entry) {
-    final updatedEntries = List<TimeEntry>.from(timeEntries)..add(entry);
-    return copyWith(
-      timeEntries: updatedEntries,
-      actualDuration: totalTimeSpent + entry.duration,
-      updatedAt: DateTime.now(),
-    );
-  }
-
   @override
   String toString() {
     return 'TaskModel(id: $id, title: $title, progress: $progressText, status: ${status.value})';
@@ -336,11 +232,10 @@ class TaskModel {
   int get hashCode => id.hashCode;
 }
 
-// ✅ Task Status Enum
+// ✅ Task Status Enum (ลบ paused)
 enum TaskStatus {
   pending('pending'),
   inProgress('in_progress'),
-  paused('paused'),
   completed('completed');
 
   const TaskStatus(this.value);
@@ -349,57 +244,8 @@ enum TaskStatus {
   static TaskStatus fromString(String value) {
     switch (value) {
       case 'in_progress': return TaskStatus.inProgress;
-      case 'paused': return TaskStatus.paused;
       case 'completed': return TaskStatus.completed;
       default: return TaskStatus.pending;
     }
-  }
-}
-
-// ✅ Time Entry Model
-class TimeEntry {
-  final String id;
-  final DateTime startTime;
-  final DateTime endTime;
-  final String? description;
-
-  TimeEntry({
-    required this.id,
-    required this.startTime,
-    required this.endTime,
-    this.description,
-  });
-
-  Duration get duration => endTime.difference(startTime);
-
-  factory TimeEntry.fromMap(Map<String, dynamic> map) {
-    return TimeEntry(
-      id: map['id'] as String? ?? '',
-      startTime: (map['startTime'] as Timestamp).toDate(),
-      endTime: (map['endTime'] as Timestamp).toDate(),
-      description: map['description'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'startTime': Timestamp.fromDate(startTime),
-      'endTime': Timestamp.fromDate(endTime),
-      'description': description,
-    };
-  }
-
-  static TimeEntry create({
-    required DateTime startTime,
-    required DateTime endTime,
-    String? description,
-  }) {
-    return TimeEntry(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      startTime: startTime,
-      endTime: endTime,
-      description: description,
-    );
   }
 }

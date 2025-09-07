@@ -162,11 +162,11 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
                         child: _buildTaskContent(),
                       ),
                       
-                      // Priority & Status indicators
+                      // Priority & Action buttons
                       Column(
                         children: [
                           _buildPriorityIndicator(),
-                          const SizedBox(height: 8),
+                          const SizedBox(width: 12),
                           _buildActionButtons(),
                         ],
                       ),
@@ -177,7 +177,7 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
             ),
             
             // Progress section (if task has progress)
-            if (widget.task.hasProgress || widget.task.hasEstimatedTime)
+            if (widget.task.hasProgress)
               _buildProgressSection(),
           ],
         ),
@@ -233,22 +233,14 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
   }
 
   Widget _buildStatusIcon() {
-    switch (widget.task.status) {
-      case TaskStatus.inProgress:
-        return Icon(
-          Icons.play_arrow,
-          color: Colors.blue,
-          size: 16,
-        );
-      case TaskStatus.paused:
-        return Icon(
-          Icons.pause,
-          color: Colors.orange,
-          size: 16,
-        );
-      default:
-        return const SizedBox.shrink();
+    if (widget.task.status == TaskStatus.inProgress) {
+      return Icon(
+        Icons.play_arrow,
+        color: Colors.blue,
+        size: 16,
+      );
     }
+    return const SizedBox.shrink();
   }
 
   Widget _buildTaskContent() {
@@ -325,38 +317,25 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
       );
     }
 
-    final status = widget.task.status;
-    Color color;
-    String text;
-    
-    switch (status) {
-      case TaskStatus.inProgress:
-        color = Colors.blue;
-        text = 'Active';
-        break;
-      case TaskStatus.paused:
-        color = Colors.orange;
-        text = 'Paused';
-        break;
-      default:
-        return const SizedBox.shrink();
+    if (widget.task.status == TaskStatus.inProgress) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Text(
+          'Active',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
+      );
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: color,
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildTaskMetadata() {
@@ -370,22 +349,6 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
             Icons.schedule,
             _formatDueDate(widget.task.dueDate!),
             _getDueDateColor(),
-          ),
-        
-        // Time estimation
-        if (widget.task.hasEstimatedTime)
-          _buildMetadataItem(
-            Icons.timer,
-            widget.task.estimatedTimeText,
-            Colors.purple,
-          ),
-
-        // Actual time spent (if any)
-        if (widget.task.totalTimeSpent.inMinutes > 0)
-          _buildMetadataItem(
-            Icons.access_time,
-            widget.task.actualTimeText,
-            Colors.indigo,
           ),
 
         // Progress percentage
@@ -436,12 +399,6 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
         final taskProvider = context.read<TaskProvider>();
         
         switch (value) {
-          case 'start':
-            await _handleStartTask(taskProvider);
-            break;
-          case 'pause':
-            await _handlePauseTask(taskProvider);
-            break;
           case 'edit':
             widget.onEdit?.call();
             break;
@@ -456,33 +413,8 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
       itemBuilder: (context) {
         List<PopupMenuItem<String>> items = [];
 
-        // Start/Pause actions
+        // Progress update (only if not completed)
         if (!widget.task.isDone) {
-          if (widget.task.status != TaskStatus.inProgress) {
-            items.add(const PopupMenuItem(
-              value: 'start',
-              child: Row(
-                children: [
-                  Icon(Icons.play_arrow, size: 18, color: Colors.green),
-                  SizedBox(width: 12),
-                  Text('Start Task'),
-                ],
-              ),
-            ));
-          } else {
-            items.add(const PopupMenuItem(
-              value: 'pause',
-              child: Row(
-                children: [
-                  Icon(Icons.pause, size: 18, color: Colors.orange),
-                  SizedBox(width: 12),
-                  Text('Pause Task'),
-                ],
-              ),
-            ));
-          }
-
-          // Progress update
           items.add(const PopupMenuItem(
             value: 'progress',
             child: Row(
@@ -548,49 +480,21 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
           Row(
             children: [
               // Progress percentage
-              if (widget.task.hasProgress) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getProgressColor().withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    widget.task.progressText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: _getProgressColor(),
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getProgressColor().withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.task.progressText,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: _getProgressColor(),
                   ),
                 ),
-                const SizedBox(width: 12),
-              ],
-
-              // Time comparison (if both estimated and actual exist)
-              if (widget.task.hasEstimatedTime && widget.task.totalTimeSpent.inMinutes > 0) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getTimeEfficiencyColor().withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${widget.task.actualTimeText} / ${widget.task.estimatedTimeText}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: _getTimeEfficiencyColor(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  _getTimeEfficiencyIcon(),
-                  size: 16,
-                  color: _getTimeEfficiencyColor(),
-                ),
-              ],
+              ),
               
               const Spacer(),
               
@@ -601,45 +505,43 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
           ),
           
           // Progress bar
-          if (widget.task.hasProgress) ...[
-            const SizedBox(height: 12),
-            AnimatedBuilder(
-              animation: _progressAnimation,
-              child: Container(
+          const SizedBox(height: 12),
+          AnimatedBuilder(
+            animation: _progressAnimation,
+            child: Container(
+              height: 6,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            builder: (context, child) {
+              return Container(
                 height: 6,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(3),
                 ),
-              ),
-              builder: (context, child) {
-                return Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                  child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: _progressAnimation.value,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: _getProgressColor(),
-                        borderRadius: BorderRadius.circular(3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _getProgressColor().withOpacity(0.3),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
+                child: FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: _progressAnimation.value,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: _getProgressColor(),
+                      borderRadius: BorderRadius.circular(3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _getProgressColor().withOpacity(0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                   ),
-                );
-              },
-            ),
-          ],
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -684,32 +586,6 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
 
   // ===== Action Handlers =====
 
-  Future<void> _handleStartTask(TaskProvider taskProvider) async {
-    try {
-      final success = await taskProvider.startTask(widget.task.id);
-      if (!success && mounted) {
-        _showErrorSnackBar('Failed to start task');
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorSnackBar('Error starting task: $e');
-      }
-    }
-  }
-
-  Future<void> _handlePauseTask(TaskProvider taskProvider) async {
-    try {
-      final success = await taskProvider.pauseTask(widget.task.id);
-      if (!success && mounted) {
-        _showErrorSnackBar('Failed to pause task');
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorSnackBar('Error pausing task: $e');
-      }
-    }
-  }
-
   Future<void> _handleUpdateProgress(TaskProvider taskProvider, double progress) async {
     try {
       final success = await taskProvider.updateTaskProgress(
@@ -749,7 +625,6 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
   Color _getStatusColor() {
     switch (widget.task.status) {
       case TaskStatus.inProgress: return Colors.blue;
-      case TaskStatus.paused: return Colors.orange;
       case TaskStatus.completed: return Colors.green;
       default: return Colors.grey.shade400;
     }
@@ -773,22 +648,6 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
     if (widget.task.isOverdue) return Colors.red;
     if (widget.task.isDueToday) return Colors.orange;
     return Colors.grey.shade600;
-  }
-
-  Color _getTimeEfficiencyColor() {
-    final efficiency = widget.task.timeEfficiency;
-    if (efficiency == null) return Colors.grey;
-    if (efficiency >= 1.0) return Colors.green;
-    if (efficiency >= 0.8) return Colors.orange;
-    return Colors.red;
-  }
-
-  IconData _getTimeEfficiencyIcon() {
-    final efficiency = widget.task.timeEfficiency;
-    if (efficiency == null) return Icons.timer;
-    if (efficiency >= 1.0) return Icons.trending_up;
-    if (efficiency >= 0.8) return Icons.trending_flat;
-    return Icons.trending_down;
   }
 
   String _formatDueDate(DateTime date) {

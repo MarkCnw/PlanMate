@@ -142,7 +142,6 @@ class TaskProvider extends ChangeNotifier {
       debugPrint(
         '⚠️ Failed to log ${type.displayName} activity: $historyError',
       );
-      // ไม่ throw error เพราะการดำเนินการหลักอาจสำเร็จแล้ว
     }
   }
 
@@ -195,24 +194,23 @@ class TaskProvider extends ChangeNotifier {
     debugPrint('🛑 Stopped listening to tasks for project: $projectId');
   }
 
-  // ===== Enhanced Task Creation =====
+  // ===== Task Creation (Simplified) =====
 
-  /// สร้าง Task พร้อมฟีเจอร์เพิ่มเติม
+  /// สร้าง Task แบบง่าย (ไม่มี time estimation)
   Future<String?> createTaskEnhanced({
     required String title,
     required String projectId,
     String? description,
     DateTime? dueDate,
     int priority = 2,
-    Duration? estimatedDuration,
+    Duration? estimatedDuration, // เก็บไว้เพื่อ compatibility แต่จะ ignore
     double initialProgress = 0.0,
   }) async {
     try {
-      debugPrint('🔄 Creating enhanced task for project: $projectId');
+      debugPrint('🔄 Creating task for project: $projectId');
       debugPrint(
         '📊 Initial progress: ${(initialProgress * 100).round()}%',
       );
-      debugPrint('⏱️ Estimated duration: $estimatedDuration');
 
       if (currentUserId == null) {
         throw Exception('User not authenticated');
@@ -221,15 +219,24 @@ class TaskProvider extends ChangeNotifier {
       _setOperating(true);
       clearError();
 
-      final taskId = await _taskService.createTaskEnhanced(
+      // สร้าง task พื้นฐาน
+      final taskId = await _taskService.createTask(
         title: title,
         projectId: projectId,
         description: description,
         dueDate: dueDate,
         priority: priority,
-        estimatedDuration: estimatedDuration,
-        initialProgress: initialProgress,
       );
+
+      if (taskId == null) return null;
+
+      // อัปเดต progress หากมี
+      if (initialProgress > 0.0) {
+        await _taskService.updateTaskProgress(
+          taskId: taskId,
+          progress: initialProgress,
+        );
+      }
 
       // บันทึกประวัติการสร้าง
       await _logActivity(
@@ -240,16 +247,14 @@ class TaskProvider extends ChangeNotifier {
         metadata: {
           'priority': priority,
           'initialProgress': initialProgress,
-          'estimatedDuration': estimatedDuration?.inMinutes,
         },
       );
 
-      debugPrint('✅ Enhanced task created successfully with ID: $taskId');
-
+      debugPrint('✅ Task created successfully with ID: $taskId');
       _setOperating(false);
       return taskId;
     } catch (e) {
-      debugPrint('❌ Failed to create enhanced task: $e');
+      debugPrint('❌ Failed to create task: $e');
       _setError('Failed to create task: $e');
       _setOperating(false);
       return null;
@@ -275,7 +280,7 @@ class TaskProvider extends ChangeNotifier {
     );
   }
 
-  // ===== Task Actions =====
+  // ===== Task Actions (Simplified) =====
 
   /// Toggle task completion (with optimistic updates)
   Future<bool> toggleTaskComplete(String taskId) async {
@@ -298,7 +303,21 @@ class TaskProvider extends ChangeNotifier {
       final taskIndex = tasks.indexWhere((t) => t.id == taskId);
 
       if (taskIndex != -1) {
-        tasks[taskIndex] = task.completeTask();
+        if (task.isDone) {
+          // Mark as not done
+          tasks[taskIndex] = task.copyWith(
+            isDone: false,
+            status:
+                task.progress > 0
+                    ? TaskStatus.inProgress
+                    : TaskStatus.pending,
+            completedAt: null,
+            updatedAt: DateTime.now(),
+          );
+        } else {
+          // Mark as completed
+          tasks[taskIndex] = task.completeTask();
+        }
         _projectTasks[projectId] = tasks;
         notifyListeners();
       }
@@ -388,112 +407,14 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
-  /// เริ่มทำ task
-  Future<bool> startTask(String taskId) async {
-    try {
-      debugPrint('🔄 Starting task: $taskId');
-
-      if (currentUserId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Find the task
-      TaskModel? task = getTaskById(taskId);
-      if (task == null) {
-        throw Exception('Task not found');
-      }
-
-      // Optimistic update
-      final projectId = task.projectId;
-      final tasks = List<TaskModel>.from(_projectTasks[projectId] ?? []);
-      final taskIndex = tasks.indexWhere((t) => t.id == taskId);
-
-      if (taskIndex != -1) {
-        tasks[taskIndex] = task.startTask();
-        _projectTasks[projectId] = tasks;
-        notifyListeners();
-      }
-
-      // Actual update to Firestore
-      await _taskService.startTask(taskId);
-
-      // บันทึกประวัติ
-      await _logActivity(
-        type: ActivityType.update,
-        projectId: projectId,
-        taskId: taskId,
-        description: 'เริ่มทำงาน: ${task.title}',
-      );
-
-      debugPrint('✅ Task started successfully');
-      return true;
-    } catch (e) {
-      debugPrint('❌ Failed to start task: $e');
-      _setError('Failed to start task: $e');
-
-      // Revert optimistic update
-      notifyListeners();
-      return false;
-    }
-  }
-
-  /// หยุดชั่วคราว task
-  Future<bool> pauseTask(String taskId) async {
-    try {
-      debugPrint('🔄 Pausing task: $taskId');
-
-      if (currentUserId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Find the task
-      TaskModel? task = getTaskById(taskId);
-      if (task == null) {
-        throw Exception('Task not found');
-      }
-
-      // Optimistic update
-      final projectId = task.projectId;
-      final tasks = List<TaskModel>.from(_projectTasks[projectId] ?? []);
-      final taskIndex = tasks.indexWhere((t) => t.id == taskId);
-
-      if (taskIndex != -1) {
-        tasks[taskIndex] = task.pauseTask();
-        _projectTasks[projectId] = tasks;
-        notifyListeners();
-      }
-
-      // Actual update to Firestore
-      await _taskService.pauseTask(taskId);
-
-      // บันทึกประวัติ
-      await _logActivity(
-        type: ActivityType.update,
-        projectId: projectId,
-        taskId: taskId,
-        description: 'หยุดชั่วคราว: ${task.title}',
-      );
-
-      debugPrint('✅ Task paused successfully');
-      return true;
-    } catch (e) {
-      debugPrint('❌ Failed to pause task: $e');
-      _setError('Failed to pause task: $e');
-
-      // Revert optimistic update
-      notifyListeners();
-      return false;
-    }
-  }
-
-  /// อัปเดต task ทั่วไป (Enhanced)
+  /// อัปเดต task ทั่วไป
   Future<bool> updateTask({
     required String taskId,
     String? title,
     String? description,
     DateTime? dueDate,
     int? priority,
-    Duration? estimatedDuration,
+    Duration? estimatedDuration, // จะถูก ignore
     double? progress,
   }) async {
     try {
@@ -516,7 +437,6 @@ class TaskProvider extends ChangeNotifier {
         description: description,
         dueDate: dueDate,
         priority: priority,
-        estimatedDuration: estimatedDuration,
         progress: progress,
       );
 
@@ -545,7 +465,6 @@ class TaskProvider extends ChangeNotifier {
       }
 
       debugPrint('✅ Task updated successfully');
-
       _setOperating(false);
       return true;
     } catch (e) {
@@ -599,7 +518,7 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
-  /// ลบ tasks ทั้งหมดของ project (เรียกเมื่อลบ project)
+  /// ลบ tasks ทั้งหมดของ project
   Future<bool> deleteAllProjectTasks(String projectId) async {
     try {
       debugPrint('🔄 Deleting all tasks for project: $projectId');
@@ -611,9 +530,7 @@ class TaskProvider extends ChangeNotifier {
       _setOperating(true);
       clearError();
 
-      // นับจำนวน tasks ก่อนลบ
       final taskCount = getProjectTasks(projectId).length;
-
       await _taskService.deleteAllProjectTasks(projectId);
 
       // Clean up local state
@@ -631,7 +548,6 @@ class TaskProvider extends ChangeNotifier {
       );
 
       debugPrint('✅ All project tasks deleted successfully');
-
       _setOperating(false);
       return true;
     } catch (e) {
@@ -644,7 +560,7 @@ class TaskProvider extends ChangeNotifier {
 
   // ===== Data Fetching & Analysis =====
 
-  /// Get task statistics from server (for accurate counts)
+  /// Get task statistics from server
   Future<Map<String, int>?> getTaskStatsFromServer(
     String projectId,
   ) async {
@@ -721,47 +637,6 @@ class TaskProvider extends ChangeNotifier {
       (sum, task) => sum + task.progress,
     );
     return totalProgress / tasks.length;
-  }
-
-  /// Get time efficiency for project (estimated vs actual)
-  Map<String, dynamic> getProjectTimeAnalysis(String projectId) {
-    final tasks =
-        getProjectTasks(
-          projectId,
-        ).where((task) => task.hasEstimatedTime).toList();
-
-    if (tasks.isEmpty) {
-      return {
-        'hasData': false,
-        'totalEstimated': Duration.zero,
-        'totalActual': Duration.zero,
-        'efficiency': 0.0,
-        'tasksWithTime': 0,
-      };
-    }
-
-    final totalEstimated = tasks.fold<Duration>(
-      Duration.zero,
-      (sum, task) => sum + (task.estimatedDuration ?? Duration.zero),
-    );
-
-    final totalActual = tasks.fold<Duration>(
-      Duration.zero,
-      (sum, task) => sum + task.totalTimeSpent,
-    );
-
-    final efficiency =
-        totalActual.inMinutes > 0
-            ? totalEstimated.inMinutes / totalActual.inMinutes
-            : 0.0;
-
-    return {
-      'hasData': true,
-      'totalEstimated': totalEstimated,
-      'totalActual': totalActual,
-      'efficiency': efficiency,
-      'tasksWithTime': tasks.length,
-    };
   }
 
   /// Search tasks within a project
