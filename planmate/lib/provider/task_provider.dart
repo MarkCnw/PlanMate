@@ -14,8 +14,7 @@ class TaskProvider extends ChangeNotifier {
   // State variables
   Map<String, List<TaskModel>> _projectTasks = {}; // projectId -> tasks
   Map<String, bool> _projectLoading = {}; // projectId -> loading state
-  Map<String, StreamSubscription<List<TaskModel>>?> _taskSubscriptions =
-      {};
+  Map<String, StreamSubscription<List<TaskModel>>?> _taskSubscriptions = {};
   bool _isOperating = false; // สำหรับ CRUD operations
   String? _error;
 
@@ -40,12 +39,14 @@ class TaskProvider extends ChangeNotifier {
     final completed = tasks.where((task) => task.isDone).length;
     final pending = tasks.where((task) => !task.isDone).length;
     final overdue = tasks.where((task) => task.isOverdue).length;
+    final inProgress = tasks.where((task) => task.status == TaskStatus.inProgress).length;
 
     return {
       'total': tasks.length,
       'completed': completed,
       'pending': pending,
       'overdue': overdue,
+      'inProgress': inProgress,
     };
   }
 
@@ -106,6 +107,43 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Helper method to log activity with error handling
+  Future<void> _logActivity({
+    required ActivityType type,
+    required String projectId,
+    required String description,
+    String? taskId,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      if (currentUserId == null) {
+        debugPrint('⚠️ Cannot log activity: No user logged in');
+        return;
+      }
+
+      final activity = ActivityHistoryModel.create(
+        type: type,
+        projectId: projectId,
+        taskId: taskId,
+        description: description,
+        metadata: metadata,
+        userId: currentUserId,
+      );
+
+      await FirebaseFirestore.instance
+          .collection('activities')
+          .doc(activity.id)
+          .set(activity.toMap());
+
+      debugPrint('✅ ${type.displayName} activity logged successfully');
+    } catch (historyError) {
+      debugPrint(
+        '⚠️ Failed to log ${type.displayName} activity: $historyError',
+      );
+      // ไม่ throw error เพราะการดำเนินการหลักอาจสำเร็จแล้ว
+    }
+  }
+
   // Start listening to tasks for a specific project
   void startListeningToProject(String projectId) {
     if (currentUserId == null) {
@@ -155,16 +193,22 @@ class TaskProvider extends ChangeNotifier {
     debugPrint('🛑 Stopped listening to tasks for project: $projectId');
   }
 
-  // Create new task
-  Future<String?> createTask({
+  // ===== Enhanced Task Creation =====
+  
+  /// สร้าง Task พร้อมฟีเจอร์เพิ่มเติม
+  Future<String?> createTaskEnhanced({
     required String title,
     required String projectId,
     String? description,
     DateTime? dueDate,
     int priority = 2,
+    Duration? estimatedDuration,
+    double initialProgress = 0.0,
   }) async {
     try {
-      debugPrint('🔄 Creating task for project: $projectId');
+      debugPrint('🔄 Creating enhanced task for project: $projectId');
+      debugPrint('📊 Initial progress: ${(initialProgress * 100).round()}%');
+      debugPrint('⏱️ Estimated duration: $estimatedDuration');
 
       if (currentUserId == null) {
         throw Exception('User not authenticated');
@@ -173,27 +217,63 @@ class TaskProvider extends ChangeNotifier {
       _setOperating(true);
       clearError();
 
-      final taskId = await _taskService.createTask(
+      final taskId = await _taskService.createTaskEnhanced(
         title: title,
         projectId: projectId,
         description: description,
         dueDate: dueDate,
         priority: priority,
+        estimatedDuration: estimatedDuration,
+        initialProgress: initialProgress,
       );
 
-      debugPrint('✅ Task created successfully with ID: $taskId');
+      // บันทึกประวัติการสร้าง
+      await _logActivity(
+        type: ActivityType.create,
+        projectId: projectId,
+        taskId: taskId,
+        description: 'สร้างงาน: $title',
+        metadata: {
+          'priority': priority,
+          'initialProgress': initialProgress,
+          'estimatedDuration': estimatedDuration?.inMinutes,
+        },
+      );
+
+      debugPrint('✅ Enhanced task created successfully with ID: $taskId');
 
       _setOperating(false);
       return taskId;
     } catch (e) {
-      debugPrint('❌ Failed to create task: $e');
+      debugPrint('❌ Failed to create enhanced task: $e');
       _setError('Failed to create task: $e');
       _setOperating(false);
       return null;
     }
   }
 
-  // Toggle task completion (with optimistic updates)
+  /// สร้าง Task แบบธรรมดา (สำหรับ backward compatibility)
+  Future<String?> createTask({
+    required String title,
+    required String projectId,
+    String? description,
+    DateTime? dueDate,
+    int priority = 2,
+  }) async {
+    return createTaskEnhanced(
+      title: title,
+      projectId: projectId,
+      description: description,
+      dueDate: dueDate,
+      priority: priority,
+      estimatedDuration: null,
+      initialProgress: 0.0,
+    );
+  }
+
+  // ===== Task Actions =====
+
+  /// Toggle task completion (with optimistic updates)
   Future<bool> toggleTaskComplete(String taskId) async {
     try {
       debugPrint('🔄 Toggling task completion: $taskId');
@@ -214,13 +294,21 @@ class TaskProvider extends ChangeNotifier {
       final taskIndex = tasks.indexWhere((t) => t.id == taskId);
 
       if (taskIndex != -1) {
-        tasks[taskIndex] = task.toggleComplete();
+        tasks[taskIndex] = task.completeTask();
         _projectTasks[projectId] = tasks;
         notifyListeners();
       }
 
       // Actual update to Firestore
       await _taskService.toggleTaskComplete(taskId);
+
+      // บันทึกประวัติ
+      await _logActivity(
+        type: ActivityType.update,
+        projectId: projectId,
+        taskId: taskId,
+        description: task.isDone ? 'ยกเลิกการทำเสร็จ: ${task.title}' : 'ทำงานเสร็จ: ${task.title}',
+      );
 
       debugPrint('✅ Task completion toggled successfully');
       return true;
@@ -229,19 +317,174 @@ class TaskProvider extends ChangeNotifier {
       _setError('Failed to update task: $e');
 
       // Revert optimistic update on error
-      // The stream will eventually fix the state, but we can be more explicit
       notifyListeners();
       return false;
     }
   }
 
-  // Update task
+  /// อัปเดต progress ของ task
+  Future<bool> updateTaskProgress({
+    required String taskId,
+    required double progress,
+  }) async {
+    try {
+      debugPrint('🔄 Updating task progress: $taskId to ${(progress * 100).round()}%');
+
+      if (currentUserId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Find the task for optimistic update
+      TaskModel? task = getTaskById(taskId);
+      if (task == null) {
+        throw Exception('Task not found');
+      }
+
+      // Optimistic update
+      final projectId = task.projectId;
+      final tasks = List<TaskModel>.from(_projectTasks[projectId] ?? []);
+      final taskIndex = tasks.indexWhere((t) => t.id == taskId);
+
+      if (taskIndex != -1) {
+        tasks[taskIndex] = task.updateProgress(progress);
+        _projectTasks[projectId] = tasks;
+        notifyListeners();
+      }
+
+      // Actual update to Firestore
+      await _taskService.updateTaskProgress(taskId: taskId, progress: progress);
+
+      // บันทึกประวัติ
+      await _logActivity(
+        type: ActivityType.update,
+        projectId: projectId,
+        taskId: taskId,
+        description: 'อัปเดตความคืบหน้า: ${task.title} (${(progress * 100).round()}%)',
+        metadata: {
+          'oldProgress': task.progress,
+          'newProgress': progress,
+        },
+      );
+
+      debugPrint('✅ Task progress updated successfully');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Failed to update task progress: $e');
+      _setError('Failed to update task progress: $e');
+      
+      // Revert optimistic update
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// เริ่มทำ task
+  Future<bool> startTask(String taskId) async {
+    try {
+      debugPrint('🔄 Starting task: $taskId');
+
+      if (currentUserId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Find the task
+      TaskModel? task = getTaskById(taskId);
+      if (task == null) {
+        throw Exception('Task not found');
+      }
+
+      // Optimistic update
+      final projectId = task.projectId;
+      final tasks = List<TaskModel>.from(_projectTasks[projectId] ?? []);
+      final taskIndex = tasks.indexWhere((t) => t.id == taskId);
+
+      if (taskIndex != -1) {
+        tasks[taskIndex] = task.startTask();
+        _projectTasks[projectId] = tasks;
+        notifyListeners();
+      }
+
+      // Actual update to Firestore
+      await _taskService.startTask(taskId);
+
+      // บันทึกประวัติ
+      await _logActivity(
+        type: ActivityType.update,
+        projectId: projectId,
+        taskId: taskId,
+        description: 'เริ่มทำงาน: ${task.title}',
+      );
+
+      debugPrint('✅ Task started successfully');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Failed to start task: $e');
+      _setError('Failed to start task: $e');
+      
+      // Revert optimistic update
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// หยุดชั่วคราว task
+  Future<bool> pauseTask(String taskId) async {
+    try {
+      debugPrint('🔄 Pausing task: $taskId');
+
+      if (currentUserId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Find the task
+      TaskModel? task = getTaskById(taskId);
+      if (task == null) {
+        throw Exception('Task not found');
+      }
+
+      // Optimistic update
+      final projectId = task.projectId;
+      final tasks = List<TaskModel>.from(_projectTasks[projectId] ?? []);
+      final taskIndex = tasks.indexWhere((t) => t.id == taskId);
+
+      if (taskIndex != -1) {
+        tasks[taskIndex] = task.pauseTask();
+        _projectTasks[projectId] = tasks;
+        notifyListeners();
+      }
+
+      // Actual update to Firestore
+      await _taskService.pauseTask(taskId);
+
+      // บันทึกประวัติ
+      await _logActivity(
+        type: ActivityType.update,
+        projectId: projectId,
+        taskId: taskId,
+        description: 'หยุดชั่วคราว: ${task.title}',
+      );
+
+      debugPrint('✅ Task paused successfully');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Failed to pause task: $e');
+      _setError('Failed to pause task: $e');
+      
+      // Revert optimistic update
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// อัปเดต task ทั่วไป (Enhanced)
   Future<bool> updateTask({
     required String taskId,
     String? title,
     String? description,
     DateTime? dueDate,
     int? priority,
+    Duration? estimatedDuration,
+    double? progress,
   }) async {
     try {
       debugPrint('🔄 Updating task: $taskId');
@@ -253,13 +496,40 @@ class TaskProvider extends ChangeNotifier {
       _setOperating(true);
       clearError();
 
+      // Find the task for logging
+      TaskModel? task = getTaskById(taskId);
+      final projectId = task?.projectId ?? '';
+
       await _taskService.updateTask(
         taskId: taskId,
         title: title,
         description: description,
         dueDate: dueDate,
         priority: priority,
+        estimatedDuration: estimatedDuration,
+        progress: progress,
       );
+
+      // บันทึกประวัติ
+      if (task != null) {
+        final changes = <String>[];
+        if (title != null && title != task.title) changes.add('ชื่อ');
+        if (description != null && description != task.description) changes.add('รายละเอียด');
+        if (priority != null && priority != task.priority) changes.add('ความสำคัญ');
+        if (progress != null && progress != task.progress) changes.add('ความคืบหน้า');
+
+        await _logActivity(
+          type: ActivityType.update,
+          projectId: projectId,
+          taskId: taskId,
+          description: 'แก้ไขงาน: ${task.title}',
+          metadata: {
+            'changedFields': changes,
+            'oldTitle': task.title,
+            'newTitle': title,
+          },
+        );
+      }
 
       debugPrint('✅ Task updated successfully');
 
@@ -273,8 +543,7 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
-  // Delete task
-  // ใน lib/provider/task_provider.dart
+  /// ลบ task
   Future<bool> deleteTask(String taskId) async {
     try {
       debugPrint('🔄 Deleting task: $taskId');
@@ -287,33 +556,24 @@ class TaskProvider extends ChangeNotifier {
       clearError();
 
       // ดึงข้อมูล task ก่อนลบ เพื่อใช้ในการบันทึกประวัติ
-      final taskSnapshot =
-          await FirebaseFirestore.instance
-              .collection('tasks')
-              .doc(taskId)
-              .get();
+      final task = getTaskById(taskId);
+      final projectId = task?.projectId ?? '';
+      final taskTitle = task?.title ?? 'ไม่ทราบชื่อ';
 
-      if (taskSnapshot.exists) {
-        final taskData = taskSnapshot.data()!;
+      // ลบ task
+      await _taskService.deleteTask(taskId);
 
-        // ลบ task
-        await _taskService.deleteTask(taskId);
-
-        // บันทึกประวัติการลบ (ไม่ใช้ context)
-        final activity = ActivityHistoryModel.create(
-          type: ActivityType.delete,
-          projectId: taskData['projectId'],
-          taskId: taskId,
-          description: 'ลบงาน: ${taskData['title']}',
-          userId: currentUserId,
-        );
-
-        // เพิ่มกิจกรรมโดยตรงไปยัง Firestore
-        await FirebaseFirestore.instance
-            .collection('activities')
-            .doc(activity.id)
-            .set(activity.toMap());
-      }
+      // บันทึกประวัติการลบ
+      await _logActivity(
+        type: ActivityType.delete,
+        projectId: projectId,
+        taskId: taskId,
+        description: 'ลบงาน: $taskTitle',
+        metadata: {
+          'deletedTitle': taskTitle,
+          'deletedAt': DateTime.now().toIso8601String(),
+        },
+      );
 
       debugPrint('✅ Task deleted successfully');
       _setOperating(false);
@@ -326,7 +586,7 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
-  // Delete all tasks for a project (called when project is deleted)
+  /// ลบ tasks ทั้งหมดของ project (เรียกเมื่อลบ project)
   Future<bool> deleteAllProjectTasks(String projectId) async {
     try {
       debugPrint('🔄 Deleting all tasks for project: $projectId');
@@ -338,10 +598,24 @@ class TaskProvider extends ChangeNotifier {
       _setOperating(true);
       clearError();
 
+      // นับจำนวน tasks ก่อนลบ
+      final taskCount = getProjectTasks(projectId).length;
+
       await _taskService.deleteAllProjectTasks(projectId);
 
       // Clean up local state
       stopListeningToProject(projectId);
+
+      // บันทึกประวัติ
+      await _logActivity(
+        type: ActivityType.delete,
+        projectId: projectId,
+        description: 'ลบงานทั้งหมดในโปรเจค ($taskCount งาน)',
+        metadata: {
+          'deletedTaskCount': taskCount,
+          'deletedAt': DateTime.now().toIso8601String(),
+        },
+      );
 
       debugPrint('✅ All project tasks deleted successfully');
 
@@ -355,10 +629,10 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
-  // Get task statistics from server (for accurate counts)
-  Future<Map<String, int>?> getTaskStatsFromServer(
-    String projectId,
-  ) async {
+  // ===== Data Fetching & Analysis =====
+
+  /// Get task statistics from server (for accurate counts)
+  Future<Map<String, int>?> getTaskStatsFromServer(String projectId) async {
     try {
       return await _taskService.getTaskStats(projectId);
     } catch (e) {
@@ -367,52 +641,121 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
-  // Refresh tasks for a project
+  /// Refresh tasks for a project
   void refreshProjectTasks(String projectId) {
     debugPrint('🔄 Refreshing tasks for project: $projectId');
     startListeningToProject(projectId);
   }
 
-  // Get tasks filtered by completion status
+  /// Get tasks filtered by completion status
   List<TaskModel> getFilteredTasks(String projectId, {bool? completed}) {
     final tasks = getProjectTasks(projectId);
     if (completed == null) return tasks;
     return tasks.where((task) => task.isDone == completed).toList();
   }
 
-  // Get overdue tasks for a project
+  /// Get overdue tasks for a project
   List<TaskModel> getOverdueTasks(String projectId) {
-    return getProjectTasks(
-      projectId,
-    ).where((task) => task.isOverdue).toList();
+    return getProjectTasks(projectId).where((task) => task.isOverdue).toList();
   }
 
-  // Get tasks due today for a project
+  /// Get tasks due today for a project
   List<TaskModel> getTasksDueToday(String projectId) {
-    return getProjectTasks(
-      projectId,
-    ).where((task) => task.isDueToday).toList();
+    return getProjectTasks(projectId).where((task) => task.isDueToday).toList();
   }
 
-  // Get tasks by priority
+  /// Get tasks by priority
   List<TaskModel> getTasksByPriority(String projectId, int priority) {
-    return getProjectTasks(
-      projectId,
-    ).where((task) => task.priority == priority).toList();
+    return getProjectTasks(projectId).where((task) => task.priority == priority).toList();
   }
 
-  // Check if project has any tasks
+  /// Get tasks by status
+  List<TaskModel> getTasksByStatus(String projectId, TaskStatus status) {
+    return getProjectTasks(projectId).where((task) => task.status == status).toList();
+  }
+
+  /// Check if project has any tasks
   bool hasProjectTasks(String projectId) {
     return getProjectTasks(projectId).isNotEmpty;
   }
 
-  // Get completion percentage for project
+  /// Get completion percentage for project
   double getProjectCompletionRate(String projectId) {
     final tasks = getProjectTasks(projectId);
     if (tasks.isEmpty) return 0.0;
 
     final completed = tasks.where((task) => task.isDone).length;
     return completed / tasks.length;
+  }
+
+  /// Get average progress for project (considering all tasks)
+  double getProjectAverageProgress(String projectId) {
+    final tasks = getProjectTasks(projectId);
+    if (tasks.isEmpty) return 0.0;
+
+    final totalProgress = tasks.fold<double>(0.0, (sum, task) => sum + task.progress);
+    return totalProgress / tasks.length;
+  }
+
+  /// Get time efficiency for project (estimated vs actual)
+  Map<String, dynamic> getProjectTimeAnalysis(String projectId) {
+    final tasks = getProjectTasks(projectId).where((task) => task.hasEstimatedTime).toList();
+    
+    if (tasks.isEmpty) {
+      return {
+        'hasData': false,
+        'totalEstimated': Duration.zero,
+        'totalActual': Duration.zero,
+        'efficiency': 0.0,
+        'tasksWithTime': 0,
+      };
+    }
+
+    final totalEstimated = tasks.fold<Duration>(
+      Duration.zero,
+      (sum, task) => sum + (task.estimatedDuration ?? Duration.zero),
+    );
+
+    final totalActual = tasks.fold<Duration>(
+      Duration.zero,
+      (sum, task) => sum + task.totalTimeSpent,
+    );
+
+    final efficiency = totalActual.inMinutes > 0 
+        ? totalEstimated.inMinutes / totalActual.inMinutes 
+        : 0.0;
+
+    return {
+      'hasData': true,
+      'totalEstimated': totalEstimated,
+      'totalActual': totalActual,
+      'efficiency': efficiency,
+      'tasksWithTime': tasks.length,
+    };
+  }
+
+  /// Search tasks within a project
+  List<TaskModel> searchProjectTasks(String projectId, String query) {
+    if (query.trim().isEmpty) {
+      return getProjectTasks(projectId);
+    }
+
+    final searchQuery = query.toLowerCase().trim();
+    return getProjectTasks(projectId).where((task) {
+      return task.title.toLowerCase().contains(searchQuery) ||
+             (task.hasDescription && task.description!.toLowerCase().contains(searchQuery));
+    }).toList();
+  }
+
+  /// Get tasks summary for multiple projects
+  Map<String, Map<String, int>> getMultiProjectTasksSummary(List<String> projectIds) {
+    final summary = <String, Map<String, int>>{};
+    
+    for (final projectId in projectIds) {
+      summary[projectId] = getProjectTaskStats(projectId);
+    }
+    
+    return summary;
   }
 
   @override

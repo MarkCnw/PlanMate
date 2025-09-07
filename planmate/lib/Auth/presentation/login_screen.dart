@@ -58,7 +58,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
               Center(
                 child: Lottie.asset(
-                  'assets/lottie/3.json',
+                  'assets/lottie/2.json',
                   width: 500,
                   height: 500,
                   repeat: true,

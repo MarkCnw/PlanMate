@@ -1,355 +1,163 @@
+// ... imports อื่นตามของเดิม
 import 'package:flutter/material.dart';
 import 'package:planmate/Models/task_model.dart';
 
 class TaskItem extends StatefulWidget {
   final TaskModel task;
+  final bool isLoading;
   final VoidCallback? onToggle;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
-  final VoidCallback? onStart;
-  final VoidCallback? onPause;
-  final Function(double)? onProgressUpdate;
-  final bool isLoading;
 
   const TaskItem({
     super.key,
     required this.task,
+    this.isLoading = false,
     this.onToggle,
     this.onEdit,
     this.onDelete,
-    this.onStart,
-    this.onPause,
-    this.onProgressUpdate,
-    this.isLoading = false,
   });
 
   @override
   State<TaskItem> createState() => _TaskItemState();
 }
 
-class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
-  late AnimationController _checkboxController;
-  late AnimationController _slideController;
-  late AnimationController _progressController;
-  late Animation<double> _checkboxAnimation;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _progressAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    // Checkbox animation
-    _checkboxController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _checkboxAnimation = CurvedAnimation(
-      parent: _checkboxController,
-      curve: Curves.elasticOut,
-    );
-
-    // Slide animation
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(0.1, 0),
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOut,
-    ));
-
-    // Progress animation
-    _progressController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _progressAnimation = Tween<double>(
-      begin: 0.0,
-      end: widget.task.progress,
-    ).animate(CurvedAnimation(
-      parent: _progressController,
-      curve: Curves.easeInOut,
-    ));
-
-    // Set initial states
-    if (widget.task.isDone) {
-      _checkboxController.value = 1.0;
-    }
-    
-    _progressController.forward();
-  }
-
-  @override
-  void didUpdateWidget(TaskItem oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    
-    // Animate checkbox when status changes
-    if (oldWidget.task.isDone != widget.task.isDone) {
-      if (widget.task.isDone) {
-        _checkboxController.forward();
-        _slideController.forward().then((_) {
-          _slideController.reverse();
-        });
-      } else {
-        _checkboxController.reverse();
-      }
-    }
-
-    // Animate progress changes
-    if (oldWidget.task.progress != widget.task.progress) {
-      _progressAnimation = Tween<double>(
-        begin: oldWidget.task.progress,
-        end: widget.task.progress,
-      ).animate(CurvedAnimation(
-        parent: _progressController,
-        curve: Curves.easeInOut,
-      ));
-      
-      _progressController.reset();
-      _progressController.forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _checkboxController.dispose();
-    _slideController.dispose();
-    _progressController.dispose();
-    super.dispose();
-  }
-
+class _TaskItemState extends State<TaskItem> {
   @override
   Widget build(BuildContext context) {
-    return SlideTransition(
-      position: _slideAnimation,
+    return Opacity(
+      opacity: widget.isLoading ? 0.5 : 1,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: widget.task.isDone
-                ? Colors.green.withOpacity(0.3)
-                : _getStatusBorderColor(),
-            width: 1.5,
+                ? Colors.green.withOpacity(0.25)
+                : Colors.grey.shade200,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Column(
-          children: [
-            // Main content
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: widget.onEdit,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      // Custom checkbox
-                      _buildCustomCheckbox(),
-                      const SizedBox(width: 16),
-                      
-                      // Task content
-                      Expanded(
-                        child: _buildTaskContent(),
-                      ),
-                      
-                      // Priority & Status indicators
-                      Column(
-                        children: [
-                          _buildPriorityIndicator(),
-                          const SizedBox(height: 8),
-                          _buildActionButtons(),
-                        ],
-                      ),
-                    ],
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GestureDetector(
+                onTap: widget.onToggle,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  margin: const EdgeInsets.only(right: 14, top: 4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: widget.task.isDone
+                          ? Colors.green
+                          : const Color(0xFF8B5CF6),
+                      width: 2,
+                    ),
+                    color: widget.task.isDone
+                        ? Colors.green
+                        : Colors.white,
                   ),
+                  child: widget.task.isDone
+                      ? const Icon(Icons.check, size: 14, color: Colors.white)
+                      : null,
                 ),
               ),
-            ),
-            
-            // Progress section (if task has progress)
-            if (widget.task.hasProgress || widget.task.hasEstimatedTime)
-              _buildProgressSection(),
-          ],
+              Expanded(child: _buildContent()),
+              PopupMenuButton<String>(
+                onSelected: (val) {
+                  if (val == 'edit') widget.onEdit?.call();
+                  if (val == 'delete') widget.onDelete?.call();
+                },
+                itemBuilder: (_) => [
+                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                ],
+              )
+            ],
         ),
       ),
     );
   }
 
-  Widget _buildCustomCheckbox() {
-    return GestureDetector(
-      onTap: widget.isLoading ? null : widget.onToggle,
-      child: AnimatedBuilder(
-        animation: _checkboxAnimation,
-        builder: (context, child) {
-          return Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: widget.task.isDone
-                    ? Colors.green
-                    : _getStatusColor(),
-                width: 2,
-              ),
-              color: widget.task.isDone
-                  ? Colors.green
-                  : Colors.transparent,
-            ),
-            child: widget.isLoading
-                ? Padding(
-                    padding: const EdgeInsets.all(6),
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.grey.shade400,
-                      ),
-                    ),
-                  )
-                : widget.task.isDone
-                    ? Transform.scale(
-                        scale: _checkboxAnimation.value,
-                        child: const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      )
-                    : _buildStatusIcon(),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildStatusIcon() {
-    switch (widget.task.status) {
-      case TaskStatus.inProgress:
-        return Icon(
-          Icons.play_arrow,
-          color: Colors.blue,
-          size: 16,
-        );
-      case TaskStatus.paused:
-        return Icon(
-          Icons.pause,
-          color: Colors.orange,
-          size: 16,
-        );
-      default:
-        return const SizedBox.shrink();
-    }
-  }
-
-  Widget _buildTaskContent() {
+  Widget _buildContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Task title with status badge
         Row(
           children: [
             Expanded(
               child: Text(
                 widget.task.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: widget.task.isDone
-                      ? Colors.grey.shade500
-                      : Colors.grey.shade800,
                   decoration: widget.task.isDone
                       ? TextDecoration.lineThrough
                       : TextDecoration.none,
+                  color: widget.task.isDone
+                      ? Colors.grey.shade500
+                      : Colors.grey.shade800,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             _buildStatusBadge(),
           ],
         ),
-        
-        // Description if exists
         if (widget.task.hasDescription) ...[
           const SizedBox(height: 4),
-          Text(
-            widget.task.description!,
-            style: TextStyle(
-              fontSize: 14,
-              color: widget.task.isDone
-                  ? Colors.grey.shade400
-                  : Colors.grey.shade600,
-              decoration: widget.task.isDone
-                  ? TextDecoration.lineThrough
-                  : TextDecoration.none,
+            Text(
+              widget.task.description!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                color: widget.task.isDone
+                    ? Colors.grey.shade400
+                    : Colors.grey.shade600,
+                decoration: widget.task.isDone
+                    ? TextDecoration.lineThrough
+                    : TextDecoration.none,
+              ),
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
         ],
-        
-        // Task metadata
-        const SizedBox(height: 12),
-        _buildTaskMetadata(),
+        const SizedBox(height: 10),
+        _buildMetadata(),
       ],
     );
   }
 
   Widget _buildStatusBadge() {
     if (widget.task.isDone) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Text(
-          'Done',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: Colors.green,
-          ),
-        ),
-      );
+      return _badge('Done', Colors.green);
     }
-
-    final status = widget.task.status;
-    Color color;
-    String text;
-    
-    switch (status) {
+    switch (widget.task.status) {
       case TaskStatus.inProgress:
-        color = Colors.blue;
-        text = 'Active';
-        break;
+        return _badge('Active', Colors.blue);
       case TaskStatus.paused:
-        color = Colors.orange;
-        text = 'Paused';
-        break;
+        return _badge('Paused', Colors.orange);
       default:
         return const SizedBox.shrink();
     }
+  }
 
+  Widget _badge(String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -363,513 +171,97 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTaskMetadata() {
+  Widget _buildMetadata() {
+    final chips = <Widget>[];
+
+    if (widget.task.hasDueDate) {
+      chips.add(_meta(
+        icon: Icons.schedule,
+        text: _formatDue(widget.task.dueDate!),
+        color: _dueColor(),
+      ));
+    }
+
+    if (widget.task.hasProgress) {
+      chips.add(_meta(
+        icon: Icons.trending_up,
+        text: widget.task.progressText,
+        color: _progressColor(),
+      ));
+    }
+
+    // Priority chip
+    chips.add(_meta(
+      icon: Icons.flag,
+      text: widget.task.priorityText,
+      color: _priorityColor(widget.task.priority),
+    ));
+
     return Wrap(
-      spacing: 12,
-      runSpacing: 4,
-      children: [
-        // Due date
-        if (widget.task.hasDueDate) 
-          _buildMetadataItem(
-            Icons.schedule,
-            _formatDueDate(widget.task.dueDate!),
-            _getDueDateColor(),
-          ),
-        
-        // Time estimation
-        if (widget.task.hasEstimatedTime)
-          _buildMetadataItem(
-            Icons.timer,
-            widget.task.estimatedTimeText,
-            Colors.purple,
-          ),
-
-        // Actual time spent (if any)
-        if (widget.task.totalTimeSpent.inMinutes > 0)
-          _buildMetadataItem(
-            Icons.access_time,
-            widget.task.actualTimeText,
-            Colors.indigo,
-          ),
-
-        // Progress percentage
-        if (widget.task.hasProgress && !widget.task.isDone)
-          _buildMetadataItem(
-            Icons.trending_up,
-            widget.task.progressText,
-            _getProgressColor(),
-          ),
-      ],
+      spacing: 10,
+      runSpacing: 6,
+      children: chips,
     );
   }
 
-  Widget _buildMetadataItem(IconData icon, String text, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: color,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPriorityIndicator() {
-    final priorityColor = _getPriorityColor();
-    
+  Widget _meta({required IconData icon, required String text, required Color color}) {
     return Container(
-      width: 6,
-      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: priorityColor,
-        borderRadius: BorderRadius.circular(3),
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(14),
       ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return PopupMenuButton<String>(
-      onSelected: (value) {
-        switch (value) {
-          case 'start':
-            widget.onStart?.call();
-            break;
-          case 'pause':
-            widget.onPause?.call();
-            break;
-          case 'edit':
-            widget.onEdit?.call();
-            break;
-          case 'delete':
-            _showDeleteConfirmation();
-            break;
-          case 'progress':
-            _showProgressDialog();
-            break;
-        }
-      },
-      itemBuilder: (context) {
-        List<PopupMenuItem<String>> items = [];
-
-        // Start/Pause actions
-        if (!widget.task.isDone) {
-          if (widget.task.status != TaskStatus.inProgress) {
-            items.add(const PopupMenuItem(
-              value: 'start',
-              child: Row(
-                children: [
-                  Icon(Icons.play_arrow, size: 18, color: Colors.green),
-                  SizedBox(width: 12),
-                  Text('Start'),
-                ],
-              ),
-            ));
-          } else {
-            items.add(const PopupMenuItem(
-              value: 'pause',
-              child: Row(
-                children: [
-                  Icon(Icons.pause, size: 18, color: Colors.orange),
-                  SizedBox(width: 12),
-                  Text('Pause'),
-                ],
-              ),
-            ));
-          }
-
-          // Progress update
-          items.add(const PopupMenuItem(
-            value: 'progress',
-            child: Row(
-              children: [
-                Icon(Icons.trending_up, size: 18, color: Colors.blue),
-                SizedBox(width: 12),
-                Text('Update Progress'),
-              ],
-            ),
-          ));
-        }
-
-        // Edit and Delete
-        items.addAll([
-          const PopupMenuItem(
-            value: 'edit',
-            child: Row(
-              children: [
-                Icon(Icons.edit, size: 18, color: Colors.blue),
-                SizedBox(width: 12),
-                Text('Edit'),
-              ],
-            ),
-          ),
-          const PopupMenuItem(
-            value: 'delete',
-            child: Row(
-              children: [
-                Icon(Icons.delete, size: 18, color: Colors.red),
-                SizedBox(width: 12),
-                Text('Delete'),
-              ],
-            ),
-          ),
-        ]);
-
-        return items;
-      },
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          Icons.more_vert,
-          size: 16,
-          color: Colors.grey.shade600,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressSection() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Column(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Divider(height: 1),
-          const SizedBox(height: 12),
-          
-          // Progress information row
-          Row(
-            children: [
-              // Progress percentage
-              if (widget.task.hasProgress) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getProgressColor().withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    widget.task.progressText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: _getProgressColor(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-              ],
-
-              // Time comparison (if both estimated and actual exist)
-              if (widget.task.hasEstimatedTime && widget.task.totalTimeSpent.inMinutes > 0) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getTimeEfficiencyColor().withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${widget.task.actualTimeText} / ${widget.task.estimatedTimeText}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: _getTimeEfficiencyColor(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  _getTimeEfficiencyIcon(),
-                  size: 16,
-                  color: _getTimeEfficiencyColor(),
-                ),
-              ],
-              
-              const Spacer(),
-              
-              // Quick progress actions (if not completed)
-              if (!widget.task.isDone && widget.task.hasProgress)
-                _buildQuickProgressButtons(),
-            ],
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: color),
           ),
-          
-          // Progress bar
-          if (widget.task.hasProgress) ...[
-            const SizedBox(height: 12),
-            AnimatedBuilder(
-              animation: _progressAnimation,
-              child: Container(
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-              builder: (context, child) {
-                return Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                  child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: _progressAnimation.value,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: _getProgressColor(),
-                        borderRadius: BorderRadius.circular(3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _getProgressColor().withOpacity(0.3),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
         ],
       ),
     );
   }
 
-  Widget _buildQuickProgressButtons() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildQuickProgressButton('+25%', 0.25),
-        const SizedBox(width: 4),
-        _buildQuickProgressButton('Done', 1.0 - widget.task.progress),
-      ],
-    );
-  }
-
-  Widget _buildQuickProgressButton(String label, double increment) {
-    return GestureDetector(
-      onTap: () {
-        final newProgress = (widget.task.progress + increment).clamp(0.0, 1.0);
-        widget.onProgressUpdate?.call(newProgress);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey.shade700,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Color helper methods
-  Color _getPriorityColor() {
-    switch (widget.task.priority) {
-      case 1: return Colors.red;
-      case 2: return Colors.orange;
-      case 3: return Colors.green;
-      default: return Colors.orange;
-    }
-  }
-
-  Color _getStatusColor() {
-    switch (widget.task.status) {
-      case TaskStatus.inProgress: return Colors.blue;
-      case TaskStatus.paused: return Colors.orange;
-      case TaskStatus.completed: return Colors.green;
-      default: return Colors.grey.shade400;
-    }
-  }
-
-  Color _getStatusBorderColor() {
-    if (widget.task.isOverdue) return Colors.red.shade200;
-    return _getStatusColor().withOpacity(0.3);
-  }
-
-  Color _getProgressColor() {
-    final progress = widget.task.progress;
-    if (progress >= 1.0) return Colors.green;
-    if (progress >= 0.7) return Colors.blue;
-    if (progress >= 0.3) return Colors.orange;
-    return Colors.red;
-  }
-
-  Color _getDueDateColor() {
-    if (widget.task.isDone) return Colors.grey.shade400;
-    if (widget.task.isOverdue) return Colors.red;
-    if (widget.task.isDueToday) return Colors.orange;
-    return Colors.grey.shade600;
-  }
-
-  Color _getTimeEfficiencyColor() {
-    final efficiency = widget.task.timeEfficiency;
-    if (efficiency == null) return Colors.grey;
-    if (efficiency >= 1.0) return Colors.green; // On time or ahead
-    if (efficiency >= 0.8) return Colors.orange; // Slightly behind
-    return Colors.red; // Significantly behind
-  }
-
-  IconData _getTimeEfficiencyIcon() {
-    final efficiency = widget.task.timeEfficiency;
-    if (efficiency == null) return Icons.timer;
-    if (efficiency >= 1.0) return Icons.trending_up;
-    if (efficiency >= 0.8) return Icons.trending_flat;
-    return Icons.trending_down;
-  }
-
-  String _formatDueDate(DateTime date) {
+  String _formatDue(DateTime d) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(const Duration(days: 1));
-    final targetDate = DateTime(date.year, date.month, date.day);
+    final dd = DateTime(d.year, d.month, d.day);
+    if (dd == today) return 'Today';
+    if (dd == today.add(const Duration(days: 1))) return 'Tomorrow';
+    return '${d.day}/${d.month}';
+  }
 
-    if (targetDate == today) {
-      return 'Today';
-    } else if (targetDate == tomorrow) {
-      return 'Tomorrow';
-    } else if (targetDate.isBefore(today)) {
-      return 'Overdue';
-    } else {
-      return '${date.day}/${date.month}';
+  Color _dueColor() {
+    if (widget.task.isDone) return Colors.grey;
+    if (!widget.task.hasDueDate) return Colors.grey;
+    final now = DateTime.now();
+    if (widget.task.dueDate!.isBefore(now) && !widget.task.isDone) {
+      return Colors.red;
     }
+    return Colors.indigo;
   }
 
-  void _showDeleteConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Task'),
-        content: Text(
-          'Are you sure you want to delete "${widget.task.title}"?\n\nThis action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              widget.onDelete?.call();
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
+  Color _progressColor() {
+    final p = widget.task.progress;
+    if (p >= 1.0) return Colors.green;
+    if (p >= 0.75) return Colors.blue;
+    if (p >= 0.4) return Colors.orange;
+    return Colors.purple;
   }
 
-  void _showProgressDialog() {
-    double tempProgress = widget.task.progress;
-    
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Update Progress'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Current: ${widget.task.progressText}',
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'New: ${(tempProgress * 100).round()}%',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Slider(
-                value: tempProgress,
-                min: 0.0,
-                max: 1.0,
-                divisions: 20,
-                onChanged: (value) {
-                  setDialogState(() {
-                    tempProgress = value;
-                  });
-                },
-              ),
-              // Quick buttons
-              Wrap(
-                spacing: 8,
-                children: [
-                  _buildDialogProgressButton('25%', 0.25, tempProgress, setDialogState),
-                  _buildDialogProgressButton('50%', 0.5, tempProgress, setDialogState),
-                  _buildDialogProgressButton('75%', 0.75, tempProgress, setDialogState),
-                  _buildDialogProgressButton('100%', 1.0, tempProgress, setDialogState),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                widget.onProgressUpdate?.call(tempProgress);
-              },
-              child: const Text('Update'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDialogProgressButton(
-    String label, 
-    double value, 
-    double currentValue, 
-    StateSetter setDialogState,
-  ) {
-    final isSelected = (currentValue - value).abs() < 0.01;
-    
-    return GestureDetector(
-      onTap: () => setDialogState(() => currentValue = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: isSelected ? Colors.white : Colors.grey.shade700,
-          ),
-        ),
-      ),
-    );
+  Color _priorityColor(int p) {
+    switch (p) {
+      case 1:
+        return Colors.redAccent;
+      case 2:
+        return Colors.orange;
+      case 3:
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
   }
 }

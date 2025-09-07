@@ -6,6 +6,7 @@ import 'package:planmate/Navigation/Widgets/buttonappbar.dart';
 import 'package:planmate/Navigation/Widgets/customfab.dart';
 import 'package:planmate/Profile/Presentation/profile.screen.dart';
 import 'package:planmate/Search/Presentation/search_screen.dart';
+import 'package:planmate/test.dart';
 
 
 class CustomBottomNavBarApp extends StatefulWidget {
@@ -21,9 +22,11 @@ class _CustomBottomNavBarAppState extends State<CustomBottomNavBarApp> {
 
   final List<Widget> _pages = [
     HomeScreen(),
-    SearchScreen(),
+    // SearchScreen(),
+    Test(),
     CreateProjectScreen(),
-    HistoryScreen(),
+    Test(),
+    // HistoryScreen(),
     ProfileScreen(),
   ];
 
