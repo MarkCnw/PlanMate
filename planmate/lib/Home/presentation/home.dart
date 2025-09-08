@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:planmate/Home/Widgets/Banner/banner.dart';
+import 'package:planmate/Home/Widgets/Banner/progress_widget.dart';
 import 'package:planmate/Home/Widgets/Title/title_widget.dart';
 import 'package:planmate/provider/project_provider.dart';
 import 'package:provider/provider.dart';
@@ -45,6 +46,15 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: BannerHome(),
+              ),
+            ),
+
+            SliverToBoxAdapter(child: SizedBox(height: 25)),
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: ProgressChartSection(),
               ),
             ),
 

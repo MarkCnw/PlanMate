@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:lottie/lottie.dart';
+import 'package:planmate/Home/Widgets/Banner/text.dart';
 
 // ⬇️ เปลี่ยน import ให้ชี้ไปยังหน้าเต็มจอของคุณ
 // NOTE: ถ้าไฟล์คุณอยู่ path อื่น ให้แก้เป็น path ที่ถูกต้อง
@@ -13,10 +14,6 @@ class BannerHome extends StatefulWidget {
 }
 
 class _BannerHomeState extends State<BannerHome> {
-  bool _isPressed = false;
-  late final AnimationController _shineCtl;
-  late final Animation<double> _shine;
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -56,17 +53,23 @@ class _BannerHomeState extends State<BannerHome> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Small Steps, Big Results',
+                  "Small Steps, Big Results",
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 21,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFFfffffe),
-                    height: 1.4,
+                    color: Color(0xFFb8c1ec),
                   ),
                 ),
+                // const StarryText(
+                //   text: 'Small Steps, Big Results',
+                //   style: TextStyle(
+                //     fontSize: 21,
+                //     fontWeight: FontWeight.w700,
+                //   ),
+                // ),
                 const SizedBox(height: 13),
                 const Text(
-                  "Plan your projects, achieve your goals",
+                  "Plan your projects\nachieve your goals",
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w400,
@@ -84,8 +87,8 @@ class _BannerHomeState extends State<BannerHome> {
               alignment: Alignment.centerRight,
               child: Lottie.asset(
                 'assets/lottie/power.json',
-                repeat: true,
-                animate: true,
+                repeat: false,
+                animate: false,
               ),
             ),
           ),
