@@ -135,14 +135,14 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
         icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
         onPressed: () => Navigator.pop(context),
       ),
-      title: const Text(
-        'Project Details',
-        style: TextStyle(
-          color: Color(0xFF001858),
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      // title: const Text(
+      //   'Project Details',
+      //   style: TextStyle(
+      //     color: Color(0xFF001858),
+      //     fontSize: 18,
+      //     fontWeight: FontWeight.w600,
+      //   ),
+      // ),
       actions: [
         IconButton(
           icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
@@ -156,6 +156,7 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
 
   Widget _buildProjectHeader() {
     return Container(
+      height: 300,
       margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -168,26 +169,19 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        // boxShadow: [
-        //   BoxShadow(
-        //     color: currentProject.color.withOpacity(0.3),
-        //     blurRadius: 20,
-        //     offset: const Offset(0, 8),
-        //   ),
-        // ],
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
+            // decoration: BoxDecoration(
+            //   color: Colors.white,
+            //   borderRadius: BorderRadius.circular(16),
+            // ),
             child: Image.asset(
               currentProject.iconPath,
-              width: 60,
-              height: 60,
+              width: 100,
+              height: 100,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   width: 60,
