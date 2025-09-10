@@ -44,6 +44,7 @@ class _BannerHomeState extends State<BannerHome> {
                   ),
                   child: const Text(
                     'Inspirational',
+
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

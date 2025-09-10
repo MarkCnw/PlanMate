@@ -49,51 +49,54 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFf9f4ef),
-      appBar: _buildAppBar(),
-      body: Consumer<ProjectProvider>(
-        builder: (context, projectProvider, child) {
-          // Find current project from provider
-          final project = projectProvider.getProjectById(
-            widget.project.id,
-          );
 
-          // If project not found (deleted), show empty or navigate back
-          if (project == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.folder_off,
-                    color: Colors.grey,
-                    size: 64,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Project not found'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Go Back'),
-                  ),
-                ],
-              ),
+      body: SafeArea(
+        child: Consumer<ProjectProvider>(
+          builder: (context, projectProvider, child) {
+            // Find current project from provider
+            final project = projectProvider.getProjectById(
+              widget.project.id,
             );
-          }
 
-          // Update current project with latest data
-          currentProject = project;
+            // If project not found (deleted), show empty or navigate back
+            if (project == null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.folder_off,
+                      color: Colors.grey,
+                      size: 64,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Project not found'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Go Back'),
+                    ),
+                  ],
+                ),
+              );
+            }
 
-          return Column(
-            children: [
-              _buildProjectHeader(),
-              const SizedBox(height: 20),
+            // Update current project with latest data
+            currentProject = project;
 
-              // ✅ แทนที่ด้วย Task List
-              Expanded(child: _buildTaskSection()),
-            ],
-          );
-        },
+            return NestedScrollView(
+              headerSliverBuilder:
+                  (context, innerBoxIsScrolled) => [
+                    SliverToBoxAdapter(child: _buildProjectHeader()),
+                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                  ],
+              body:
+                  _buildTaskSection(), // ยังเป็นลิสต์เดิม เลื่อนได้ตามปกติ
+            );
+          },
+        ),
       ),
+
       floatingActionButton: SizedBox(
         width: 300,
         height: 55,
@@ -127,36 +130,9 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: const Color(0xFFf9f4ef),
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
-        onPressed: () => Navigator.pop(context),
-      ),
-      // title: const Text(
-      //   'Project Details',
-      //   style: TextStyle(
-      //     color: Color(0xFF001858),
-      //     fontSize: 18,
-      //     fontWeight: FontWeight.w600,
-      //   ),
-      // ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
-          onPressed: () {
-            _showProjectOptions();
-          },
-        ),
-      ],
-    );
-  }
-
   Widget _buildProjectHeader() {
     return Container(
-      height: 300,
+      height: 230,
       margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -170,69 +146,121 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
         ),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Column(
+      child: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            // decoration: BoxDecoration(
-            //   color: Colors.white,
-            //   borderRadius: BorderRadius.circular(16),
-            // ),
-            child: Image.asset(
-              currentProject.iconPath,
-              width: 100,
-              height: 100,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.image_not_supported,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                );
-              },
+          // ปุ่มลอยมุมซ้าย/ขวา (ไม่กิน layout height)
+          Positioned(
+            left: 0,
+            top: 0,
+            child: _circleBtn(
+              icon: Icons.arrow_back_ios_new_rounded,
+              onTap: () => Navigator.pop(context),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            currentProject.title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          Positioned(
+            right: 0,
+            top: 0,
+            child: _circleBtn(
+              icon: Icons.more_vert,
+              onTap: _showProjectOptions,
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildInfoChip(_getTimeAgoText(), FontAwesomeIcons.clock),
-              const SizedBox(width: 12),
-              // ✅ แสดง task count จริงจาก TaskProvider
-              Consumer<TaskProvider>(
-                builder: (context, taskProvider, _) {
-                  final taskStats = taskProvider.getProjectTaskStats(
-                    currentProject.id,
-                  );
-                  final totalTasks = taskStats['total'] ?? 0;
-                  final completedTasks = taskStats['completed'] ?? 0;
 
-                  return _buildInfoChip(
-                    '$completedTasks/$totalTasks Tasks',
-                    FontAwesomeIcons.listCheck,
-                  );
-                },
+          // เนื้อหาหลักจัดกลาง
+          Align(
+            alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+              ), // เผื่อข้างเล็กน้อย
+              child: Column(
+                mainAxisSize:
+                    MainAxisSize
+                        .max, // ให้คอลัมน์กินความสูงทั้งหมดของการ์ด
+                children: [
+                  // รูปจะยืด/หดตามพื้นที่ที่เหลือ
+                  Expanded(
+                    child: Center(
+                      child: Image.asset(
+                        currentProject.iconPath,
+                        fit: BoxFit.contain,
+                        errorBuilder:
+                            (_, __, ___) => const Icon(
+                              Icons.image_not_supported,
+                              color: Colors.white,
+                              size: 48,
+                            ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  // บีบข้อความลงถ้าพื้นที่ไม่พอ
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      currentProject.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Chips บีบลงถ้าพื้นที่แคบ
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Consumer<TaskProvider>(
+                      builder: (context, tp, _) {
+                        final s = tp.getProjectTaskStats(
+                          currentProject.id,
+                        );
+                        return Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            _buildInfoChip(
+                              _getTimeAgoText(),
+                              FontAwesomeIcons.clock,
+                            ),
+                            // _buildInfoChip(
+                            //   '${s['completed'] ?? 0}/${s['total'] ?? 0} Tasks',
+                            //   FontAwesomeIcons.listCheck,
+                            // ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ปุ่มวงกลมโปร่ง ๆ
+  Widget _circleBtn({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withOpacity(.2),
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white, size: 18),
+        onPressed: onTap,
       ),
     );
   }

@@ -1,25 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:planmate/Models/project_model.dart';
+import 'package:planmate/provider/task_provider.dart';
+import 'package:provider/provider.dart';
 
-class ProjectCard extends StatelessWidget {
+class ProjectCard extends StatefulWidget {
   final ProjectModel project;
   final VoidCallback? onTap;
 
-  const ProjectCard({
-    super.key, 
-    required this.project,
-    this.onTap,
-  });
+  const ProjectCard({super.key, required this.project, this.onTap});
+
+  @override
+  State<ProjectCard> createState() => _ProjectCardState();
+}
+
+class _ProjectCardState extends State<ProjectCard> {
+  late ProjectModel currentProject;
+
+  @override
+  void initState() {
+    super.initState();
+    currentProject = widget.project;
+    // ✅ เริ่มฟัง tasks ของ project นี้
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TaskProvider>().startListeningToProject(
+        widget.project.id,
+      );
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: project.color,
+          color: widget.project.color,
           // gradient: LinearGradient(
           //   colors: [project.color.withOpacity(0.8), project.color],
           //   begin: Alignment.topLeft,
@@ -49,8 +68,8 @@ class ProjectCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Image.asset(
-                    project.iconPath, 
-                    width: 60, 
+                    widget.project.iconPath,
+                    width: 60,
                     height: 60,
                     errorBuilder: (context, error, stackTrace) {
                       // Fallback icon ถ้าโหลดไม่ได้
@@ -69,7 +88,7 @@ class ProjectCard extends StatelessWidget {
 
             // Title
             Text(
-              project.title,
+              widget.project.title,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
@@ -86,29 +105,33 @@ class ProjectCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  project.taskCountText,
+                  widget.project.taskCountText,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'Detail',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
+                  child: Consumer<TaskProvider>(
+                      builder: (context, tp, _) {
+                        
+                        return Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            _buildInfoChip(
+                              _getTimeAgoText(),
+                              FontAwesomeIcons.clock,
+                            ),
+                            // _buildInfoChip(
+                            //   '${s['completed'] ?? 0}/${s['total'] ?? 0} Tasks',
+                            //   FontAwesomeIcons.listCheck,
+                            // ),
+                          ],
+                        );
+                      },
                     ),
-                  ),
                 ),
               ],
             ),
@@ -117,4 +140,45 @@ class ProjectCard extends StatelessWidget {
       ),
     );
   }
+}
+ 
+
+String _getTimeAgoText() {
+  final now = DateTime.now();
+  final difference = now.difference(currentProject.createdAt);
+
+  if (difference.inDays > 0) {
+    return '${difference.inDays}d ago';
+  } else if (difference.inHours > 0) {
+    return '${difference.inHours}h ago';
+  } else if (difference.inMinutes > 0) {
+    return '${difference.inMinutes}m ago';
+  } else {
+    return 'Just created';
+  }
+}
+
+Widget _buildInfoChip(String text, IconData icon) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: const Color(0xFFff8ba7),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: Colors.white, size: 14),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    ),
+  );
 }
