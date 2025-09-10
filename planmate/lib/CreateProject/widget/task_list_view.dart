@@ -158,69 +158,7 @@ class TaskListView extends StatelessWidget {
     );
   }
 
-  // Widget _buildTaskStats() {
-  //   final totalTasks = tasks.length;
-  //   final completedTasks = tasks.where((task) => task.isDone).length;
-  //   final overdueTasks = tasks.where((task) => task.isOverdue).length;
-  //   final completionRate = totalTasks > 0 ? (completedTasks / totalTasks) : 0.0;
-
-  //   return Container(
-  //     padding: const EdgeInsets.all(16),
-  //     decoration: BoxDecoration(
-  //       color: Color(0xFFFDDE67),
-  //       borderRadius: BorderRadius.circular(16),
-  //       border: Border.all(
-  //         color: const Color(0xFF8B5CF6).withOpacity(0.2),
-  //       ),
-  //     ),
-  //     child: Column(
-  //       children: [
-  //         Row(
-  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //           children: [
-  //             Text(
-  //               'Task Progress',
-  //               style: TextStyle(
-  //                 fontSize: 16,
-  //                 fontWeight: FontWeight.w600,
-  //                 color: Color(0xFF030202),
-  //               ),
-  //             ),
-  //             Text(
-  //               '${(completionRate * 100).toInt()}%',
-  //               style: const TextStyle(
-  //                 fontSize: 18,
-  //                 fontWeight: FontWeight.bold,
-  //                 color: Color(0xFF202430),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //         const SizedBox(height: 12),
-          
-  //         // Progress bar
-  //         LinearProgressIndicator(
-  //           value: completionRate,
-  //           backgroundColor: Colors.grey.shade200,
-  //           valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF202430)),
-  //           minHeight: 6,
-  //         ),
-  //         const SizedBox(height: 16),
-          
-  //         // Stats row
-  //         Row(
-  //           mainAxisAlignment: MainAxisAlignment.spaceAround,
-  //           children: [
-  //             _buildStatItem('Total', totalTasks, const Color(0xFF202430)),
-  //             _buildStatItem('Completed', completedTasks, Color(0xFF202430)),
-  //             if (overdueTasks > 0)
-  //               _buildStatItem('Overdue', overdueTasks, Colors.red),
-  //           ],
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
+  
 
   Widget _buildStatItem(String label, int count, Color color) {
     return Column(

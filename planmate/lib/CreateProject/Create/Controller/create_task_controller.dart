@@ -21,7 +21,8 @@ class CreateTaskController {
 
   // Form controllers
   final TextEditingController titleController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController descriptionController =
+      TextEditingController();
 
   // Form state
   DateTime? selectedDueDate;
@@ -36,9 +37,9 @@ class CreateTaskController {
 
   // Priority options
   final List<Map<String, dynamic>> priorityOptions = [
-    {'value': 1, 'label': 'High', 'color': Colors.red},
-    {'value': 2, 'label': 'Medium', 'color': Colors.orange},
-    {'value': 3, 'label': 'Low', 'color': Colors.green},
+    {'value': 1, 'label': 'High', 'emoji': '😡'},
+    {'value': 2, 'label': 'Medium', 'emoji': '😐'},
+    {'value': 3, 'label': 'Low', 'emoji': '😊'},
   ];
 
   // Get current priority info
@@ -116,7 +117,9 @@ class CreateTaskController {
     // Validate due date (optional validation if needed)
     if (selectedDueDate != null) {
       final now = DateTime.now();
-      if (selectedDueDate!.isBefore(DateTime(now.year, now.month, now.day))) {
+      if (selectedDueDate!.isBefore(
+        DateTime(now.year, now.month, now.day),
+      )) {
         dueDateError = 'Due date cannot be in the past';
         isValid = false;
       }
@@ -134,7 +137,10 @@ class CreateTaskController {
     onStateChanged();
 
     try {
-      final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+      final taskProvider = Provider.of<TaskProvider>(
+        context,
+        listen: false,
+      );
 
       final title = titleController.text.trim();
       final description = descriptionController.text.trim();
@@ -167,12 +173,14 @@ class CreateTaskController {
       ).copyWith(
         id: taskId,
         progress: initialProgress,
-        status: initialProgress > 0 ? TaskStatus.inProgress : TaskStatus.pending,
+        status:
+            initialProgress > 0
+                ? TaskStatus.inProgress
+                : TaskStatus.pending,
         startedAt: initialProgress > 0 ? DateTime.now() : null,
       );
 
       onSuccess?.call(task);
-
     } catch (e) {
       debugPrint('createTask error: $e');
       onError?.call();
@@ -220,10 +228,10 @@ class CreateTaskController {
   // Check if form has changes
   bool get hasChanges {
     return titleController.text.trim().isNotEmpty ||
-           descriptionController.text.trim().isNotEmpty ||
-           selectedDueDate != null ||
-           selectedPriority != 2 ||
-           initialProgress > 0.0;
+        descriptionController.text.trim().isNotEmpty ||
+        selectedDueDate != null ||
+        selectedPriority != 2 ||
+        initialProgress > 0.0;
   }
 
   // ✅ Helper methods for UI
@@ -264,7 +272,9 @@ extension TaskProviderEnhanced on TaskProvider {
   }) async {
     try {
       debugPrint('🔄 Creating enhanced task for project: $projectId');
-      debugPrint('📊 Initial progress: ${(initialProgress * 100).round()}%');
+      debugPrint(
+        '📊 Initial progress: ${(initialProgress * 100).round()}%',
+      );
 
       if (currentUserId == null) {
         throw Exception('User not authenticated');
@@ -305,7 +315,7 @@ extension TaskProviderEnhanced on TaskProvider {
     try {
       // อัปเดตข้อมูลใน Firestore (ไม่มี time estimation)
       final updateData = <String, dynamic>{};
-      
+
       if (progress != null) {
         updateData['progress'] = progress.clamp(0.0, 1.0);
         if (progress > 0.0 && progress < 1.0) {
@@ -320,7 +330,7 @@ extension TaskProviderEnhanced on TaskProvider {
 
       if (updateData.isNotEmpty) {
         updateData['updatedAt'] = FieldValue.serverTimestamp();
-        
+
         await FirebaseFirestore.instance
             .collection('tasks')
             .doc(taskId)

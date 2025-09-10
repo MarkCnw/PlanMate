@@ -211,34 +211,34 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  // const SizedBox(height: 10),
 
                   // Chips บีบลงถ้าพื้นที่แคบ
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Consumer<TaskProvider>(
-                      builder: (context, tp, _) {
-                        final s = tp.getProjectTaskStats(
-                          currentProject.id,
-                        );
-                        return Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 12,
-                          runSpacing: 8,
-                          children: [
-                            _buildInfoChip(
-                              _getTimeAgoText(),
-                              FontAwesomeIcons.clock,
-                            ),
-                            // _buildInfoChip(
-                            //   '${s['completed'] ?? 0}/${s['total'] ?? 0} Tasks',
-                            //   FontAwesomeIcons.listCheck,
-                            // ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
+                  // FittedBox(
+                  //   fit: BoxFit.scaleDown,
+                  //   child: Consumer<TaskProvider>(
+                  //     builder: (context, tp, _) {
+                  //       final s = tp.getProjectTaskStats(
+                  //         currentProject.id,
+                  //       );
+                  //       return Wrap(
+                  //         alignment: WrapAlignment.center,
+                  //         spacing: 12,
+                  //         runSpacing: 8,
+                  //         children: [
+                  //           _buildInfoChip(
+                  //             _getTimeAgoText(),
+                  //             FontAwesomeIcons.clock,
+                  //           ),
+                  //           // _buildInfoChip(
+                  //           //   '${s['completed'] ?? 0}/${s['total'] ?? 0} Tasks',
+                  //           //   FontAwesomeIcons.listCheck,
+                  //           // ),
+                  //         ],
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
                 ],
               ),
             ),

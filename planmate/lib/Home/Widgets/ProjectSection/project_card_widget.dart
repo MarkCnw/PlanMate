@@ -29,7 +29,6 @@ class _ProjectCardState extends State<ProjectCard> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -113,25 +112,24 @@ class _ProjectCardState extends State<ProjectCard> {
                 ),
                 Container(
                   child: Consumer<TaskProvider>(
-                      builder: (context, tp, _) {
-                        
-                        return Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 12,
-                          runSpacing: 8,
-                          children: [
-                            _buildInfoChip(
-                              _getTimeAgoText(),
-                              FontAwesomeIcons.clock,
-                            ),
-                            // _buildInfoChip(
-                            //   '${s['completed'] ?? 0}/${s['total'] ?? 0} Tasks',
-                            //   FontAwesomeIcons.listCheck,
-                            // ),
-                          ],
-                        );
-                      },
-                    ),
+                    builder: (context, tp, _) {
+                      return Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 12,
+                        runSpacing: 8,
+                        children: [
+                          _buildInfoChip(
+                            _getTimeAgoText(),
+                            FontAwesomeIcons.clock,
+                          ),
+                          // _buildInfoChip(
+                          //   '${s['completed'] ?? 0}/${s['total'] ?? 0} Tasks',
+                          //   FontAwesomeIcons.listCheck,
+                          // ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -140,45 +138,44 @@ class _ProjectCardState extends State<ProjectCard> {
       ),
     );
   }
-}
- 
 
-String _getTimeAgoText() {
-  final now = DateTime.now();
-  final difference = now.difference(currentProject.createdAt);
+  String _getTimeAgoText() {
+    final now = DateTime.now();
+    final difference = now.difference(currentProject.createdAt);
 
-  if (difference.inDays > 0) {
-    return '${difference.inDays}d ago';
-  } else if (difference.inHours > 0) {
-    return '${difference.inHours}h ago';
-  } else if (difference.inMinutes > 0) {
-    return '${difference.inMinutes}m ago';
-  } else {
-    return 'Just created';
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just created';
+    }
   }
-}
 
-Widget _buildInfoChip(String text, IconData icon) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-    decoration: BoxDecoration(
-      color: const Color(0xFFff8ba7),
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: Colors.white, size: 14),
-        const SizedBox(width: 6),
-        Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
+  Widget _buildInfoChip(String text, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFff8ba7),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 14),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
