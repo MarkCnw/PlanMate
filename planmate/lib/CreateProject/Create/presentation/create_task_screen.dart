@@ -291,30 +291,30 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
                           () => controller.selectPriority(option['value']),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color:
                               isSelected
-                                  ? Colors.purple.withOpacity(0.1)
+                                  ? option['color'].withOpacity(0.1)
                                   : Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color:
                                 isSelected
-                                    ? Colors.purple
+                                    ? option['color']
                                     : Colors.transparent,
                             width: 2,
                           ),
                         ),
-
                         child: Column(
                           children: [
-                            // 🔹 เปลี่ยนวงกลมเป็น emoji
-                            Text(
-                              option['emoji'],
-                              style: const TextStyle(
-                                fontSize: 28,
-                              ), // ขนาด emoji
+                            Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: option['color'],
+                                shape: BoxShape.circle,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Text(
