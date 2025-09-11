@@ -120,6 +120,11 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final priorityColor = _getPriorityColor();
+    final borderColor = widget.task.isDone 
+        ? Colors.green.withOpacity(0.4)
+        : priorityColor;
+
     return SlideTransition(
       position: _slideAnimation,
       child: Container(
@@ -128,18 +133,16 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: widget.task.isDone
-                ? Colors.green.withOpacity(0.3)
-                : _getStatusBorderColor(),
-            width: 1.5,
+            color: borderColor,
+            width: 3.0, // เพิ่มความหนาของกรอบ
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          // boxShadow: [
+          //   BoxShadow(
+          //     color: priorityColor.withOpacity(0.1),
+          //     blurRadius: 12,
+          //     offset: const Offset(0, 4),
+          //   ),
+          // ],
         ),
         child: Column(
           children: [
@@ -153,8 +156,8 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      // Custom checkbox
-                      _buildCustomCheckbox(),
+                      // Square checkbox
+                      _buildSquareCheckbox(),
                       const SizedBox(width: 16),
                       
                       // Task content
@@ -162,14 +165,8 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
                         child: _buildTaskContent(),
                       ),
                       
-                      // Priority & Action buttons
-                      Column(
-                        children: [
-                          _buildPriorityIndicator(),
-                          const SizedBox(width: 12),
-                          _buildActionButtons(),
-                        ],
-                      ),
+                      // Action buttons
+                      _buildActionButtons(),
                     ],
                   ),
                 ),
@@ -185,7 +182,10 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildCustomCheckbox() {
+  // ✅ New square checkbox design
+  Widget _buildSquareCheckbox() {
+    final priorityColor = _getPriorityColor();
+    
     return GestureDetector(
       onTap: widget.isLoading ? null : widget.onToggle,
       child: AnimatedBuilder(
@@ -195,12 +195,12 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(6), // มุมมน slightly
               border: Border.all(
                 color: widget.task.isDone
                     ? Colors.green
-                    : _getStatusColor(),
-                width: 2,
+                    : priorityColor,
+                width: 2.5,
               ),
               color: widget.task.isDone
                   ? Colors.green
@@ -212,7 +212,7 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.grey.shade400,
+                        priorityColor.withOpacity(0.6),
                       ),
                     ),
                   )
@@ -233,13 +233,6 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
   }
 
   Widget _buildStatusIcon() {
-    if (widget.task.status == TaskStatus.inProgress) {
-      return Icon(
-        Icons.play_arrow,
-        color: Colors.blue,
-        size: 16,
-      );
-    }
     return const SizedBox.shrink();
   }
 
@@ -318,18 +311,19 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
     }
 
     if (widget.task.status == TaskStatus.inProgress) {
+      final priorityColor = _getPriorityColor();
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.blue.withOpacity(0.1),
+          color: priorityColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Text(
+        child: Text(
           'Active',
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.bold,
-            color: Colors.blue,
+            color: priorityColor,
           ),
         ),
       );
@@ -358,6 +352,13 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
             widget.task.progressText,
             _getProgressColor(),
           ),
+
+        // Priority indicator
+        _buildMetadataItem(
+          Icons.flag,
+          _getPriorityText(),
+          _getPriorityColor(),
+        ),
       ],
     );
   }
@@ -377,19 +378,6 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildPriorityIndicator() {
-    final priorityColor = _getPriorityColor();
-    
-    return Container(
-      width: 6,
-      height: 40,
-      decoration: BoxDecoration(
-        color: priorityColor,
-        borderRadius: BorderRadius.circular(3),
-      ),
     );
   }
 
@@ -612,27 +600,34 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
     );
   }
 
-  // Color helper methods
+  // ===== Color Helper Methods =====
+
+  // ✅ Updated priority color method
   Color _getPriorityColor() {
     switch (widget.task.priority) {
-      case 1: return Colors.red;
-      case 2: return Colors.orange;
-      case 3: return Colors.green;
-      default: return Colors.orange;
+      case 1: return Colors.red.shade600;    // High priority - แดงเข้ม
+      case 2: return Colors.orange.shade600; // Medium priority - ส้มเข้ม  
+      case 3: return Colors.green.shade600;  // Low priority - เขียวเข้ม
+      default: return Colors.grey.shade500;  // Default - เทา
+    }
+  }
+
+  // ✅ New helper method for priority text
+  String _getPriorityText() {
+    switch (widget.task.priority) {
+      case 1: return 'High';
+      case 2: return 'Medium';
+      case 3: return 'Low';
+      default: return 'Normal';
     }
   }
 
   Color _getStatusColor() {
     switch (widget.task.status) {
-      case TaskStatus.inProgress: return Colors.blue;
+      case TaskStatus.inProgress: return _getPriorityColor();
       case TaskStatus.completed: return Colors.green;
-      default: return Colors.grey.shade400;
+      default: return _getPriorityColor();
     }
-  }
-
-  Color _getStatusBorderColor() {
-    if (widget.task.isOverdue) return Colors.red.shade200;
-    return _getStatusColor().withOpacity(0.3);
   }
 
   Color _getProgressColor() {
