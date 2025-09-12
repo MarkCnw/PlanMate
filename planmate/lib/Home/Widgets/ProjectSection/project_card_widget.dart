@@ -53,23 +53,23 @@ class _ProjectCardState extends State<ProjectCard> {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Icon ด้านขวาบน
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(), // Spacer
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  // decoration: BoxDecoration(
+                  //   color: Colors.white,
+                  //   borderRadius: BorderRadius.circular(8),
+                  // ),
                   child: Image.asset(
                     widget.project.iconPath,
-                    width: 60,
-                    height: 60,
+                    width: 70,
+                    height: 70,
                     errorBuilder: (context, error, stackTrace) {
                       // Fallback icon ถ้าโหลดไม่ได้
                       return Icon(
@@ -88,26 +88,27 @@ class _ProjectCardState extends State<ProjectCard> {
             // Title
             Text(
               widget.project.title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white70, // สีซีดกว่าปกติ
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
 
             const SizedBox(height: 8),
 
             // Task count + Detail button
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   widget.project.taskCountText,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 Container(
@@ -155,12 +156,24 @@ class _ProjectCardState extends State<ProjectCard> {
   }
 
   Widget _buildInfoChip(String text, IconData icon) {
+    // ถ้าเป็นข้อความ Just created ให้แสดงเฉพาะ text แต่มี padding ด้วย
+    if (text == 'Just created') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    // ค่าอื่นยังคงเป็นแบบมีไอคอน + padding
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFff8ba7),
-        borderRadius: BorderRadius.circular(20),
-      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

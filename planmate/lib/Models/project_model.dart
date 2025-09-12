@@ -43,52 +43,52 @@ class ProjectModel {
     return {
       '1': const ProjectIconData(
         iconPath: 'assets/newicons/1.png',
-        color: Color(0xFFD32F2F), // แดงเข้มพลัง
+        color: Color(0xFF4A90E2), // แดงเข้มพลัง
         name: 'dumbel',
       ),
       '2': const ProjectIconData(
         iconPath: 'assets/newicons/2.png',
-        color: Color(0xFFD32F2F), // แดงเข้มพลัง
+        color: Color(0xFF7B68EE), // แดงเข้มพลัง
         name: 'dumbel',
       ),
        '3': const ProjectIconData(
         iconPath: 'assets/newicons/3.png',
-        color: Color(0xFFD32F2F), // แดงเข้มพลัง
+        color: Color(0xFF87CEEB), // แดงเข้มพลัง
         name: 'dumbel',
       ),
        '4': const ProjectIconData(
         iconPath: 'assets/newicons/4.png',
-        color: Color(0xFFD32F2F), // แดงเข้มพลัง
+        color: Color(0xFF9370DB), 
         name: 'dumbel',
       ),
        '5': const ProjectIconData(
         iconPath: 'assets/newicons/5.png',
-        color: Color(0xFFD32F2F), // แดงเข้มพลัง
+        color: Color(0xFF4169E1), 
         name: 'dumbel',
       ),
        '6': const ProjectIconData(
         iconPath: 'assets/newicons/6.png',
-        color: Color(0xFFD32F2F), // แดงเข้มพลัง
+        color: Color(0xFFDC143C), 
         name: 'dumbel',
       ),
        '7': const ProjectIconData(
         iconPath: 'assets/newicons/7.png',
-        color: Color(0xFFD32F2F), // แดงเข้มพลัง
+        color: Color(0xFFCD853F), 
         name: 'dumbel',
       ),
        '8': const ProjectIconData(
         iconPath: 'assets/newicons/8.png',
-        color: Color(0xFFD32F2F), // แดงเข้มพลัง
+        color: Color(0xFFD32F2F), 
         name: 'dumbel',
       ),
        '9': const ProjectIconData(
         iconPath: 'assets/newicons/9.png',
-        color: Color(0xFFD32F2F), // แดงเข้มพลัง
+        color: Color(0xFFFF6347), 
         name: 'dumbel',
       ),
        '10': const ProjectIconData(
         iconPath: 'assets/newicons/10.png',
-        color: Color(0xFFD32F2F), // แดงเข้มพลัง
+        color: Color(0xFF8A2BE2), 
         name: 'dumbel',
       ),
      

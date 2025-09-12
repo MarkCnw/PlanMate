@@ -127,87 +127,6 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ---------- Preview Card ----------
-                Container(
-                  decoration: BoxDecoration(
-                    color: _cardNavy,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _cardNavy.withOpacity(.18),
-                        blurRadius: 24,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(18),
-                  child: Row(
-                    children: [
-                      // left: text
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // pill tag
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(.10),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(color: Colors.white.withOpacity(.22)),
-                              ),
-                              child: Text(
-                                'Preview',
-                                style: GoogleFonts.inter(
-                                  color: Colors.white.withOpacity(.95),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              name.isEmpty ? 'Project Name' : name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                                height: 1.2,
-                                letterSpacing: .2,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Choose an icon you love. You can change it later.',
-                              style: GoogleFonts.inter(
-                                color: const Color(0xFFb8c1ec),
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // right: icon box
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(.15),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white.withOpacity(.25)),
-                        ),
-                        child: iconPath == null
-                            ? Icon(Icons.folder_open_rounded, size: 56, color: Colors.white.withOpacity(.9))
-                            : Image.asset(iconPath, width: 56, height: 56, fit: BoxFit.contain),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 22),
-
                 // ---------- Header copy ----------
                 _title('Let’s set up your project', sub: 'Name it and pick an icon.'),
 
@@ -287,7 +206,7 @@ class _CreateProjectSheetState extends State<CreateProjectSheet> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4, // แถวละ 4 ไอคอน ดูทันสมัยขึ้น
+                      crossAxisCount: 3, // แถวละ 4 ไอคอน ดูทันสมัยขึ้น
                       crossAxisSpacing: 10,
                       mainAxisSpacing: 10,
                     ),

@@ -49,7 +49,6 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFf9f4ef),
-
       body: SafeArea(
         child: Consumer<ProjectProvider>(
           builder: (context, projectProvider, child) {
@@ -120,7 +119,7 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
                 ),
               ),
               SizedBox(width: 8),
-              Icon(FontAwesomeIcons.plus, size: 18, color: Colors.white),
+              Icon(FontAwesomeIcons.pen, size: 18, color: Colors.white),
             ],
           ),
         ),
@@ -153,7 +152,7 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
             left: 0,
             top: 0,
             child: _circleBtn(
-              icon: Icons.arrow_back_ios_new_rounded,
+              icon: FontAwesomeIcons.arrowLeft,
               onTap: () => Navigator.pop(context),
             ),
           ),
@@ -161,7 +160,7 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
             right: 0,
             top: 0,
             child: _circleBtn(
-              icon: Icons.more_vert,
+              icon: FontAwesomeIcons.ellipsis,
               onTap: _showProjectOptions,
             ),
           ),
@@ -398,44 +397,138 @@ class _ProjectScreenDetailState extends State<ProjectScreenDetail> {
   }
 
   void _showProjectOptions() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 20,
+            offset: Offset(0, -4),
+          ),
+        ],
       ),
-      builder:
-          (context) => Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(
-                    FontAwesomeIcons.penToSquare,
-                    color: Color(0xFF3B82F6),
-                  ),
-                  title: const Text('Edit Project'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showEditProjectBottomSheet();
-                  },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
+            // Header
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Project Options',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
                 ),
-                ListTile(
-                  leading: const Icon(
-                    FontAwesomeIcons.trash,
-                    color: Colors.red,
-                  ),
-                  title: const Text('Delete Project'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showDeleteConfirmation();
-                  },
-                ),
-              ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Edit Project
+            _optionTile(
+              icon: Icons.edit,
+              iconColor: Colors.blue,
+              bgColor: Colors.blue.withOpacity(0.1),
+              text: 'Edit Project',
+              onTap: () {
+                Navigator.pop(context);
+                _showEditProjectBottomSheet();
+              },
+            ),
+            const SizedBox(height: 8),
+
+            // Delete Project
+            _optionTile(
+              icon: Icons.delete,
+              iconColor: Colors.red,
+              bgColor: Colors.red.withOpacity(0.1),
+              text: 'Delete Project',
+              textColor: Colors.red,
+              onTap: () {
+                Navigator.pop(context);
+                _showDeleteConfirmation();
+              },
+            ),
+            const SizedBox(height: 8),
+
+            // Cancel
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey.shade700,
+                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// ✅ helper widget สวยๆ
+Widget _optionTile({
+  required IconData icon,
+  required Color iconColor,
+  required Color bgColor,
+  required String text,
+  Color textColor = Colors.black87,
+  required VoidCallback onTap,
+}) {
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(14),
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: textColor,
             ),
           ),
-    );
-  }
+          const Spacer(),
+          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        ],
+      ),
+    ),
+  );
+}
+
 
   // ✅ เปลี่ยนจาก mock เป็น real task creation
   void _showAddTaskBottomSheet() {

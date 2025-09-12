@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:planmate/Models/task_model.dart';
 import 'package:provider/provider.dart';
 import 'package:planmate/provider/task_provider.dart';
@@ -23,7 +24,8 @@ class TaskItem extends StatefulWidget {
   State<TaskItem> createState() => _TaskItemState();
 }
 
-class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
+class _TaskItemState extends State<TaskItem>
+    with TickerProviderStateMixin {
   late AnimationController _checkboxController;
   late AnimationController _slideController;
   late AnimationController _progressController;
@@ -34,7 +36,7 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    
+
     // Checkbox animation
     _checkboxController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -53,10 +55,9 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
     _slideAnimation = Tween<Offset>(
       begin: Offset.zero,
       end: const Offset(0.1, 0),
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOut),
+    );
 
     // Progress animation
     _progressController = AnimationController(
@@ -66,23 +67,25 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
     _progressAnimation = Tween<double>(
       begin: 0.0,
       end: widget.task.progress,
-    ).animate(CurvedAnimation(
-      parent: _progressController,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _progressController,
+        curve: Curves.easeInOut,
+      ),
+    );
 
     // Set initial states
     if (widget.task.isDone) {
       _checkboxController.value = 1.0;
     }
-    
+
     _progressController.forward();
   }
 
   @override
   void didUpdateWidget(TaskItem oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Animate checkbox when status changes
     if (oldWidget.task.isDone != widget.task.isDone) {
       if (widget.task.isDone) {
@@ -100,11 +103,13 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
       _progressAnimation = Tween<double>(
         begin: oldWidget.task.progress,
         end: widget.task.progress,
-      ).animate(CurvedAnimation(
-        parent: _progressController,
-        curve: Curves.easeInOut,
-      ));
-      
+      ).animate(
+        CurvedAnimation(
+          parent: _progressController,
+          curve: Curves.easeInOut,
+        ),
+      );
+
       _progressController.reset();
       _progressController.forward();
     }
@@ -121,9 +126,8 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final priorityColor = _getPriorityColor();
-    final borderColor = widget.task.isDone 
-        ? Colors.green.withOpacity(0.4)
-        : priorityColor;
+    final borderColor =
+        widget.task.isDone ? Colors.green.withOpacity(0.4) : priorityColor;
 
     return SlideTransition(
       position: _slideAnimation,
@@ -159,12 +163,10 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
                       // Square checkbox
                       _buildSquareCheckbox(),
                       const SizedBox(width: 16),
-                      
+
                       // Task content
-                      Expanded(
-                        child: _buildTaskContent(),
-                      ),
-                      
+                      Expanded(child: _buildTaskContent()),
+
                       // Action buttons
                       _buildActionButtons(),
                     ],
@@ -172,10 +174,9 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            
+
             // Progress section (if task has progress)
-            if (widget.task.hasProgress)
-              _buildProgressSection(),
+            if (widget.task.hasProgress) _buildProgressSection(),
           ],
         ),
       ),
@@ -185,7 +186,7 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
   // ✅ New square checkbox design
   Widget _buildSquareCheckbox() {
     final priorityColor = _getPriorityColor();
-    
+
     return GestureDetector(
       onTap: widget.isLoading ? null : widget.onToggle,
       child: AnimatedBuilder(
@@ -197,34 +198,32 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(6), // มุมมน slightly
               border: Border.all(
-                color: widget.task.isDone
-                    ? Colors.green
-                    : priorityColor,
+                color: widget.task.isDone ? Colors.green : priorityColor,
                 width: 2.5,
               ),
-              color: widget.task.isDone
-                  ? Colors.green
-                  : Colors.transparent,
+              color:
+                  widget.task.isDone ? Colors.green : Colors.transparent,
             ),
-            child: widget.isLoading
-                ? Padding(
-                    padding: const EdgeInsets.all(6),
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        priorityColor.withOpacity(0.6),
-                      ),
-                    ),
-                  )
-                : widget.task.isDone
-                    ? Transform.scale(
-                        scale: _checkboxAnimation.value,
-                        child: const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 18,
+            child:
+                widget.isLoading
+                    ? Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          priorityColor.withOpacity(0.6),
                         ),
-                      )
+                      ),
+                    )
+                    : widget.task.isDone
+                    ? Transform.scale(
+                      scale: _checkboxAnimation.value,
+                      child: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    )
                     : _buildStatusIcon(),
           );
         },
@@ -249,22 +248,22 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: widget.task.isDone
-                      ? Colors.grey.shade500
-                      : Colors.grey.shade800,
-                  decoration: widget.task.isDone
-                      ? TextDecoration.lineThrough
-                      : TextDecoration.none,
+                  color:
+                      widget.task.isDone
+                          ? Colors.grey.shade500
+                          : Colors.grey.shade800,
+                  decoration:
+                      widget.task.isDone
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 8),
-            _buildStatusBadge(),
           ],
         ),
-        
+
         // Description if exists
         if (widget.task.hasDescription) ...[
           const SizedBox(height: 4),
@@ -272,18 +271,20 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
             widget.task.description!,
             style: TextStyle(
               fontSize: 14,
-              color: widget.task.isDone
-                  ? Colors.grey.shade400
-                  : Colors.grey.shade600,
-              decoration: widget.task.isDone
-                  ? TextDecoration.lineThrough
-                  : TextDecoration.none,
+              color:
+                  widget.task.isDone
+                      ? Colors.grey.shade400
+                      : Colors.grey.shade600,
+              decoration:
+                  widget.task.isDone
+                      ? TextDecoration.lineThrough
+                      : TextDecoration.none,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ],
-        
+
         // Task metadata
         const SizedBox(height: 12),
         _buildTaskMetadata(),
@@ -291,46 +292,7 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildStatusBadge() {
-    if (widget.task.isDone) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Text(
-          'Done',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: Colors.green,
-          ),
-        ),
-      );
-    }
-
-    if (widget.task.status == TaskStatus.inProgress) {
-      final priorityColor = _getPriorityColor();
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: priorityColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          'Active',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: priorityColor,
-          ),
-        ),
-      );
-    }
-
-    return const SizedBox.shrink();
-  }
+  
 
   Widget _buildTaskMetadata() {
     return Wrap(
@@ -338,7 +300,7 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
       runSpacing: 4,
       children: [
         // Due date
-        if (widget.task.hasDueDate) 
+        if (widget.task.hasDueDate)
           _buildMetadataItem(
             Icons.schedule,
             _formatDueDate(widget.task.dueDate!),
@@ -385,7 +347,7 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
     return PopupMenuButton<String>(
       onSelected: (value) async {
         final taskProvider = context.read<TaskProvider>();
-        
+
         switch (value) {
           case 'edit':
             widget.onEdit?.call();
@@ -403,16 +365,18 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
 
         // Progress update (only if not completed)
         if (!widget.task.isDone) {
-          items.add(const PopupMenuItem(
-            value: 'progress',
-            child: Row(
-              children: [
-                Icon(Icons.trending_up, size: 18, color: Colors.blue),
-                SizedBox(width: 12),
-                Text('Update Progress'),
-              ],
+          items.add(
+            const PopupMenuItem(
+              value: 'progress',
+              child: Row(
+                children: [
+                  Icon(Icons.trending_up, size: 18, color: Colors.blue),
+                  SizedBox(width: 12),
+                  Text('Update Progress'),
+                ],
+              ),
             ),
-          ));
+          );
         }
 
         // Edit and Delete
@@ -441,15 +405,18 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
 
         return items;
       },
-      child: Container(
-        padding: const EdgeInsets.all(8),
+      child: // ปุ่มแอคชั่นสมัยใหม่
+      
+      // ปุ่มแอคชั่นสมัยใหม่
+      Container(
+        padding: EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
-          shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(8), // เปลี่ยนจากวงกลม
         ),
         child: Icon(
-          Icons.more_vert,
-          size: 16,
+          FontAwesomeIcons.ellipsis, // 3 จุดแนวนอน (ทันสมัยกว่า)
+          size: 20,
           color: Colors.grey.shade600,
         ),
       ),
@@ -463,13 +430,16 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
         children: [
           const Divider(height: 1),
           const SizedBox(height: 12),
-          
+
           // Progress information row
           Row(
             children: [
               // Progress percentage
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: _getProgressColor().withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -483,15 +453,15 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              
+
               const Spacer(),
-              
+
               // Quick progress actions (if not completed)
               if (!widget.task.isDone && widget.task.hasProgress)
                 _buildQuickProgressButtons(),
             ],
           ),
-          
+
           // Progress bar
           const SizedBox(height: 12),
           AnimatedBuilder(
@@ -549,7 +519,10 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
   Widget _buildQuickProgressButton(String label, double increment) {
     return GestureDetector(
       onTap: () async {
-        final newProgress = (widget.task.progress + increment).clamp(0.0, 1.0);
+        final newProgress = (widget.task.progress + increment).clamp(
+          0.0,
+          1.0,
+        );
         final taskProvider = context.read<TaskProvider>();
         await _handleUpdateProgress(taskProvider, newProgress);
       },
@@ -574,7 +547,10 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
 
   // ===== Action Handlers =====
 
-  Future<void> _handleUpdateProgress(TaskProvider taskProvider, double progress) async {
+  Future<void> _handleUpdateProgress(
+    TaskProvider taskProvider,
+    double progress,
+  ) async {
     try {
       final success = await taskProvider.updateTaskProgress(
         taskId: widget.task.id,
@@ -605,28 +581,39 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
   // ✅ Updated priority color method
   Color _getPriorityColor() {
     switch (widget.task.priority) {
-      case 1: return Colors.red.shade600;    // High priority - แดงเข้ม
-      case 2: return Colors.orange.shade600; // Medium priority - ส้มเข้ม  
-      case 3: return Colors.green.shade600;  // Low priority - เขียวเข้ม
-      default: return Colors.grey.shade500;  // Default - เทา
+      case 1:
+        return Colors.red.shade600; // High priority - แดงเข้ม
+      case 2:
+        return Colors.orange.shade600; // Medium priority - ส้มเข้ม
+      case 3:
+        return Colors.green.shade600; // Low priority - เขียวเข้ม
+      default:
+        return Colors.grey.shade500; // Default - เทา
     }
   }
 
   // ✅ New helper method for priority text
   String _getPriorityText() {
     switch (widget.task.priority) {
-      case 1: return 'High';
-      case 2: return 'Medium';
-      case 3: return 'Low';
-      default: return 'Normal';
+      case 1:
+        return 'High';
+      case 2:
+        return 'Medium';
+      case 3:
+        return 'Low';
+      default:
+        return 'Normal';
     }
   }
 
   Color _getStatusColor() {
     switch (widget.task.status) {
-      case TaskStatus.inProgress: return _getPriorityColor();
-      case TaskStatus.completed: return Colors.green;
-      default: return _getPriorityColor();
+      case TaskStatus.inProgress:
+        return _getPriorityColor();
+      case TaskStatus.completed:
+        return Colors.green;
+      default:
+        return _getPriorityColor();
     }
   }
 
@@ -665,103 +652,129 @@ class _TaskItemState extends State<TaskItem> with TickerProviderStateMixin {
   void _showDeleteConfirmation() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Task'),
-        content: Text(
-          'Are you sure you want to delete "${widget.task.title}"?\n\nThis action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Task'),
+            content: Text(
+              'Are you sure you want to delete "${widget.task.title}"?\n\nThis action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  widget.onDelete?.call();
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              widget.onDelete?.call();
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
   }
 
   void _showProgressDialog() {
     double tempProgress = widget.task.progress;
-    
+
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Update Progress'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Current: ${widget.task.progressText}',
-                style: TextStyle(color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'New: ${(tempProgress * 100).round()}%',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setDialogState) => AlertDialog(
+                  title: const Text('Update Progress'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Current: ${widget.task.progressText}',
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'New: ${(tempProgress * 100).round()}%',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Slider(
+                        value: tempProgress,
+                        min: 0.0,
+                        max: 1.0,
+                        divisions: 20,
+                        onChanged: (value) {
+                          setDialogState(() {
+                            tempProgress = value;
+                          });
+                        },
+                      ),
+                      // Quick buttons
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          _buildDialogProgressButton(
+                            '25%',
+                            0.25,
+                            tempProgress,
+                            setDialogState,
+                          ),
+                          _buildDialogProgressButton(
+                            '50%',
+                            0.5,
+                            tempProgress,
+                            setDialogState,
+                          ),
+                          _buildDialogProgressButton(
+                            '75%',
+                            0.75,
+                            tempProgress,
+                            setDialogState,
+                          ),
+                          _buildDialogProgressButton(
+                            '100%',
+                            1.0,
+                            tempProgress,
+                            setDialogState,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        final taskProvider = context.read<TaskProvider>();
+                        await _handleUpdateProgress(
+                          taskProvider,
+                          tempProgress,
+                        );
+                      },
+                      child: const Text('Update'),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              Slider(
-                value: tempProgress,
-                min: 0.0,
-                max: 1.0,
-                divisions: 20,
-                onChanged: (value) {
-                  setDialogState(() {
-                    tempProgress = value;
-                  });
-                },
-              ),
-              // Quick buttons
-              Wrap(
-                spacing: 8,
-                children: [
-                  _buildDialogProgressButton('25%', 0.25, tempProgress, setDialogState),
-                  _buildDialogProgressButton('50%', 0.5, tempProgress, setDialogState),
-                  _buildDialogProgressButton('75%', 0.75, tempProgress, setDialogState),
-                  _buildDialogProgressButton('100%', 1.0, tempProgress, setDialogState),
-                ],
-              ),
-            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                final taskProvider = context.read<TaskProvider>();
-                await _handleUpdateProgress(taskProvider, tempProgress);
-              },
-              child: const Text('Update'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
   Widget _buildDialogProgressButton(
-    String label, 
-    double value, 
-    double currentValue, 
+    String label,
+    double value,
+    double currentValue,
     StateSetter setDialogState,
   ) {
     final isSelected = (currentValue - value).abs() < 0.01;
-    
+
     return GestureDetector(
       onTap: () => setDialogState(() => currentValue = value),
       child: Container(

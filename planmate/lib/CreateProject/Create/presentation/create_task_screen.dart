@@ -79,13 +79,8 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.8, // ลดความสูง
-        padding: EdgeInsets.fromLTRB(
-          20,
-          20,
-          20,
-          MediaQuery.of(context).viewInsets.bottom + 20,
-        ),
+        height: MediaQuery.of(context).size.height * 0.8,
+           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20), // ❌ ไม่มี viewInsets
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -107,7 +102,7 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
             _buildHeader(),
             const SizedBox(height: 30),
 
-            // Form content
+            // Form content with button inside ScrollView
             Expanded(
               child: SingleChildScrollView(
                 keyboardDismissBehavior:
@@ -123,16 +118,21 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
                     const SizedBox(height: 24),
                     _buildDueDateSelector(),
                     const SizedBox(height: 24),
-                    // ✅ Initial Progress Section (เหลือแค่นี้)
                     _buildInitialProgressSlider(),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),
             ),
 
-            // Create button
-            _buildCreateButton(),
+            // ✅ ปุ่มลอยอยู่กับที่ ไม่โดน scroll
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.all(5),
+                child: _buildCreateButton(),
+              ),
+            ),
           ],
         ),
       ),
@@ -422,7 +422,6 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
     );
   }
 
-  // ✅ Initial Progress Slider (ยังคงเหมือนเดิม)
   Widget _buildInitialProgressSlider() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -641,29 +640,18 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
                     ),
                   ],
                 )
-                : Row(
+                : const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.add_task, size: 20),
-                    const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       'Create Task',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    if (controller.hasChanges) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
+                    SizedBox(width: 8),
+                    Icon(Icons.add_task, size: 20),
                   ],
                 ),
       ),
@@ -695,7 +683,6 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
     }
   }
 
-  // ✅ Helper methods สำหรับสีและไอคอน
   Color _getProgressColor() {
     final progress = controller.initialProgress;
     if (progress == 0.0) return Colors.grey.shade400;
