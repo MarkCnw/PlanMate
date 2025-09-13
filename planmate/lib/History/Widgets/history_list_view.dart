@@ -18,7 +18,7 @@ class HistoryListView extends StatelessWidget {
           onRefresh: () async {
             await historyProvider.refreshActivities();
           },
-          color: const Color(0xFF8B5CF6),
+          // color: const Color(0xFF8B5CF6),
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: activities.length,

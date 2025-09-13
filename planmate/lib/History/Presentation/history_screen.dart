@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:planmate/History/Models/activity_history_model.dart';
+
 import 'package:planmate/History/Provider/history_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:planmate/provider/auth_provider.dart';
@@ -38,7 +38,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFf9f4ef),
         elevation: 0,
         title: const Text(
           'ประวัติกิจกรรม',
@@ -137,39 +136,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
 
-          // เพิ่มในหน้า HistoryScreen เพื่อทดสอบ
-          // FloatingActionButton(
-          //   onPressed: () async {
-          //     print('🧪 Testing: Creating sample activity');
-
-          //     try {
-          //       final authProvider = context.read<AuthProvider>();
-          //       final historyProvider = context.read<HistoryProvider>();
-
-          //       if (authProvider.currentUser == null) {
-          //         print('❌ No user logged in');
-          //         return;
-          //       }
-
-          //       // สร้าง activity ทดสอบ
-          //       final activity = ActivityHistoryModel.create(
-          //         type: ActivityType.create,
-          //         projectId: 'test_project_123',
-          //         description: 'ทดสอบสร้างกิจกรรม',
-          //         userId: authProvider.currentUser!.uid,
-          //       );
-
-          //       print('🧪 Activity data: ${activity.toMap()}');
-
-          //       await historyProvider.addActivity(activity);
-          //       print('✅ Test activity added successfully');
-          //     } catch (e) {
-          //       print('❌ Error adding test activity: $e');
-          //     }
-          //   },
-          //   child: Icon(Icons.add),
-          //   backgroundColor: Colors.purple,
-          // ),
+          
         ],
       ),
     );

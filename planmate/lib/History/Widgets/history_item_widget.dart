@@ -6,10 +6,7 @@ import 'package:planmate/provider/project_provider.dart';
 class HistoryItemWidget extends StatelessWidget {
   final ActivityHistoryModel activity;
 
-  const HistoryItemWidget({
-    super.key,
-    required this.activity,
-  });
+  const HistoryItemWidget({super.key, required this.activity});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +31,7 @@ class HistoryItemWidget extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: _getTypeColor(activity.type).withOpacity(0.1),
+              // color: _getTypeColor(activity.type).withOpacity(0.1),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
@@ -43,9 +40,9 @@ class HistoryItemWidget extends StatelessWidget {
               size: 24,
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Content
           Expanded(
             child: Column(
@@ -60,13 +57,15 @@ class HistoryItemWidget extends StatelessWidget {
                     color: Color(0xFF001858),
                   ),
                 ),
-                
+
                 const SizedBox(height: 4),
-                
+
                 // Project info
                 Consumer<ProjectProvider>(
                   builder: (context, projectProvider, child) {
-                    final project = projectProvider.getProjectById(activity.projectId);
+                    final project = projectProvider.getProjectById(
+                      activity.projectId,
+                    );
                     return Text(
                       // ✅ เปลี่ยนจาก project?.name เป็น project?.title
                       'โปรเจกต์: ${project?.title ?? 'ไม่พบโปรเจกต์'}',
@@ -77,7 +76,7 @@ class HistoryItemWidget extends StatelessWidget {
                     );
                   },
                 ),
-                
+
                 // Task info (if exists)
                 if (activity.taskId != null)
                   Padding(
@@ -93,21 +92,18 @@ class HistoryItemWidget extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Timestamp
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 activity.formattedTime,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
               ),
-              
+
               const SizedBox(height: 4),
-              
+
               // Activity type badge
               Container(
                 padding: const EdgeInsets.symmetric(
