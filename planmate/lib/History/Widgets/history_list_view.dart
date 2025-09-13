@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:planmate/History/Provider/history_provider.dart';
 import 'package:planmate/History/Widgets/history_item_widget.dart';
@@ -18,20 +16,24 @@ class HistoryListView extends StatelessWidget {
           onRefresh: () async {
             await historyProvider.refreshActivities();
           },
-          // color: const Color(0xFF8B5CF6),
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: activities.length,
-            itemBuilder: (context, index) {
-              final activity = activities[index];
-              
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: HistoryItemWidget(
-                  activity: activity,
-                ),
-              );
-            },
+          color: const Color(0xFF8B5CF6),
+          backgroundColor: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
+          child: Container(
+            color: Colors.white, // ✅ กำหนดพื้นหลังสีขาว
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: activities.length,
+              itemBuilder: (context, index) {
+                final activity = activities[index];
+                
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: HistoryItemWidget(
+                    activity: activity,
+                  ),
+                );
+              },
+            ),
           ),
         );
       },

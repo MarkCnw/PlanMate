@@ -11,17 +11,7 @@ class HistoryFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
+      color: Colors.white, // ✅ ใช้ color แทน decoration
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -51,6 +41,7 @@ class HistoryFilterBar extends StatelessWidget {
                     },
                     selectedColor: const Color(0xFF8B5CF6).withOpacity(0.2),
                     checkmarkColor: const Color(0xFF8B5CF6),
+                    backgroundColor: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
                   ),
                   // Activity type filters
                   ...ActivityType.values.map((type) {
@@ -62,6 +53,7 @@ class HistoryFilterBar extends StatelessWidget {
                       },
                       selectedColor: _getTypeColor(type).withOpacity(0.2),
                       checkmarkColor: _getTypeColor(type),
+                      backgroundColor: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
                     );
                   }).toList(),
                 ],
@@ -89,6 +81,7 @@ class HistoryFilterBar extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
+                  color: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
                   border: Border.all(color: Colors.grey[300]!),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -97,6 +90,7 @@ class HistoryFilterBar extends StatelessWidget {
                     value: historyProvider.selectedProjectId,
                     hint: const Text('เลือกโปรเจกต์'),
                     isExpanded: true,
+                    dropdownColor: Colors.white, // ✅ เพิ่มสีพื้นหลัง dropdown
                     onChanged: (value) {
                       historyProvider.setProjectFilter(value);
                     },
@@ -108,7 +102,6 @@ class HistoryFilterBar extends StatelessWidget {
                       ...projects.map((project) {
                         return DropdownMenuItem<String>(
                           value: project.id,
-                          // ✅ เปลี่ยนจาก project.name เป็น project.title
                           child: Text(project.title),
                         );
                       }).toList(),
@@ -135,6 +128,7 @@ class HistoryFilterBar extends StatelessWidget {
                   label: const Text('ล้างตัวกรอง'),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF8B5CF6),
+                    backgroundColor: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
                   ),
                 ),
               );

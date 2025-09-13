@@ -30,65 +30,47 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // ถ้า theme มี scaffoldBackgroundColor = Colors.white อยู่แล้ว จะลบบรรทัดนี้ก็ได้
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return SafeArea(
+      child: Scaffold(
+        // ถ้า theme มี scaffoldBackgroundColor = Colors.white อยู่แล้ว จะลบบรรทัดนี้ก็ได้
         backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent, // กัน M3 เติม tint
-        elevation: 0,
-        title: const Text(
-          'ประวัติกิจกรรม',
-          style: TextStyle(
-            color: Color(0xFF001858),
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'รีเฟรช',
-            icon: const Icon(Icons.refresh, color: Color(0xFF001858)),
-            onPressed: _loadActivities,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          const HistoryFilterBar(),
-          Expanded(
-            child: Consumer<HistoryProvider>(
-              builder: (context, historyProvider, _) {
-                if (historyProvider.isLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
-                  );
-                }
-
-                if (historyProvider.error != null) {
-                  return _ErrorState(
-                    message: historyProvider.error!,
-                    onRetry: _loadActivities,
-                  );
-                }
-
-                final activities = historyProvider.filteredActivities;
-
-                if (activities.isEmpty) {
-                  final filtered = historyProvider.selectedFilter != null ||
-                      historyProvider.selectedProjectId != null;
-                  return _EmptyState(
-                    message: filtered
-                        ? 'ไม่พบกิจกรรมที่ตรงกับตัวกรอง'
-                        : 'ยังไม่มีประวัติกิจกรรม',
-                  );
-                }
-
-                return const HistoryListView();
-              },
+        body: Column(
+          children: [
+            const HistoryFilterBar(),
+            Expanded(
+              child: Consumer<HistoryProvider>(
+                builder: (context, historyProvider, _) {
+                  if (historyProvider.isLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+                    );
+                  }
+      
+                  if (historyProvider.error != null) {
+                    return _ErrorState(
+                      message: historyProvider.error!,
+                      onRetry: _loadActivities,
+                    );
+                  }
+      
+                  final activities = historyProvider.filteredActivities;
+      
+                  if (activities.isEmpty) {
+                    final filtered = historyProvider.selectedFilter != null ||
+                        historyProvider.selectedProjectId != null;
+                    return _EmptyState(
+                      message: filtered
+                          ? 'ไม่พบกิจกรรมที่ตรงกับตัวกรอง'
+                          : 'ยังไม่มีประวัติกิจกรรม',
+                    );
+                  }
+      
+                  return const HistoryListView();
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
