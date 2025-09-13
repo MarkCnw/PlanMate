@@ -37,7 +37,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFf9f4ef),
       appBar: AppBar(
         backgroundColor: const Color(0xFFf9f4ef),
         elevation: 0,

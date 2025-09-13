@@ -138,7 +138,7 @@ class _TaskItemState extends State<TaskItem>
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: borderColor,
-            width: 3.0, // เพิ่มความหนาของกรอบ
+            width: 1.5, // เพิ่มความหนาของกรอบ
           ),
           // boxShadow: [
           //   BoxShadow(
@@ -292,8 +292,6 @@ class _TaskItemState extends State<TaskItem>
     );
   }
 
-  
-
   Widget _buildTaskMetadata() {
     return Wrap(
       spacing: 12,
@@ -346,8 +344,6 @@ class _TaskItemState extends State<TaskItem>
   Widget _buildActionButtons() {
     return PopupMenuButton<String>(
       onSelected: (value) async {
-        final taskProvider = context.read<TaskProvider>();
-
         switch (value) {
           case 'edit':
             widget.onEdit?.call();
@@ -360,66 +356,112 @@ class _TaskItemState extends State<TaskItem>
             break;
         }
       },
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      color: Colors.white,
+      elevation: 8,
       itemBuilder: (context) {
-        List<PopupMenuItem<String>> items = [];
+        List<PopupMenuEntry<String>> items = [];
 
-        // Progress update (only if not completed)
+        // Progress update (เฉพาะถ้า task ยังไม่เสร็จ)
         if (!widget.task.isDone) {
           items.add(
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'progress',
               child: Row(
                 children: [
-                  Icon(Icons.trending_up, size: 18, color: Colors.blue),
-                  SizedBox(width: 12),
-                  Text('Update Progress'),
+                  _menuIcon(Icons.trending_up, Colors.blue),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Update Progress',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),
           );
         }
 
-        // Edit and Delete
-        items.addAll([
-          const PopupMenuItem(
+        // Edit
+        items.add(
+          PopupMenuItem(
             value: 'edit',
             child: Row(
               children: [
-                Icon(Icons.edit, size: 18, color: Colors.blue),
-                SizedBox(width: 12),
-                Text('Edit Task'),
+                _menuIcon(Icons.edit, Colors.indigo),
+                const SizedBox(width: 12),
+                const Text(
+                  'Edit Task',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),
-          const PopupMenuItem(
+        );
+
+        // Delete
+        items.add(
+          PopupMenuItem(
             value: 'delete',
             child: Row(
               children: [
-                Icon(Icons.delete, size: 18, color: Colors.red),
-                SizedBox(width: 12),
-                Text('Delete Task'),
+                _menuIcon(Icons.delete, Colors.red),
+                const SizedBox(width: 12),
+                const Text(
+                  'Delete Task',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.red,
+                  ),
+                ),
               ],
             ),
           ),
-        ]);
+        );
 
         return items;
       },
-      child: // ปุ่มแอคชั่นสมัยใหม่
-      
-      // ปุ่มแอคชั่นสมัยใหม่
-      Container(
-        padding: EdgeInsets.all(8),
+
+      // ปุ่มเรียกเมนู (modern ellipsis button)
+      child: Container(
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8), // เปลี่ยนจากวงกลม
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Icon(
-          FontAwesomeIcons.ellipsis, // 3 จุดแนวนอน (ทันสมัยกว่า)
-          size: 20,
-          color: Colors.grey.shade600,
+          FontAwesomeIcons.ellipsisVertical, // ใช้จุดแนวตั้งแบบ modern
+          size: 18,
+          color: Colors.grey.shade700,
         ),
       ),
+    );
+  }
+
+  /// helper สำหรับไอคอนในเมนู
+  Widget _menuIcon(IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(icon, color: color, size: 18),
     );
   }
 
