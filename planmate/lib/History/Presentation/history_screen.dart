@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'package:planmate/History/Provider/history_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:planmate/provider/auth_provider.dart';
 import 'package:planmate/History/Widgets/history_filter_bar.dart';
 import 'package:planmate/History/Widgets/history_list_view.dart';
@@ -17,27 +17,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadActivities();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadActivities());
   }
 
   void _loadActivities() {
-    final authProvider = context.read<AuthProvider>();
-    final historyProvider = context.read<HistoryProvider>();
-
-    // ✅ เปลี่ยนจาก authProvider.user เป็น authProvider.currentUser
-    if (authProvider.currentUser != null) {
-      historyProvider.fetchActivities(
-        userId: authProvider.currentUser!.uid,
-      );
+    final auth = context.read<AuthProvider>();
+    final history = context.read<HistoryProvider>();
+    if (auth.currentUser != null) {
+      history.fetchActivities(userId: auth.currentUser!.uid);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // ถ้า theme มี scaffoldBackgroundColor = Colors.white อยู่แล้ว จะลบบรรทัดนี้ก็ได้
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent, // กัน M3 เติม tint
         elevation: 0,
         title: const Text(
           'ประวัติกิจกรรม',
@@ -49,6 +47,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: 'รีเฟรช',
             icon: const Icon(Icons.refresh, color: Color(0xFF001858)),
             onPressed: _loadActivities,
           ),
@@ -56,78 +55,32 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
       body: Column(
         children: [
-          // Filter Bar
           const HistoryFilterBar(),
-
-          // Activities List
           Expanded(
             child: Consumer<HistoryProvider>(
-              builder: (context, historyProvider, child) {
+              builder: (context, historyProvider, _) {
                 if (historyProvider.isLoading) {
                   return const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF8B5CF6),
-                    ),
+                    child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
                   );
                 }
 
                 if (historyProvider.error != null) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          historyProvider.error!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadActivities,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF8B5CF6),
-                          ),
-                          child: const Text('ลองใหม่'),
-                        ),
-                      ],
-                    ),
+                  return _ErrorState(
+                    message: historyProvider.error!,
+                    onRetry: _loadActivities,
                   );
                 }
 
                 final activities = historyProvider.filteredActivities;
 
                 if (activities.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.history,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          historyProvider.selectedFilter != null ||
-                                  historyProvider.selectedProjectId != null
-                              ? 'ไม่พบกิจกรรมที่ตรงกับตัวกรอง'
-                              : 'ยังไม่มีประวัติกิจกรรม',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
+                  final filtered = historyProvider.selectedFilter != null ||
+                      historyProvider.selectedProjectId != null;
+                  return _EmptyState(
+                    message: filtered
+                        ? 'ไม่พบกิจกรรมที่ตรงกับตัวกรอง'
+                        : 'ยังไม่มีประวัติกิจกรรม',
                   );
                 }
 
@@ -135,8 +88,64 @@ class _HistoryScreenState extends State<HistoryScreen> {
               },
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
 
-          
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _ErrorState({
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+            Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: onRetry,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8B5CF6),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('ลองใหม่'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final String message;
+  const _EmptyState({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.history, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          ),
         ],
       ),
     );
