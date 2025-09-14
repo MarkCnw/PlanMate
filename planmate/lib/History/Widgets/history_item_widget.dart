@@ -2,92 +2,139 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:planmate/History/Models/activity_history_model.dart';
 import 'package:planmate/provider/project_provider.dart';
+import 'package:intl/intl.dart';
 
 class HistoryItemWidget extends StatelessWidget {
   final ActivityHistoryModel activity;
+  final bool isLast;
 
-  const HistoryItemWidget({super.key, required this.activity});
+  const HistoryItemWidget({
+    super.key, 
+    required this.activity,
+    this.isLast = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-     
+    return IntrinsicHeight(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Activity Icon
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: _getTypeColor(activity.type).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Icon(
-              _getTypeIcon(activity.type),
-              color: _getTypeColor(activity.type),
-              size: 24,
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Content
-          Expanded(
+          // Timeline column (left side)
+          SizedBox(
+            width: 60,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Description
-                Text(
-                  activity.description,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF001858),
+                // Icon circle
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: _getTypeColor(activity.type),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _getTypeIcon(activity.type),
+                    color: Colors.white,
+                    size: 20,
                   ),
                 ),
-
-                const SizedBox(height: 4),
-
-                // Project info
-                Consumer<ProjectProvider>(
-                  builder: (context, projectProvider, child) {
-                    final project = projectProvider.getProjectById(
-                      activity.projectId,
-                    );
-                    return Text(
-                      // ✅ เปลี่ยนจาก project?.name เป็น project?.title
-                      'โปรเจกต์: ${project?.title ?? 'ไม่พบโปรเจกต์'}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                    );
-                  },
-                ),
-
-                // Task info (if exists)
-              
-                 
+                
+                // Connecting line (แสดงเส้นต่อยกเว้นรายการสุดท้าย)
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.only(top: 8),
+                      color: Colors.grey[300],
+                    ),
+                  ),
               ],
             ),
           ),
+          
+          // Content area (right side)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16, bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Date and time (แบบรูปภาพที่ 2)
+                  Text(
+                    _formatDateTime(activity.timestamp),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 4),
+                  
+                  // Activity title/description
+                  Text(
+                    activity.description,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF001858),
+                    ),
+                  ),
 
-          // Timestamp
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                activity.formattedTime,
-                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  const SizedBox(height: 4),
+
+                  // Project info
+                  Consumer<ProjectProvider>(
+                    builder: (context, projectProvider, child) {
+                      final project = projectProvider.getProjectById(
+                        activity.projectId,
+                      );
+                      return Text(
+                       'Project: ${project?.title ?? 'ไม่พบโปรเจกต์'}',
+                        
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-
-              
-            ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  // Format datetime like "10th January, 10:40"
+  String _formatDateTime(DateTime dateTime) {
+    final day = dateTime.day;
+    final dayWithSuffix = _getDayWithSuffix(day);
+    final month = DateFormat('MMMM', 'en_US').format(dateTime);
+    final time = DateFormat('HH:mm').format(dateTime);
+    
+    return '$dayWithSuffix $month, $time';
+  }
+
+  // Get day with ordinal suffix (1st, 2nd, 3rd, 4th, etc.)
+  String _getDayWithSuffix(int day) {
+    if (day >= 11 && day <= 13) {
+      return '${day}th';
+    }
+    
+    switch (day % 10) {
+      case 1:
+        return '${day}st';
+      case 2:
+        return '${day}nd';
+      case 3:
+        return '${day}rd';
+      default:
+        return '${day}th';
+    }
   }
 
   IconData _getTypeIcon(ActivityType type) {

@@ -17,7 +17,59 @@ class HistoryFilterBar extends StatelessWidget {
         children: [
           // Activity Type Filters
           const Text(
-            'ประเภทกิจกรรม',
+            'Project',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF001858),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Consumer2<HistoryProvider, ProjectProvider>(
+            builder: (context, historyProvider, projectProvider, child) {
+              final projects = projectProvider.projects;
+
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: historyProvider.selectedProjectId,
+                    hint: const Text('เลือกโปรเจกต์'),
+                    isExpanded: true,
+                    dropdownColor:
+                        Colors.white, // ✅ เพิ่มสีพื้นหลัง dropdown
+                    onChanged: (value) {
+                      historyProvider.setProjectFilter(value);
+                    },
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: null,
+                        child: Text('ทั้งหมด'),
+                      ),
+                      ...projects.map((project) {
+                        return DropdownMenuItem<String>(
+                          value: project.id,
+                          child: Text(project.title),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          // Project Filter
+          const Text(
+            'Activitis type',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -39,7 +91,9 @@ class HistoryFilterBar extends StatelessWidget {
                         historyProvider.setFilter(null);
                       }
                     },
-                    selectedColor: const Color(0xFF8B5CF6).withOpacity(0.2),
+                    selectedColor: const Color(
+                      0xFF8B5CF6,
+                    ).withOpacity(0.2),
                     checkmarkColor: const Color(0xFF8B5CF6),
                     backgroundColor: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
                   ),
@@ -53,73 +107,23 @@ class HistoryFilterBar extends StatelessWidget {
                       },
                       selectedColor: _getTypeColor(type).withOpacity(0.2),
                       checkmarkColor: _getTypeColor(type),
-                      backgroundColor: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
+                      backgroundColor:
+                          Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
                     );
                   }).toList(),
                 ],
               );
             },
           ),
-          
-          const SizedBox(height: 16),
-          
-          // Project Filter
-          const Text(
-            'โปรเจกต์',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF001858),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Consumer2<HistoryProvider, ProjectProvider>(
-            builder: (context, historyProvider, projectProvider, child) {
-              final projects = projectProvider.projects;
-              
-              return Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: historyProvider.selectedProjectId,
-                    hint: const Text('เลือกโปรเจกต์'),
-                    isExpanded: true,
-                    dropdownColor: Colors.white, // ✅ เพิ่มสีพื้นหลัง dropdown
-                    onChanged: (value) {
-                      historyProvider.setProjectFilter(value);
-                    },
-                    items: [
-                      const DropdownMenuItem<String>(
-                        value: null,
-                        child: Text('ทั้งหมด'),
-                      ),
-                      ...projects.map((project) {
-                        return DropdownMenuItem<String>(
-                          value: project.id,
-                          child: Text(project.title),
-                        );
-                      }).toList(),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          
+
           // Clear filters button
           Consumer<HistoryProvider>(
             builder: (context, historyProvider, child) {
-              if (historyProvider.selectedFilter == null && 
+              if (historyProvider.selectedFilter == null &&
                   historyProvider.selectedProjectId == null) {
                 return const SizedBox.shrink();
               }
-              
+
               return Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: TextButton.icon(
