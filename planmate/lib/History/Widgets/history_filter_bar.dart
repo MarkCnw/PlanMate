@@ -11,11 +11,11 @@ class HistoryFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.white, // ✅ ใช้ color แทน decoration
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Activity Type Filters
+          // Project Filter
           const Text(
             'Project',
             style: TextStyle(
@@ -33,7 +33,7 @@ class HistoryFilterBar extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
+                  color: Colors.white,
                   border: Border.all(color: Colors.grey[300]!),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -42,15 +42,14 @@ class HistoryFilterBar extends StatelessWidget {
                     value: historyProvider.selectedProjectId,
                     hint: const Text('เลือกโปรเจกต์'),
                     isExpanded: true,
-                    dropdownColor:
-                        Colors.white, // ✅ เพิ่มสีพื้นหลัง dropdown
+                    dropdownColor: Colors.white,
                     onChanged: (value) {
                       historyProvider.setProjectFilter(value);
                     },
                     items: [
                       const DropdownMenuItem<String>(
                         value: null,
-                        child: Text('ทั้งหมด'),
+                        child: Text('All'),
                       ),
                       ...projects.map((project) {
                         return DropdownMenuItem<String>(
@@ -67,73 +66,39 @@ class HistoryFilterBar extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Project Filter
-          const Text(
-            'Activitis type',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF001858),
-            ),
-          ),
+          // Activity Type Filters - Underline Tab Style
           const SizedBox(height: 8),
           Consumer<HistoryProvider>(
             builder: (context, historyProvider, child) {
-              return Wrap(
-                spacing: 8,
-                children: [
-                  // All filter
-                  FilterChip(
-                    label: const Text('ทั้งหมด'),
-                    selected: historyProvider.selectedFilter == null,
-                    onSelected: (selected) {
-                      if (selected) {
-                        historyProvider.setFilter(null);
-                      }
-                    },
-                    selectedColor: const Color(
-                      0xFF8B5CF6,
-                    ).withOpacity(0.2),
-                    checkmarkColor: const Color(0xFF8B5CF6),
-                    backgroundColor: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
-                  ),
-                  // Activity type filters
-                  ...ActivityType.values.map((type) {
-                    return FilterChip(
-                      label: Text(type.displayName),
-                      selected: historyProvider.selectedFilter == type,
-                      onSelected: (selected) {
-                        historyProvider.setFilter(selected ? type : null);
-                      },
-                      selectedColor: _getTypeColor(type).withOpacity(0.2),
-                      checkmarkColor: _getTypeColor(type),
-                      backgroundColor:
-                          Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
-                    );
-                  }).toList(),
-                ],
-              );
-            },
-          ),
-
-          // Clear filters button
-          Consumer<HistoryProvider>(
-            builder: (context, historyProvider, child) {
-              if (historyProvider.selectedFilter == null &&
-                  historyProvider.selectedProjectId == null) {
-                return const SizedBox.shrink();
-              }
-
-              return Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: TextButton.icon(
-                  onPressed: historyProvider.clearFilters,
-                  icon: const Icon(Icons.clear, size: 16),
-                  label: const Text('ล้างตัวกรอง'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF8B5CF6),
-                    backgroundColor: Colors.white, // ✅ เพิ่มพื้นหลังสีขาว
-                  ),
+              return Container(
+                height: 50,
+                child: Row(
+                  children: [
+                    // All tab
+                    _buildUnderlineTab(
+                      text: 'All',
+                      isSelected: historyProvider.selectedFilter == null,
+                      onTap: () => historyProvider.setFilter(null),
+                    ),
+                
+                    const SizedBox(width: 24),
+                    // Activity type tabs
+                    ...ActivityType.values.map((type) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 24),
+                        child: _buildUnderlineTab(
+                          text: type.displayName,
+                          isSelected:
+                              historyProvider.selectedFilter == type,
+                          onTap: () => historyProvider.setFilter(type),
+                        ),
+                      );
+                    }).toList(),
+                     Divider(
+                       color: Colors.grey[300],
+                       thickness: 1,
+                     ),
+                  ],
                 ),
               );
             },
@@ -143,16 +108,41 @@ class HistoryFilterBar extends StatelessWidget {
     );
   }
 
-  Color _getTypeColor(ActivityType type) {
-    switch (type) {
-      case ActivityType.create:
-        return Colors.green;
-      case ActivityType.update:
-        return Colors.blue;
-      case ActivityType.complete:
-        return Colors.orange;
-      case ActivityType.delete:
-        return Colors.red;
-    }
+  Widget _buildUnderlineTab({
+    required String text,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              text,
+              style: TextStyle(
+                color:
+                    isSelected
+                        ? const Color(0xFF333333)
+                        : const Color(0xFF999999),
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              height: 2,
+              width: 24,
+              color:
+                  isSelected
+                      ? const Color(0xFF333333)
+                      : Colors.transparent,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

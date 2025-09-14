@@ -30,7 +30,7 @@ class HeaderSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Welcome,', style: TextStyle(color: Color(0xFF172c66))),
+                  const Text('Hello,', style: TextStyle(color: Color(0xFF172c66))),
                   Text(
                     name,
                     style: const TextStyle(

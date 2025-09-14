@@ -9,13 +9,13 @@ enum ActivityType {
   String get displayName {
     switch (this) {
       case ActivityType.create:
-        return 'สร้าง';
+        return 'Create';
       case ActivityType.update:
-        return 'แก้ไข';
+        return 'Edit';
       case ActivityType.complete:
-        return 'เสร็จ';
+        return 'Complete';
       case ActivityType.delete:
-        return 'ลบ';
+        return 'Delete';
     }
   }
 
