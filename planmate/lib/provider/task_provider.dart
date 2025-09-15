@@ -327,7 +327,7 @@ class TaskProvider extends ChangeNotifier {
 
       // บันทึกประวัติ
       await _logActivity(
-        type: ActivityType.update,
+        type: ActivityType.complete,
         projectId: projectId,
         taskId: taskId,
         description:

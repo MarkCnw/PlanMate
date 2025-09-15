@@ -11,7 +11,7 @@ enum ActivityType {
       case ActivityType.create:
         return 'Create';
       case ActivityType.update:
-        return 'Edit';
+        return 'Update';
       case ActivityType.complete:
         return 'Complete';
       case ActivityType.delete:

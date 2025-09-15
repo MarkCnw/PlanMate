@@ -139,11 +139,11 @@ class HistoryProvider extends ChangeNotifier {
   }
 
   // Clear all filters
-  void clearFilters() {
-    _selectedFilter = null;
-    _selectedProjectId = null;
-    notifyListeners();
-  }
+  // void clearFilters() {
+  //   _selectedFilter = null;
+  //   _selectedProjectId = null;
+  //   notifyListeners();
+  // }
 
   // Refresh activities
   Future<void> refreshActivities({String? userId}) async {
