@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:planmate/History/Models/projec_option_model.dart';
 import 'package:provider/provider.dart';
+import 'package:animated_custom_dropdown/custom_dropdown.dart'; // เพิ่ม import
 import 'package:planmate/History/Provider/history_provider.dart';
 import 'package:planmate/provider/project_provider.dart';
 import 'package:planmate/History/Models/activity_history_model.dart';
+
+// สร้าง model สำหรับ dropdown
 
 class HistoryFilterBar extends StatefulWidget {
   const HistoryFilterBar({super.key});
@@ -76,47 +80,125 @@ class _HistoryFilterBarState extends State<HistoryFilterBar>
           const Text(
             'Project',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Color(0xFF001858),
             ),
           ),
           const SizedBox(height: 8),
 
-          // ---------- Project dropdown ----------
+          // ---------- Project dropdown with AnimatedCustomDropdown ----------
           Consumer2<HistoryProvider, ProjectProvider>(
             builder: (context, historyProvider, projectProvider, child) {
               final projects = projectProvider.projects;
-              return Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(8),
+
+              // สร้าง options สำหรับ dropdown
+              final options = [
+                ProjectOption(id: null, title: 'All'),
+                ...projects.map(
+                  (project) =>
+                      ProjectOption(id: project.id, title: project.title),
                 ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String?>(
-                    value: historyProvider.selectedProjectId,
-                    hint: const Text('เลือกโปรเจกต์'),
-                    isExpanded: true,
-                    dropdownColor: Colors.white,
-                    onChanged:
-                        (value) => historyProvider.setProjectFilter(value),
-                    items: [
-                      const DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text('All'),
-                      ),
-                      ...projects.map(
-                        (p) => DropdownMenuItem<String?>(
-                          value: p.id,
-                          child: Text(p.title),
-                        ),
-                      ),
-                    ],
+              ];
+
+              // หา selected option
+              final selectedOption = options.firstWhere(
+                (option) => option.id == historyProvider.selectedProjectId,
+                orElse: () => options.first, // default เป็น 'All'
+              );
+
+              return CustomDropdown<ProjectOption>(
+                hintText: 'เลือกโปรเจกต์',
+                items: options,
+                initialItem: selectedOption,
+                onChanged: (ProjectOption? value) {
+                  historyProvider.setProjectFilter(value?.id);
+                },
+                decoration: CustomDropdownDecoration(
+                  
+                  closedFillColor: Colors.white,
+                  expandedFillColor: Colors.white,
+                  closedBorder: Border.all(color: Colors.grey[300]!),
+                  expandedBorder: Border.all(
+                    color: Colors.grey
+                  ),
+                  closedBorderRadius: BorderRadius.circular(8),
+                  expandedBorderRadius: BorderRadius.circular(8),
+                  hintStyle: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 16,
+                  ),
+                  headerStyle: const TextStyle(
+                    color: Color(0xFF001858),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  listItemStyle: const TextStyle(
+                    color: Color(0xFF001858),
+                    fontSize: 16,
                   ),
                 ),
+                listItemBuilder: (
+                  context,
+                  item,
+                  isSelected,
+                  onItemSelect,
+                ) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          isSelected
+                              ? const Color(0xFF8B5CF6).withOpacity(0.1)
+                              : Colors.transparent,
+                    ),
+                    child: Text(
+                      item.title,
+                      style: TextStyle(
+                        color:
+                            isSelected
+                                ? const Color(0xFF8B5CF6)
+                                : const Color(0xFF001858),
+                        fontSize: 16,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                  );
+                },
+                headerBuilder: (context, selectedItem, enabled) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            selectedItem.title,
+                            style: TextStyle(
+                              color:
+                                  enabled
+                                      ? const Color(0xFF001858)
+                                      : Colors.grey[400],
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        // Icon(
+                        //   Icons.keyboard_arrow_down,
+                        //   color:
+                        //       enabled
+                        //           ? const Color(0xFF666666)
+                        //           : Colors.grey[400],
+                        //   size: 20,
+                        // ),
+                      ],
+                    ),
+                  );
+                },
               );
             },
           ),

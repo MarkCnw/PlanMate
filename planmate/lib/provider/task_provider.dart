@@ -415,7 +415,7 @@ class TaskProvider extends ChangeNotifier {
     DateTime? dueDate,
     int? priority,
     Duration? estimatedDuration, // จะถูก ignore
-    double? progress,
+    double? progress, required projectId,
   }) async {
     try {
       debugPrint('🔄 Updating task: $taskId');
