@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:planmate/History/Models/activity_history_model.dart';
 import 'package:planmate/provider/project_provider.dart';
@@ -140,13 +141,13 @@ class HistoryItemWidget extends StatelessWidget {
   IconData _getTypeIcon(ActivityType type) {
     switch (type) {
       case ActivityType.create:
-        return Icons.add_circle_outline;
+        return FontAwesomeIcons.plus  ;
       case ActivityType.update:
-        return Icons.edit_outlined;
+        return FontAwesomeIcons.pen;
       case ActivityType.complete:
-        return Icons.check_circle_outline;
+        return FontAwesomeIcons.check;
       case ActivityType.delete:
-        return Icons.delete_outline;
+        return FontAwesomeIcons.trash;
     }
   }
 
