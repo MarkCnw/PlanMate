@@ -156,13 +156,12 @@ class UpdateTaskController {
       // ✅ สร้าง task พร้อม initial progress
       final taskId = await taskProvider.updateTask(
         taskId: task.id,
-  title: title,
-  description: description.isEmpty ? null : description,
-  dueDate: selectedDueDate,
-  priority: selectedPriority,
-  progress: initialProgress, projectId: TaskModel, // ถ้าอยากอัปเดตความคืบหน้าด้วย
-
-
+        title: title,
+        description: description.isEmpty ? null : description,
+        dueDate: selectedDueDate,
+        priority: selectedPriority,
+        progress: initialProgress,
+        projectId: task.projectId,
       );
 
       if (taskId == null) {
@@ -171,27 +170,24 @@ class UpdateTaskController {
       }
 
       // Create task model for success callback
-      final task = TaskModel.create(
+      final updatedTask = task.copyWith(
         title: title,
-        projectId: description,
-        userId: taskProvider.currentUserId!,
         description: description.isEmpty ? null : description,
         dueDate: selectedDueDate,
         priority: selectedPriority,
-        estimatedDuration: null, // ลบ time estimation
-      ).copyWith(
-        id: taskId,
         progress: initialProgress,
+        // อัปเดต status ตาม progress ใหม่
         status:
-            initialProgress > 0
-                ? TaskStatus.inProgress
-                : TaskStatus.pending,
-        startedAt: initialProgress > 0 ? DateTime.now() : null,
+            initialProgress >= 1.0
+                ? TaskStatus.completed
+                : (initialProgress > 0
+                    ? TaskStatus.inProgress
+                    : TaskStatus.pending),
       );
 
-      onSuccess?.call(task);
+      onSuccess?.call(updatedTask);
     } catch (e) {
-      debugPrint('createTask error: $e');
+      debugPrint('updatedTask error: $e');
       onError?.call();
     } finally {
       isLoading = false;
@@ -236,11 +232,11 @@ class UpdateTaskController {
 
   // Check if form has changes
   bool get hasChanges {
-    return titleController.text.trim().isNotEmpty ||
-        descriptionController.text.trim().isNotEmpty ||
-        selectedDueDate != null ||
-        selectedPriority != 2 ||
-        initialProgress > 0.0;
+    return titleController.text.trim() != task.title ||
+        descriptionController.text.trim() != (task.description ?? '') ||
+        selectedDueDate != task.dueDate ||
+        selectedPriority != task.priority ||
+        initialProgress != task.progress;
   }
 
   // ✅ Helper methods for UI
