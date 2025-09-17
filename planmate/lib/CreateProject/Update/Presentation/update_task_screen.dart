@@ -1,37 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:planmate/CreateProject/Create/Controller/create_task_controller.dart';
+import 'package:planmate/CreateProject/Update/Controller/update_task_controller.dart';
 import 'package:planmate/Models/task_model.dart';
 
 class UpdateTaskSheet extends StatefulWidget {
-  final String projectId;
-  final String projectTitle;
+  final TaskModel task;
 
-  const UpdateTaskSheet({
-    super.key,
-    required this.projectId,
-    required this.projectTitle,
-  });
+  const UpdateTaskSheet({super.key, required this.task});
 
   @override
   State<UpdateTaskSheet> createState() => _UpdateTaskSheetState();
 }
 
 class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
-  late CreateTaskController controller;
+  late UpdateTaskController controller;
 
   @override
   void initState() {
     super.initState();
-    controller = CreateTaskController(
+    controller = UpdateTaskController(
       context: context,
-      projectId: widget.projectId,
+      task: widget.task,
       onStateChanged: () => setState(() {}),
-      onSuccess: _onCreateSuccess,
-      onError: _onCreateError,
+      onSuccess: _onUpdateSuccess,
+      onError: _onUpdateError
+      
     );
   }
 
-  void _onCreateSuccess(TaskModel task) {
+  void _onUpdateSuccess(TaskModel task) {
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -40,7 +36,7 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
             const Icon(Icons.check_circle, color: Colors.white),
             const SizedBox(width: 12),
             Expanded(
-              child: Text('Task "${task.title}" created successfully'),
+              child: Text('Task "${task.title}" update successfully'),
             ),
           ],
         ),
@@ -54,10 +50,10 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
     );
   }
 
-  void _onCreateError() {
+  void _onUpdateError() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Failed to create task'),
+        content: Text('Failed to update task'),
         backgroundColor: Colors.red,
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.all(16),
@@ -133,7 +129,7 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
               top: false,
               child: Padding(
                 padding: const EdgeInsets.all(5),
-                child: _buildCreateButton(),
+                child: _buildUpdateButton(),
               ),
             ),
           ],
@@ -146,7 +142,7 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
     return Column(
       children: [
         Text(
-          'Add New Task',
+          'Update Task',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -155,7 +151,7 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
         ),
         const SizedBox(height: 8),
         Text(
-          'to ${widget.projectTitle}',
+          'to ${widget.task}',
           style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
         ),
       ],
@@ -168,7 +164,7 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
       children: [
         RichText(
           text: TextSpan(
-            text: 'Task Title',
+            text: 'New Task Title',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -184,7 +180,7 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
           controller: controller.titleController,
           maxLength: 100,
           decoration: InputDecoration(
-            hintText: 'Enter task title',
+            hintText: 'Enter new task title',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -595,7 +591,7 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
     );
   }
 
-  Widget _buildCreateButton() {
+  Widget _buildUpdateButton() {
     return Container(
       width: double.infinity,
       height: 56,
@@ -610,7 +606,7 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: controller.isLoading ? null : controller.createTask,
+        onPressed: controller.isLoading ? null : controller.updateTask,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF8B5CF6),
           foregroundColor: Colors.white,
@@ -635,7 +631,7 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
                     ),
                     SizedBox(width: 12),
                     Text(
-                      'Creating Task...',
+                      'Updating Task...',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -647,7 +643,7 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Create Task',
+                      'Update Task',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

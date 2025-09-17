@@ -176,7 +176,7 @@ class TaskModel {
       projectId: projectId ?? this.projectId,
       userId: userId ?? this.userId,
       createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? DateTime.now(),
+      updatedAt: updatedAt ?? this.updatedAt,
       dueDate: dueDate ?? this.dueDate,
       completedAt: completedAt ?? this.completedAt,
       startedAt: startedAt ?? this.startedAt,

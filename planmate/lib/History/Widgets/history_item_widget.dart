@@ -141,9 +141,9 @@ class HistoryItemWidget extends StatelessWidget {
   IconData _getTypeIcon(ActivityType type) {
     switch (type) {
       case ActivityType.create:
-        return FontAwesomeIcons.plus  ;
+        return FontAwesomeIcons.plus ;
       case ActivityType.update:
-        return FontAwesomeIcons.pen;
+        return Icons.edit_document;
       case ActivityType.complete:
         return FontAwesomeIcons.check;
       case ActivityType.delete:
