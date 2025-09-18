@@ -61,13 +61,13 @@ class _BannerHomeState extends State<BannerHome> {
                     color: Color(0xFFb8c1ec),
                   ),
                 ),
-                const StarryText(
-                  text: 'Small Steps, Big Results',
-                  style: TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                // const StarryText(
+                //   text: 'Small Steps, Big Results',
+                //   style: TextStyle(
+                //     fontSize: 21,
+                //     fontWeight: FontWeight.w700,
+                //   ),
+                // ),
                 const SizedBox(height: 13),
                 const Text(
                   "Plan your projects\nachieve your goals",
