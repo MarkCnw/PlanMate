@@ -53,21 +53,21 @@ class _BannerHomeState extends State<BannerHome> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  "Small Steps, Big Results",
-                  style: TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFb8c1ec),
-                  ),
-                ),
-                // const StarryText(
-                //   text: 'Small Steps, Big Results',
+                // const Text(
+                //   "Small Steps, Big Results",
                 //   style: TextStyle(
                 //     fontSize: 21,
                 //     fontWeight: FontWeight.w700,
+                //     color: Color(0xFFb8c1ec),
                 //   ),
                 // ),
+                const StarryText(
+                  text: 'Small Steps, Big Results',
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 13),
                 const Text(
                   "Plan your projects\nachieve your goals",
@@ -88,8 +88,8 @@ class _BannerHomeState extends State<BannerHome> {
               alignment: Alignment.centerRight,
               child: Lottie.asset(
                 'assets/lottie/power.json',
-                repeat: false,
-                animate: false,
+                repeat: true,
+                animate: true,
               ),
             ),
           ),
