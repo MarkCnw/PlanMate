@@ -209,127 +209,113 @@ class TaskListView extends StatelessWidget {
 
   Widget _buildTaskItem(BuildContext context, TaskModel task) {
     final isTaskLoading = loadingTaskId == task.id;
+    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
 
-    return Consumer<TaskProvider>(
-      builder: (context, taskProvider, child) {
-        return TaskItem(
-          task: task,
-          isLoading: isTaskLoading,
-          // ✅ Connect to TaskProvider methods
-          onToggle: () async {
-            try {
-              await taskProvider.toggleTaskComplete(task.id);
-            } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to update task: $e'),
-                    backgroundColor: Colors.red,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
-            }
-          },
-
-          // ✅ Edit task callback
-          onEdit: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true, // สำคัญ!
-              backgroundColor: Colors.transparent,
-              builder: (context) => UpdateTaskSheet(task: task),
+    return TaskItem(
+      task: task,
+      isLoading: isTaskLoading,
+      // ✅ Connect to TaskProvider methods
+      onToggle: () async {
+        try {
+          await taskProvider.toggleTaskComplete(task.id);
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to update task: $e'),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
             );
-          },
+          }
+        }
+      },
 
-          // ✅ Delete task callback
-          onDelete: () async {
-            try {
-              final confirmed = await _showDeleteConfirmation(
-                context,
-                task,
-              );
-              if (confirmed) {
-                final success = await taskProvider.deleteTask(task.id);
-                if (context.mounted) {
-                  if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.white),
-                            SizedBox(width: 12),
-                            Text('Task deleted successfully'),
-                          ],
-                        ),
-                        backgroundColor: Colors.green,
-                        behavior: SnackBarBehavior.floating,
-                        margin: EdgeInsets.all(16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(10),
-                          ),
-                        ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Failed to delete task: ${taskProvider.error}',
-                        ),
-                        backgroundColor: Colors.red,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                }
-              }
-            } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error deleting task: $e'),
-                    backgroundColor: Colors.red,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
-            }
-          },
-        );
+      // ✅ Edit task callback
+      onEdit: () {
+        _openUpdateTaskSheet(context, task);
+      },
+
+      onDelete: () {
+        _showDeleteConfirmation(context, task, taskProvider);
       },
     );
   }
 
   // ✅ Delete confirmation dialog
-  Future<bool> _showDeleteConfirmation(
+  void _showDeleteConfirmation(
     BuildContext context,
     TaskModel task,
+    TaskProvider taskProvider, // รับ Provider เข้ามา
   ) async {
-    return await showDialog<bool>(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Delete Task'),
-                content: Text(
-                  'Are you sure you want to delete "${task.title}"?\n\nThis action cannot be undone.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
-                    child: const Text('Delete'),
-                  ),
-                ],
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (dialogContext) => AlertDialog(
+            // ใช้ dialogContext ที่เป็นของ Dialog เอง
+            title: const Text('Delete Task'),
+            content: Text(
+              'Are you sure you want to delete "${task.title}"?\n\nThis action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Cancel'),
               ),
-        ) ??
-        false;
+              TextButton(
+                onPressed: () async {
+                  // 1. ลบ Task โดยใช้ Provider
+                  final success = await taskProvider.deleteTask(task.id);
+
+                  // 2. ปิด Dialog และส่งผลลัพธ์กลับไป
+                  Navigator.pop(dialogContext, success);
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+
+    // 3. จัดการแสดง SnackBar ข้างนอก Dialog
+    if (context.mounted) {
+      if (confirmed == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text('Task deleted successfully'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+            ),
+          ),
+        );
+      } else if (confirmed == false && taskProvider.error != null) {
+        // กรณีที่ deleteTask ล้มเหลว
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete task: ${taskProvider.error}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
+}
+
+void _openUpdateTaskSheet(BuildContext context, TaskModel task) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => UpdateTaskSheet(task: task),
+  );
 }
