@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:planmate/Models/task_model.dart';
 import 'package:provider/provider.dart';
 import 'package:planmate/provider/task_provider.dart';

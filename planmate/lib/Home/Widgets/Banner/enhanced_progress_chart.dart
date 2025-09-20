@@ -48,7 +48,9 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
       weeklyData = _getSampleData();
     }
     
-    setState(() => isLoading = false);
+    if (mounted) {
+      setState(() => isLoading = false);
+    }
   }
 
   List<DailyProgress> _generateWeeklyData(List<TaskModel> tasks) {
@@ -126,7 +128,7 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
@@ -156,10 +158,10 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
+        const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Your Progress',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
@@ -167,21 +169,18 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
                 color: Color(0xFF001858),
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               'Weekly task completion',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: Colors.grey,
               ),
             ),
           ],
         ),
         GestureDetector(
-          onTap: () {
-            // Navigate to detailed progress screen
-            _showDetailedProgress();
-          },
+          onTap: _showDetailedProgress,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -203,11 +202,12 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
   }
 
   Widget _buildLoadingState() {
-    return Container(
+    return const SizedBox(
       height: 200,
-      child: const Center(
+      child: Center(
         child: CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8B5CF6)),
+          strokeWidth: 3,
         ),
       ),
     );
@@ -217,6 +217,10 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
     if (weeklyData.isEmpty) {
       return Container(
         height: 200,
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -249,7 +253,7 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
       );
     }
 
-    return Container(
+    return SizedBox(
       height: 200,
       child: BarChart(
         BarChartData(
@@ -259,7 +263,7 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
             show: true,
             drawVerticalLine: false,
             drawHorizontalLine: true,
-            horizontalInterval: _getMaxY() / 4,
+            horizontalInterval: _getMaxY() / 4 > 0 ? _getMaxY() / 4 : 1,
             getDrawingHorizontalLine: (value) {
               return FlLine(
                 color: Colors.grey.withOpacity(0.2),
@@ -273,14 +277,14 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 30,
-                interval: _getMaxY() / 4,
+                interval: _getMaxY() / 4 > 0 ? _getMaxY() / 4 : 1,
                 getTitlesWidget: (value, meta) {
                   if (value == 0) return const SizedBox.shrink();
                   return Text(
                     value.toInt().toString(),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: Colors.grey,
                       fontWeight: FontWeight.w500,
                     ),
                   );
@@ -337,9 +341,9 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
             enabled: true,
             handleBuiltInTouches: true,
             touchTooltipData: BarTouchTooltipData(
-              tooltipBgColor: const Color(0xFF2D3748), // ✅ ใช้ชื่อใหม่
-              tooltipRoundedRadius: 12,
-              tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              getTooltipColor: (group) => const Color(0xFF2D3748),
+              tooltipBorder: BorderSide.none,
+              tooltipMargin: 8,
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final data = weeklyData[group.x];
                 final isPlanned = rodIndex == 0;
@@ -373,7 +377,10 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
     
     // Add some padding and round up to nearest 5
     max = (max * 1.2).ceilToDouble();
-    return (max / 5).ceil() * 5;
+    final result = (max / 5).ceil() * 5;
+    
+    // ป้องกันไม่ให้เป็น 0
+    return result > 0 ? result.toDouble() : 10.0;
   }
 
   List<BarChartGroupData> _buildBarGroups() {
@@ -401,14 +408,7 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
               topLeft: Radius.circular(3),
               topRight: Radius.circular(3),
             ),
-            gradient: const LinearGradient(
-              begin: Alignment.bottomCenter,
-              end: Alignment.topCenter,
-              colors: [
-                Color(0xFF8B5CF6),
-                Color(0xFFA78BFA),
-              ],
-            ),
+            // เอา gradient ออกเพื่อลด lag
           ),
         ],
         barsSpace: 3,
@@ -549,6 +549,7 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
+          constraints: const BoxConstraints(maxHeight: 400),
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -562,33 +563,49 @@ class _EnhancedProgressChartSectionState extends State<EnhancedProgressChartSect
                 ),
               ),
               const SizedBox(height: 20),
-              ...weeklyData.map((data) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      data.day,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[700],
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: weeklyData.length,
+                  itemBuilder: (context, index) {
+                    final data = weeklyData[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            data.day,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          Text(
+                            '${data.completed.toInt()}/${data.planned.toInt()}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF8B5CF6),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Text(
-                      '${data.completed.toInt()}/${data.planned.toInt()}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF8B5CF6),
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
-              )).toList(),
+              ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B5CF6),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 child: const Text('Close'),
               ),
             ],
