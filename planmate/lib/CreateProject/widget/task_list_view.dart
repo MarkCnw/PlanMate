@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:planmate/CreateProject/Update/Presentation/update_task_screen.dart';
 import 'package:planmate/CreateProject/widget/task_empty_state.dart';
 import 'package:planmate/CreateProject/widget/task_item.dart';
-import 'package:planmate/Models/task_model.dart';
+import 'package:planmate/models/task_model.dart';
 import 'package:provider/provider.dart';
 import 'package:planmate/provider/task_provider.dart';
 

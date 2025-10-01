@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:lottie/lottie.dart';
-import 'package:planmate/Home/Widgets/Banner/text.dart';
+import 'package:planmate/Home/widgets/Banner/text.dart';
 
 // ⬇️ เปลี่ยน import ให้ชี้ไปยังหน้าเต็มจอของคุณ
 // NOTE: ถ้าไฟล์คุณอยู่ path อื่น ให้แก้เป็น path ที่ถูกต้อง

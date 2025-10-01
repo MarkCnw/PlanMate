@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:planmate/CreateProject/Create/Controller/create_task_controller.dart';
-import 'package:planmate/Models/task_model.dart';
+import 'package:planmate/models/task_model.dart';
 
 class CreateTaskSheet extends StatefulWidget {
   final String projectId;

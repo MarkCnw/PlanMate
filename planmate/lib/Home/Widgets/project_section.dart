@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:planmate/CreateProject/Create/presentation/create_project_screen.dart';
 import 'package:planmate/provider/project_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:planmate/Home/Widgets/ProjectSection/project_empty_state.dart';
-import 'package:planmate/Home/Widgets/ProjectSection/project_error_state.dart';
-import 'package:planmate/Home/Widgets/ProjectSection/project_list_view.dart';
-import 'package:planmate/Home/Widgets/ProjectSection/project_loading_state.dart';
-import 'package:planmate/Home/Widgets/ProjectSection/project_section_config.dart';
-import 'package:planmate/Home/Widgets/ProjectSection/project_section_header.dart';
-import 'package:planmate/Home/Widgets/ProjectSection/sized_container_wrapper.dart';
-import 'package:planmate/Models/project_model.dart';
+import 'package:planmate/Home/widgets/ProjectSection/project_empty_state.dart';
+import 'package:planmate/Home/widgets/ProjectSection/project_error_state.dart';
+import 'package:planmate/Home/widgets/ProjectSection/project_list_view.dart';
+import 'package:planmate/Home/widgets/ProjectSection/project_loading_state.dart';
+import 'package:planmate/Home/widgets/ProjectSection/project_section_config.dart';
+import 'package:planmate/Home/widgets/ProjectSection/project_section_header.dart';
+import 'package:planmate/Home/widgets/ProjectSection/sized_container_wrapper.dart';
+import 'package:planmate/models/project_model.dart';
 import 'package:planmate/CreateProject/Presentation/project_screen.dart';
 
 

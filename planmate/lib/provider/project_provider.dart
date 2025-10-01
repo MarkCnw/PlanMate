@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:planmate/History/Models/activity_history_model.dart';
 
-import 'package:planmate/Models/project_model.dart';
+import 'package:planmate/models/project_model.dart';
 
 class ProjectProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

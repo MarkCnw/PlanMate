@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:planmate/provider/auth_provider.dart';
 import 'package:planmate/provider/project_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:planmate/Models/project_model.dart';
+import 'package:planmate/models/project_model.dart';
 
 
 class CreateProjectController {

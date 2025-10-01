@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:planmate/Home/Widgets/ProjectSection/project_card_widget.dart';
-import 'package:planmate/Models/project_model.dart';
+import 'package:planmate/Home/widgets/ProjectSection/project_card_widget.dart';
+import 'package:planmate/models/project_model.dart';
 
 
 class SearchResultsWidget extends StatelessWidget {

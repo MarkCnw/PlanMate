@@ -30,10 +30,10 @@ class ProfileScreen extends StatelessWidget {
               // Menu Grid
               _MenuGrid(),
               
-              const SizedBox(height: 30),
+              // const SizedBox(height: 30),
               
-              // Settings Section
-              _SettingsSection(),
+              // // Settings Section
+              // _SettingsSection(),
               
               const SizedBox(height: 30),
               
@@ -437,113 +437,113 @@ class _MenuItemCard extends StatelessWidget {
   }
 }
 
-class _SettingsSection extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _SettingsTile(
-            icon: Icons.notifications_outlined,
-            title: 'Notifications',
-            subtitle: 'Manage your notifications',
-            onTap: () => _showNotificationSettings(context),
-          ),
-          const Divider(height: 1),
-          _SettingsTile(
-            icon: Icons.language_outlined,
-            title: 'Language',
-            subtitle: 'English (US)',
-            onTap: () => _showLanguageSettings(context),
-          ),
-          const Divider(height: 1),
-          _SettingsTile(
-            icon: Icons.dark_mode_outlined,
-            title: 'Theme',
-            subtitle: 'System default',
-            onTap: () => _showThemeSettings(context),
-          ),
-        ],
-      ),
-    );
-  }
+// class _SettingsSection extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(16),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.grey.withOpacity(0.1),
+//             blurRadius: 10,
+//             offset: const Offset(0, 5),
+//           ),
+//         ],
+//       ),
+//       child: Column(
+//         children: [
+//           _SettingsTile(
+//             icon: Icons.notifications_outlined,
+//             title: 'Notifications',
+//             subtitle: 'Manage your notifications',
+//             onTap: () => _showNotificationSettings(context),
+//           ),
+//           const Divider(height: 1),
+//           _SettingsTile(
+//             icon: Icons.language_outlined,
+//             title: 'Language',
+//             subtitle: 'English (US)',
+//             onTap: () => _showLanguageSettings(context),
+//           ),
+//           const Divider(height: 1),
+//           _SettingsTile(
+//             icon: Icons.dark_mode_outlined,
+//             title: 'Theme',
+//             subtitle: 'System default',
+//             onTap: () => _showThemeSettings(context),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
 
-  void _showNotificationSettings(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Notification settings coming soon!'),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
+//   void _showNotificationSettings(BuildContext context) {
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         content: const Text('Notification settings coming soon!'),
+//         behavior: SnackBarBehavior.floating,
+//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+//       ),
+//     );
+//   }
 
-  void _showLanguageSettings(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Language settings coming soon!'),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
+//   void _showLanguageSettings(BuildContext context) {
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         content: const Text('Language settings coming soon!'),
+//         behavior: SnackBarBehavior.floating,
+//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+//       ),
+//     );
+//   }
 
-  void _showThemeSettings(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Theme settings coming soon!'),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-}
+//   void _showThemeSettings(BuildContext context) {
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         content: const Text('Theme settings coming soon!'),
+//         behavior: SnackBarBehavior.floating,
+//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+//       ),
+//     );
+//   }
+// }
 
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
+// class _SettingsTile extends StatelessWidget {
+//   final IconData icon;
+//   final String title;
+//   final String subtitle;
+//   final VoidCallback onTap;
 
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+//   const _SettingsTile({
+//     required this.icon,
+//     required this.title,
+//     required this.subtitle,
+//     required this.onTap,
+//   });
 
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: Colors.grey.shade700),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return ListTile(
+//       leading: Container(
+//         padding: const EdgeInsets.all(8),
+//         decoration: BoxDecoration(
+//           color: Colors.grey.shade100,
+//           borderRadius: BorderRadius.circular(8),
+//         ),
+//         child: Icon(icon, color: Colors.grey.shade700),
+//       ),
+//       title: Text(
+//         title,
+//         style: const TextStyle(fontWeight: FontWeight.w600),
+//       ),
+//       subtitle: Text(subtitle),
+//       trailing: const Icon(Icons.chevron_right),
+//       onTap: onTap,
+//     );
+//   }
+// }
 
 class _LogoutButton extends StatelessWidget {
   final bool isLoading;

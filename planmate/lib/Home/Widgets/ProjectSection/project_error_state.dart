@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:planmate/Home/Widgets/ProjectSection/project_section_config.dart';
+import 'package:planmate/Home/widgets/ProjectSection/project_section_config.dart';
 
 class ProjectErrorState extends StatelessWidget {
   final String error;

@@ -1,6 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:planmate/Home/Widgets/Banner/legend_widget.dart';
+import 'package:planmate/Home/widgets/Banner/legend_widget.dart';
 
 class ProgressChartSection extends StatelessWidget {
   const ProgressChartSection({super.key});

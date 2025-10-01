@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:planmate/History/Models/activity_history_model.dart';
 
-import '../Models/task_model.dart';
+import '../models/task_model.dart';
 import '../Services/firebase_task_service.dart';
 
 class TaskProvider extends ChangeNotifier {

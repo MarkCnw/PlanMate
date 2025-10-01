@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:planmate/CreateProject/Create/Controller/create_project_controller.dart';
 import 'package:planmate/CreateProject/Presentation/project_screen.dart';
-import 'package:planmate/Models/project_model.dart';
+import 'package:planmate/models/project_model.dart';
 
 // --- UI Constants (สีเดิม + ปรับโทน) ---
 const _primaryColor = Color(0xFF8B5CF6);

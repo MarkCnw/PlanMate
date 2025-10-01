@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:planmate/CreateProject/Update/Controller/update_task_controller.dart';
-import 'package:planmate/Models/task_model.dart';
+import 'package:planmate/models/task_model.dart';
 
 class UpdateTaskSheet extends StatefulWidget {
   final TaskModel task;

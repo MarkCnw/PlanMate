@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:planmate/provider/task_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:planmate/Models/task_model.dart';
+import 'package:planmate/models/task_model.dart';
 
 class UpdateTaskController {
   final BuildContext context;

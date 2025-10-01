@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:planmate/Models/project_model.dart';
+import 'package:planmate/models/project_model.dart';
 import 'package:planmate/Search/Widgets/search_results_widget.dart';
 import 'package:planmate/Search/Widgets/search_widget.dart';
 import 'package:planmate/provider/project_provider.dart';

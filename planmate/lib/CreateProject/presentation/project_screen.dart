@@ -6,7 +6,7 @@ import 'package:planmate/provider/project_provider.dart';
 import 'package:planmate/provider/task_provider.dart'; // ✅ เพิ่ม
 import 'package:provider/provider.dart';
 import 'package:planmate/CreateProject/Update/Presentation/update_project_screen.dart';
-import 'package:planmate/Models/project_model.dart';
+import 'package:planmate/models/project_model.dart';
 
 class ProjectScreenDetail extends StatefulWidget {
   final ProjectModel project;

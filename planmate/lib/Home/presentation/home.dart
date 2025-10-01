@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:planmate/Home/Widgets/Banner/banner.dart';
+import 'package:planmate/Home/widgets/Banner/banner.dart';
 // import 'package:planmate/Home/Widgets/Banner/progress_widget.dart'; // เอาออก
 
 import 'package:planmate/provider/project_provider.dart';
 import 'package:planmate/provider/task_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:planmate/Home/Widgets/Header/header_widget.dart';
-import 'package:planmate/Home/Widgets/project_section.dart';
+import 'package:planmate/Home/widgets/Header/header_widget.dart';
+import 'package:planmate/Home/widgets/project_section.dart';
 
 // ✅ เพิ่ม import สำหรับ Enhanced Progress Chart
 // สมมติว่าเราสร้างไฟล์ enhanced_progress_chart.dart ใน Home/Widgets/Banner/
 // และใส่โค้ด EnhancedProgressChartSection ไว้ในนั้น
-import 'package:planmate/Home/Widgets/Banner/enhanced_progress_chart.dart';
+import 'package:planmate/Home/widgets/Banner/enhanced_progress_chart.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

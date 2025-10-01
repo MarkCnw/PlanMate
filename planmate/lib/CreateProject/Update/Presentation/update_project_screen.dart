@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:planmate/Models/project_model.dart';
+import 'package:planmate/models/project_model.dart';
 import '../Controller/update_project_controller.dart';
 
 class UpdateProjectScreen extends StatefulWidget {
