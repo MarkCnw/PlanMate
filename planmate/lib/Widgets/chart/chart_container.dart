@@ -61,9 +61,12 @@ class ChartContainer extends StatelessWidget {
               else if (weeklyData.isEmpty)
                 const Text("No data available")
               else
-                ChartBarView(
-                  weeklyData: weeklyData,
-                  chartAnimation: chartAnimation,
+                SizedBox(
+                  height: 180, // เพิ่มความสูงที่นี่
+                  child: ChartBarView(
+                    weeklyData: weeklyData,
+                    chartAnimation: chartAnimation,
+                  ),
                 ),
               _buildPremiumLegend(),
               const SizedBox(height: 10),

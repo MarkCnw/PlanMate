@@ -80,7 +80,7 @@ class _EnhancedProgressChartSectionState
 
   @override
   Widget build(BuildContext context) {
-    final projectProvider = context.watch<ProjectProvider>();
+    final projectProvider = context.read<ProjectProvider>();
     final taskProvider = context.watch<TaskProvider>();
 
     return FutureBuilder(
@@ -92,7 +92,8 @@ class _EnhancedProgressChartSectionState
         return ChartContainer(
           isLoading: isLoading,
           weeklyData: weeklyData,
-          onDetailsTap: _showDetailedProgress, chartAnimation: _chartAnimation,
+          onDetailsTap: _showDetailedProgress,
+          chartAnimation: _chartAnimation,
         );
       },
     );

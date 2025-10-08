@@ -24,6 +24,8 @@ class TaskProvider extends ChangeNotifier {
   String? get error => _error;
   String? get currentUserId => _auth.currentUser?.uid;
 
+  
+
   // Get tasks for specific project
   List<TaskModel> getProjectTasks(String projectId) {
     return _projectTasks[projectId] ?? [];
@@ -415,7 +417,8 @@ class TaskProvider extends ChangeNotifier {
     DateTime? dueDate,
     int? priority,
     Duration? estimatedDuration, // จะถูก ignore
-    double? progress, required projectId,
+    double? progress,
+    required projectId,
   }) async {
     try {
       debugPrint('🔄 Updating task: $taskId');
