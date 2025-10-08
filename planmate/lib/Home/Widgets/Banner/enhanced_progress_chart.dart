@@ -18,7 +18,6 @@ class EnhancedProgressChartSection extends StatefulWidget {
 class _EnhancedProgressChartSectionState
     extends State<EnhancedProgressChartSection>
     with TickerProviderStateMixin {
-  bool isLoading = true;
   List<DailyProgress> weeklyData = [];
   late AnimationController _chartController;
   late Animation<double> _chartAnimation;
@@ -36,10 +35,6 @@ class _EnhancedProgressChartSectionState
       parent: _chartController,
       curve: Curves.easeOutBack,
     );
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
-    });
   }
 
   @override
@@ -48,115 +43,49 @@ class _EnhancedProgressChartSectionState
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    setState(() => isLoading = true);
-
+  /// ✅ คำนวณข้อมูลกราฟแบบ Synchronous (ไม่ต้อง async)
+  List<DailyProgress> _calculateWeeklyData(
+    ProjectProvider projectProvider,
+    TaskProvider taskProvider,
+  ) {
     try {
-      final projectProvider = context.read<ProjectProvider>();
-      final taskProvider = context.read<TaskProvider>();
-
-      // Get all projects
       final projects = projectProvider.projects;
 
-      // Collect all tasks from all projects
+      // รวม tasks จากทุก project
       List<TaskModel> allTasks = [];
       for (final project in projects) {
         final tasks = taskProvider.getProjectTasks(project.id);
         allTasks.addAll(tasks);
       }
 
-      // Generate weekly progress data
-      weeklyData = generateWeeklyData(allTasks);
+      // สร้างข้อมูลสัปดาห์
+      return generateWeeklyData(allTasks);
     } catch (e) {
-      print('Error loading chart data: $e');
-      // Fallback to sample data
-      weeklyData = getSampleData();
-    }
-    if (mounted) {
-      setState(() => isLoading = false);
-      _chartController.forward(from: 0);
+      debugPrint('Error calculating chart data: $e');
+      return getSampleData();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final projectProvider = context.read<ProjectProvider>();
-    final taskProvider = context.watch<TaskProvider>();
+    // ✅ ใช้ Consumer2 เพื่อฟังการเปลี่ยนแปลงจากทั้งสอง Provider
+    return Consumer2<ProjectProvider, TaskProvider>(
+      builder: (context, projectProvider, taskProvider, _) {
+        // คำนวณข้อมูลใหม่ทุกครั้งที่ state เปลี่ยน
+        weeklyData = _calculateWeeklyData(projectProvider, taskProvider);
 
-    return FutureBuilder(
-      future: _prepareData(projectProvider, taskProvider),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildPremiumLoadingState();
+        // เล่น animation เมื่อข้อมูลเปลี่ยน
+        if (weeklyData.isNotEmpty) {
+          _chartController.forward(from: 0);
         }
+
         return ChartContainer(
-          isLoading: isLoading,
+          isLoading: false,
           weeklyData: weeklyData,
           onDetailsTap: _showDetailedProgress,
           chartAnimation: _chartAnimation,
         );
       },
-    );
-  }
-
-  /// ✅ สร้าง method _prepareData
-  Future<void> _prepareData(
-    ProjectProvider projectProvider,
-    TaskProvider taskProvider,
-  ) async {
-    await _loadData(); // ใช้ method เดิมที่คุณเขียนแล้ว
-  }
-
-  Widget _buildPremiumLoadingState() {
-    return Container(
-      height: 220,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.grey.shade50, Colors.grey.shade100],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
-                ),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Loading your progress...',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -193,11 +122,11 @@ class _EnhancedProgressChartSectionState
                   // Header
                   Container(
                     padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
                         colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
                       ),
-                      borderRadius: const BorderRadius.only(
+                      borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(24),
                         topRight: Radius.circular(24),
                       ),
@@ -306,9 +235,7 @@ class _EnhancedProgressChartSectionState
                                     ),
                                   ),
                                 ),
-
                                 const SizedBox(width: 16),
-
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -373,10 +300,7 @@ class _EnhancedProgressChartSectionState
                                           ),
                                         ],
                                       ),
-
                                       const SizedBox(height: 8),
-
-                                      // Progress bar
                                       Container(
                                         height: 6,
                                         decoration: BoxDecoration(
