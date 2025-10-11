@@ -1,12 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:planmate/History/Provider/history_provider.dart';
+
 import 'package:planmate/provider/task_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'Services/ืnoti.dart';
 import 'firebase_options.dart';
 
 // ==== Layers ====
@@ -23,10 +24,17 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-    final token = await FirebaseMessaging.instance.getToken();
-  print("🔑 FCM Token: $token");
+
+  // 2. เรียกใช้ Service เพื่อตั้งค่า Notification (แก้ไขตรงนี้)
+  await NotificationService().init(); 
+
+  // บรรทัดสำหรับดึง Token เพื่อดีบั๊ก สามารถลบออกได้แล้ว
+  // final token = await FirebaseMessaging.instance.getToken();
+  // print("🔑 FCM Token: $token");
+
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

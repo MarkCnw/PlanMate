@@ -1,17 +1,16 @@
+// functions/src/notification.ts
 import * as admin from "firebase-admin";
-import {setGlobalOptions} from "firebase-functions/v2";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 
-// init firebase
-admin.initializeApp();
+// ❌ ลบบรรทัดนี้ออก - เพราะ init แล้วใน index.ts
+// admin.initializeApp();
 
-// ตั้งค่า region ใกล้ไทย
-setGlobalOptions({region: "asia-southeast1"});
+// ❌ ลบบรรทัดนี้ออก - เพราะตั้งค่าแล้วใน index.ts
+// setGlobalOptions({region: "asia-southeast1"});
 
 // ===== HELPER FUNCTIONS =====
-
 
 async function sendNotificationToUser(
   userId: string,
@@ -54,7 +53,6 @@ async function sendNotificationToUser(
   }
 }
 
-
 async function getUserTaskStats(userId: string) {
   const db = admin.firestore();
   const tasksSnapshot = await db
@@ -77,7 +75,6 @@ async function getUserTaskStats(userId: string) {
   return {total, completed, pending, overdue};
 }
 
-
 async function getWeeklyStats(userId: string) {
   const db = admin.firestore();
   const now = new Date();
@@ -99,7 +96,6 @@ async function getWeeklyStats(userId: string) {
   const completedCount = completedSnapshot.size;
   const createdCount = totalSnapshot.size;
 
-  // คำนวณ productivity rate
   const productivityRate =
     createdCount > 0 ? Math.round((completedCount / createdCount) * 100) : 0;
 
@@ -112,10 +108,6 @@ async function getWeeklyStats(userId: string) {
 
 // ===== SCHEDULED FUNCTIONS =====
 
-/**
- * 1. ตรวจสอบ inactive users ทุกวันเวลา 09:00
- * แจ้งเตือนผู้ใช้ที่หายไป 3, 7, 14 วัน
- */
 export const checkInactiveUsers = onSchedule(
   {schedule: "0 9 * * *", timeZone: "Asia/Bangkok"},
   async () => {
@@ -137,14 +129,9 @@ export const checkInactiveUsers = onSchedule(
         (now.getTime() - lastSignIn.getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      // ตรวจสอบว่ามีงานค้างหรือไม่
       const stats = await getUserTaskStats(userId);
 
-      // ส่งการแจ้งเตือนตามจำนวนวันที่หายไป
-      if (
-        daysSinceLastSignIn === 3 &&
-        stats.pending > 0
-      ) {
+      if (daysSinceLastSignIn === 3 && stats.pending > 0) {
         await sendNotificationToUser(userId, {
           title: "คิดถึงคุณนะ! 🌟",
           body: `คุณมีงานค้าง ${stats.pending} งาน มาทำต่อกันเถอะ!`,
@@ -155,10 +142,7 @@ export const checkInactiveUsers = onSchedule(
           },
         });
         notificationsSent++;
-      } else if (
-        daysSinceLastSignIn === 7 &&
-        stats.pending > 0
-      ) {
+      } else if (daysSinceLastSignIn === 7 && stats.pending > 0) {
         await sendNotificationToUser(userId, {
           title: "เราคิดถึงคุณมาก! 💙",
           body: `ห่างหายกันไปนานแล้ว! คุณมีงานค้าง ${stats.pending} งาน`,
@@ -169,10 +153,7 @@ export const checkInactiveUsers = onSchedule(
           },
         });
         notificationsSent++;
-      } else if (
-        daysSinceLastSignIn === 14 &&
-        stats.pending > 0
-      ) {
+      } else if (daysSinceLastSignIn === 14 && stats.pending > 0) {
         await sendNotificationToUser(userId, {
           title: "มานานเกินไปแล้ว! 🎯",
           body: `2 สัปดาห์แล้ว! งานของคุณรออยู่ (${stats.pending} งาน)`,
@@ -190,9 +171,6 @@ export const checkInactiveUsers = onSchedule(
   }
 );
 
-/**
- * 2. Weekly Summary ทุกวันอาทิตย์ เวลา 20:00
- */
 export const sendWeeklySummary = onSchedule(
   {schedule: "0 20 * * 0", timeZone: "Asia/Bangkok"},
   async () => {
@@ -207,8 +185,7 @@ export const sendWeeklySummary = onSchedule(
       const weeklyStats = await getWeeklyStats(userId);
       const currentStats = await getUserTaskStats(userId);
 
-      if (weeklyStats.completedThisWeek === 0 &&
-          currentStats.total === 0) {
+      if (weeklyStats.completedThisWeek === 0 && currentStats.total === 0) {
         continue;
       }
 
@@ -228,10 +205,11 @@ export const sendWeeklySummary = onSchedule(
 
       await sendNotificationToUser(userId, {
         title: `${emoji} สรุปสัปดาห์นี้`,
-        body: `${message}\n` +
-              `✅ ทำเสร็จ: ${weeklyStats.completedThisWeek} งาน\n` +
-              `📋 คงเหลือ: ${currentStats.pending} งาน\n` +
-              `📊 Productivity: ${weeklyStats.productivityRate}%`,
+        body:
+          `${message}\n` +
+          `✅ ทำเสร็จ: ${weeklyStats.completedThisWeek} งาน\n` +
+          `📋 คงเหลือ: ${currentStats.pending} งาน\n` +
+          `📊 Productivity: ${weeklyStats.productivityRate}%`,
         data: {
           type: "weekly_summary",
           completed: weeklyStats.completedThisWeek.toString(),
@@ -247,9 +225,6 @@ export const sendWeeklySummary = onSchedule(
   }
 );
 
-/**
- * 3. Daily Reminder งานที่ค้าง ทุกวันเวลา 18:00
- */
 export const sendDailyReminder = onSchedule(
   {schedule: "0 18 * * *", timeZone: "Asia/Bangkok"},
   async () => {
@@ -278,7 +253,7 @@ export const sendDailyReminder = onSchedule(
         body:
           stats.overdue > 0 ?
             `งานเลยกำหนด: ${stats.overdue} งาน | ` +
-            `งานค้าง: ${stats.pending} งาน` :
+              `งานค้าง: ${stats.pending} งาน` :
             `คุณมีงานค้าง ${stats.pending} งาน`,
         data: {
           type: "daily_reminder",
@@ -296,16 +271,12 @@ export const sendDailyReminder = onSchedule(
 
 // ===== REAL-TIME ACHIEVEMENT TRIGGERS =====
 
-/**
- * 4. Achievement: ปิดงานครบ 5 งานในวันนี้
- */
 export const checkDailyAchievements = onDocumentWritten(
   "tasks/{taskId}",
   async (event) => {
     const after = event.data?.after?.data();
     const before = event.data?.before?.data();
 
-    // ตรวจสอบว่ามีการเปลี่ยนจาก not done -> done
     if (!after || !before) return;
     if (after.isDone === before.isDone) return;
     if (!after.isDone) return;
@@ -313,7 +284,6 @@ export const checkDailyAchievements = onDocumentWritten(
     const userId = after.userId;
     if (!userId) return;
 
-    // นับจำนวนงานที่ทำเสร็จวันนี้
     const db = admin.firestore();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -327,7 +297,6 @@ export const checkDailyAchievements = onDocumentWritten(
 
     const completedCount = completedTodaySnapshot.size;
 
-    // Achievements
     const achievements = [
       {count: 1, title: "🎯 เริ่มต้นดีแล้ว!", body: "ทำงานเสร็จแรกวันนี้!"},
       {count: 5, title: "🔥 น่าทึ่งมาก!", body: "คุณปิดงานครบ 5 งานแล้ว!"},
@@ -348,7 +317,6 @@ export const checkDailyAchievements = onDocumentWritten(
         },
       });
 
-      // บันทึก achievement ใน Firestore
       await db.collection("achievements").add({
         userId,
         type: "daily_completion",
@@ -364,9 +332,6 @@ export const checkDailyAchievements = onDocumentWritten(
   }
 );
 
-/**
- * 5. Achievement: Project Completion
- */
 export const checkProjectCompletion = onDocumentWritten(
   "tasks/{taskId}",
   async (event) => {
@@ -377,7 +342,6 @@ export const checkProjectCompletion = onDocumentWritten(
     const projectId = after.projectId;
     const userId = after.userId;
 
-    // ดึงงานทั้งหมดใน project
     const projectTasksSnapshot = await db
       .collection("tasks")
       .where("projectId", "==", projectId)
@@ -389,7 +353,6 @@ export const checkProjectCompletion = onDocumentWritten(
       (doc) => doc.data().isDone
     ).length;
 
-    // ถ้าทำเสร็จทุกงานใน project
     if (totalTasks > 0 && completedTasks === totalTasks) {
       const projectDoc = await db.collection("projects").doc(projectId).get();
       const projectTitle = projectDoc.data()?.title || "โปรเจค";
@@ -405,7 +368,6 @@ export const checkProjectCompletion = onDocumentWritten(
         },
       });
 
-      // บันทึก achievement
       await db.collection("achievements").add({
         userId,
         type: "project_completion",
@@ -420,107 +382,8 @@ export const checkProjectCompletion = onDocumentWritten(
   }
 );
 
-// ===== CLEANUP FUNCTIONS (จากเดิม) =====
-
-export const cleanupOldActivities = onSchedule(
-  {schedule: "0 2 * * *", timeZone: "Asia/Bangkok"},
-  async () => {
-    const db = admin.firestore();
-    const activitiesRef = db.collection("activities");
-    const retentionDays = 7;
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-
-    let totalDeleted = 0;
-    const batchSize = 500;
-    let hasMore = true;
-
-    while (hasMore) {
-      const snapshot = await activitiesRef
-        .where("timestamp", "<", cutoffDate.toISOString())
-        .limit(batchSize)
-        .get();
-
-      if (snapshot.empty) {
-        hasMore = false;
-        break;
-      }
-
-      const batch = db.batch();
-      snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-      await batch.commit();
-
-      totalDeleted += snapshot.size;
-      if (snapshot.size < batchSize) {
-        hasMore = false;
-      }
-    }
-
-    console.log(`✅ Deleted ${totalDeleted} old activities`);
-  }
-);
-
-export const testCleanup = onCall(async (req) => {
-  if (!req.auth?.token?.admin) {
-    throw new HttpsError("permission-denied", "Only admin can trigger cleanup");
-  }
-
-  const db = admin.firestore();
-  const activitiesRef = db.collection("activities");
-
-  const retentionDays = req.data.days || 7;
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-
-  const maxDelete = req.data.maxDelete || 100;
-  const snapshot = await activitiesRef
-    .where("timestamp", "<", cutoffDate.toISOString())
-    .limit(maxDelete)
-    .get();
-
-  if (snapshot.empty) {
-    return {success: true, message: "No old activities found"};
-  }
-
-  const batch = db.batch();
-  snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-  await batch.commit();
-
-  return {success: true, deleted: snapshot.size};
-});
-
-export const getCleanupStats = onCall(async () => {
-  const db = admin.firestore();
-  const activitiesRef = db.collection("activities");
-
-  const retentionDays = 7;
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-
-  const oldSnap = await activitiesRef
-    .where("timestamp", "<", cutoffDate.toISOString())
-    .get();
-
-  const recentSnap = await activitiesRef
-    .where("timestamp", ">=", cutoffDate.toISOString())
-    .get();
-
-  const totalSnap = await activitiesRef.get();
-
-  return {
-    total: totalSnap.size,
-    old: oldSnap.size,
-    recent: recentSnap.size,
-    retentionDays,
-    cutoffDate: cutoffDate.toISOString(),
-  };
-});
-
 // ===== MANUAL NOTIFICATION CALLABLE =====
 
-/**
- * Test notification function (สำหรับทดสอบ)
- */
 export const sendTestNotification = onCall(async (req) => {
   if (!req.auth) {
     throw new HttpsError("unauthenticated", "User must be authenticated");
