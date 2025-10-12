@@ -169,10 +169,6 @@ class NotificationScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // Statistics card
-                _buildStatsCard(context, provider),
-                const SizedBox(height: 16),
-
                 // Unread notifications
                 if (provider.unreadNotifications.isNotEmpty) ...[
                   _buildSectionHeader(
@@ -204,86 +200,6 @@ class NotificationScreen extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-
-  Widget _buildStatsCard(
-    BuildContext context,
-    NotificationProvider provider,
-  ) {
-    final stats = provider.notificationStats;
-
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'สถิติการแจ้งเตือน',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  context,
-                  '📬',
-                  'ทั้งหมด',
-                  stats['total']!,
-                  Colors.blue,
-                ),
-                _buildStatItem(
-                  context,
-                  '🔔',
-                  'ยังไม่อ่าน',
-                  stats['unread']!,
-                  Colors.orange,
-                ),
-                _buildStatItem(
-                  context,
-                  '🏆',
-                  'ความสำเร็จ',
-                  stats['achievements']!,
-                  Colors.green,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(
-    BuildContext context,
-    String emoji,
-    String label,
-    int value,
-    Color color,
-  ) {
-    return Column(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 32)),
-        const SizedBox(height: 4),
-        Text(
-          value.toString(),
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-        ),
-      ],
     );
   }
 

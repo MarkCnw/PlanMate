@@ -1,13 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:planmate/History/Provider/history_provider.dart';
-
 import 'package:planmate/provider/task_provider.dart';
+import 'package:planmate/Services/notification.dart'; // 🔥 เปลี่ยนจาก noti.dart
+import 'package:planmate/provider/notificationprovider.dart'; // 🔥 เพิ่ม
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'Services/noti.dart';
 import 'firebase_options.dart';
 
 // ==== Layers ====
@@ -19,22 +20,40 @@ import 'package:planmate/Navigation/presentation/navigation_screen.dart';
 import 'package:planmate/Onboarding/Presentation/onboarding_screen.dart';
 import 'package:planmate/Auth/presentation/login_screen.dart';
 
+// 🔥 Background message handler (must be top-level function)
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(
+  RemoteMessage message,
+) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  debugPrint('📨 Background message: ${message.notification?.title}');
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 2. เรียกใช้ Service เพื่อตั้งค่า Notification (แก้ไขตรงนี้)
-  await NotificationService().init(); 
+  // 🔥 Set background message handler
+  FirebaseMessaging.onBackgroundMessage(
+    _firebaseMessagingBackgroundHandler,
+  );
 
-  // บรรทัดสำหรับดึง Token เพื่อดีบั๊ก สามารถลบออกได้แล้ว
-  // final token = await FirebaseMessaging.instance.getToken();
-  // print("🔑 FCM Token: $token");
+  // 🔥 Get FCM token for debugging
+  try {
+    final token = await FirebaseMessaging.instance.getToken();
+    debugPrint("🔑 FCM Token: $token");
+  } catch (e) {
+    debugPrint("❌ Failed to get FCM token: $e");
+  }
 
   runApp(const MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -46,25 +65,21 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(),
         ),
-        // 3) ProjectProvider อ่าน repo จาก context
         ChangeNotifierProvider(create: (context) => ProjectProvider()),
-
         ChangeNotifierProvider<TaskProvider>(
           create: (_) => TaskProvider(),
         ),
-
         ChangeNotifierProvider<HistoryProvider>(
           create: (_) => HistoryProvider(),
         ),
-
-        ChangeNotifierProvider<HistoryProvider>(
-          create: (_) => HistoryProvider(),
+        // 🔥 เพิ่ม NotificationProvider
+        ChangeNotifierProvider<NotificationProvider>(
+          create: (_) => NotificationProvider(),
         ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'PlanMate',
-        // คุณใช้ธีมเดิมได้เลย; ถ้าอยากใช้ M3 ก็เปลี่ยนเป็น colorSchemeSeed
         theme: ThemeData(
           textTheme: GoogleFonts.interTextTheme(
             Theme.of(context).textTheme,
@@ -131,7 +146,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// ทำ Stateful เพื่อ memoize future ของ onboarding
+/// AuthWrapper with notification initialization
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
@@ -142,6 +157,23 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> {
   late final Future<bool> _seenFuture = _hasSeenOnboarding();
 
+  @override
+  void initState() {
+    super.initState();
+    // 🔥 Initialize notifications when app starts
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    try {
+      final notificationService = NotificationService();
+      await notificationService.initialize();
+      debugPrint('✅ Notifications initialized in AuthWrapper');
+    } catch (e) {
+      debugPrint('❌ Failed to initialize notifications: $e');
+    }
+  }
+
   Future<bool> _hasSeenOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('has_seen_onboarding') ?? false;
@@ -151,25 +183,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        // ถ้า AuthProvider มี isLoading จริง ให้ใช้; ถ้าไม่มีก็ตัดบล็อกนี้ออก
-        if (authProvider.isLoading) {
-          // return Scaffold(
-          //   body: Center(
-          //     child: CircularProgressIndicator(
-          //       valueColor: AlwaysStoppedAnimation<Color>(
-          //         Theme.of(context).primaryColor,
-          //       ),
-          //     ),
-          //   ),
-          // );
-        }
-
         if (authProvider.isAuthenticated) {
           return const CustomBottomNavBarApp();
         }
 
         return FutureBuilder<bool>(
-          future: _seenFuture, // ✅ ใช้ future เดิม ไม่สร้างใหม่ทุก build
+          future: _seenFuture,
           builder: (context, snap) {
             if (snap.connectionState == ConnectionState.waiting) {
               return Scaffold(
