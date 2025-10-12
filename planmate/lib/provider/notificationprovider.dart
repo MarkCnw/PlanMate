@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:planmate/Services/notification.dart';
+import 'package:intl/intl.dart';
 
 class NotificationProvider extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
@@ -27,6 +28,66 @@ class NotificationProvider extends ChangeNotifier {
 
   List<NotificationLog> get readNotifications =>
       _notifications.where((n) => n.read).toList();
+
+  // 🔥 NEW: Group notifications by date
+  Map<String, List<NotificationLog>> get notificationsByDate {
+    final grouped = <String, List<NotificationLog>>{};
+    
+    for (final notification in _notifications) {
+      final dateKey = _getDateKey(notification.receivedAt);
+      if (!grouped.containsKey(dateKey)) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey]!.add(notification);
+    }
+    
+    // Sort notifications within each group by time (newest first)
+    grouped.forEach((key, list) {
+      list.sort((a, b) => b.receivedAt.compareTo(a.receivedAt));
+    });
+    
+    return grouped;
+  }
+
+  // 🔥 NEW: Get sorted date headers
+  List<String> get dateHeaders {
+    final headers = notificationsByDate.keys.toList();
+    headers.sort((a, b) => _parseDateKey(b).compareTo(_parseDateKey(a)));
+    return headers;
+  }
+
+  // 🔥 NEW: Get date key for grouping (format: "YYYY-MM-DD")
+  String _getDateKey(DateTime date) {
+    return DateFormat('yyyy-MM-dd').format(date);
+  }
+
+  // 🔥 NEW: Parse date key back to DateTime
+  DateTime _parseDateKey(String dateKey) {
+    return DateTime.parse(dateKey);
+  }
+
+  // 🔥 NEW: Format date header for display (e.g., "01 ต.ค. 2025")
+  String formatDateHeader(String dateKey) {
+    final date = _parseDateKey(dateKey);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    if (dateOnly == today) {
+      return 'วันนี้';
+    } else if (dateOnly == yesterday) {
+      return 'เมื่อวาน';
+    } else {
+      // Format as "DD MMM YYYY" in Thai
+      return DateFormat('dd MMM yyyy', 'th').format(date);
+    }
+  }
+
+  // 🔥 NEW: Format time for notification card (e.g., "17:01")
+  String formatTime(DateTime dateTime) {
+    return DateFormat('HH:mm').format(dateTime);
+  }
 
   // Group notifications by type
   Map<String, List<NotificationLog>> get groupedByType {
@@ -156,7 +217,6 @@ class NotificationProvider extends ChangeNotifier {
   /// Delete specific notification
   Future<void> deleteNotification(String notificationId) async {
     try {
-      // You may want to implement this in NotificationService
       debugPrint('🔄 Deleting notification: $notificationId');
     } catch (e) {
       debugPrint('❌ Failed to delete notification: $e');

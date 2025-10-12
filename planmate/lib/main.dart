@@ -22,27 +22,21 @@ import 'package:planmate/Auth/presentation/login_screen.dart';
 
 // 🔥 Background message handler (must be top-level function)
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(
-  RemoteMessage message,
-) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   debugPrint('📨 Background message: ${message.notification?.title}');
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  
   // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
   // 🔥 Set background message handler
-  FirebaseMessaging.onBackgroundMessage(
-    _firebaseMessagingBackgroundHandler,
-  );
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   // 🔥 Get FCM token for debugging
   try {
@@ -65,7 +59,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(),
         ),
-        ChangeNotifierProvider(create: (context) => ProjectProvider()),
+        ChangeNotifierProvider(
+          create: (context) => ProjectProvider(),
+        ),
         ChangeNotifierProvider<TaskProvider>(
           create: (_) => TaskProvider(),
         ),

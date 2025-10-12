@@ -1,11 +1,16 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
+  static final NotificationService _instance =
+      NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
@@ -80,7 +85,9 @@ class NotificationService {
   Future<void> _initializeLocalNotifications() async {
     debugPrint('🔄 Initializing local notifications...');
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -291,27 +298,29 @@ class NotificationService {
         .limit(50)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return NotificationLog(
-          id: doc.id,
-          title: data['title'] ?? '',
-          body: data['body'] ?? '',
-          data: Map<String, dynamic>.from(data['data'] ?? {}),
-          receivedAt: (data['receivedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          read: data['read'] ?? false,
-        );
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return NotificationLog(
+              id: doc.id,
+              title: data['title'] ?? '',
+              body: data['body'] ?? '',
+              data: Map<String, dynamic>.from(data['data'] ?? {}),
+              receivedAt:
+                  (data['receivedAt'] as Timestamp?)?.toDate() ??
+                  DateTime.now(),
+              read: data['read'] ?? false,
+            );
+          }).toList();
+        });
   }
 
   /// Mark notification as read
   Future<void> markAsRead(String notificationId) async {
     try {
-      await _firestore.collection('notification_logs').doc(notificationId).update({
-        'read': true,
-        'readAt': FieldValue.serverTimestamp(),
-      });
+      await _firestore
+          .collection('notification_logs')
+          .doc(notificationId)
+          .update({'read': true, 'readAt': FieldValue.serverTimestamp()});
     } catch (e) {
       debugPrint('❌ Failed to mark notification as read: $e');
     }
@@ -338,10 +347,11 @@ class NotificationService {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      final snapshot = await _firestore
-          .collection('notification_logs')
-          .where('userId', isEqualTo: user.uid)
-          .get();
+      final snapshot =
+          await _firestore
+              .collection('notification_logs')
+              .where('userId', isEqualTo: user.uid)
+              .get();
 
       final batch = _firestore.batch();
       for (final doc in snapshot.docs) {
@@ -368,13 +378,15 @@ class NotificationService {
       // You'll need to implement this callable function
       debugPrint('🔄 Sending test notification...');
 
-      await _showLocalNotification(RemoteMessage(
-        notification: const RemoteNotification(
-          title: '🔔 ทดสอบการแจ้งเตือน',
-          body: 'นี่คือการแจ้งเตือนทดสอบ',
+      await _showLocalNotification(
+        RemoteMessage(
+          notification: const RemoteNotification(
+            title: '🔔 ทดสอบการแจ้งเตือน',
+            body: 'นี่คือการแจ้งเตือนทดสอบ',
+          ),
+          data: {'type': 'test'},
         ),
-        data: {'type': 'test'},
-      ));
+      );
 
       debugPrint('✅ Test notification sent');
     } catch (e) {
@@ -444,28 +456,30 @@ class NotificationLog {
     }
   }
 
-  String get emoji {
+  IconData get icon {
     switch (notificationType) {
       case 'achievement':
-        return '🏆';
+        return FontAwesomeIcons.medal;
       case 'weekly_summary':
-        return '📊';
+        return Symbols.bar_chart;
       case 'daily_reminder':
-        return '📝';
+        return Symbols.alarm;
       case 'inactive_reminder':
-        return '💙';
+        return Symbols.hourglass_bottom;
       default:
-        return '🔔';
+        return Symbols.notifications;
     }
   }
-}
 
-// ===== BACKGROUND MESSAGE HANDLER =====
-// This must be a top-level function
-@pragma('vm:entry-point')
-Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('📨 Background message handler');
-  debugPrint('📍 Title: ${message.notification?.title}');
-  debugPrint('📍 Body: ${message.notification?.body}');
-  debugPrint('📍 Data: ${message.data}');
+  // ===== BACKGROUND MESSAGE HANDLER =====
+  // This must be a top-level function
+  @pragma('vm:entry-point')
+  Future<void> firebaseMessagingBackgroundHandler(
+    RemoteMessage message,
+  ) async {
+    debugPrint('📨 Background message handler');
+    debugPrint('📍 Title: ${message.notification?.title}');
+    debugPrint('📍 Body: ${message.notification?.body}');
+    debugPrint('📍 Data: ${message.data}');
+  }
 }

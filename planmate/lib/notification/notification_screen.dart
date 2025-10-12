@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:planmate/Services/notification.dart';
 import 'package:planmate/provider/notificationprovider.dart';
+import 'package:planmate/notification/widgets/date_header.dart';
+import 'package:planmate/notification/widgets/notification_card.dart';
 import 'package:provider/provider.dart';
 
 class NotificationScreen extends StatelessWidget {
@@ -9,32 +11,35 @@ class NotificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('การแจ้งเตือน'),
+        elevation: 0,
         actions: [
           // Mark all as read
           Consumer<NotificationProvider>(
             builder: (context, provider, child) {
               return provider.hasUnread
                   ? IconButton(
-                    icon: const Icon(Icons.done_all),
-                    tooltip: 'อ่านทั้งหมด',
-                    onPressed: () async {
-                      await provider.markAllAsRead();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('อ่านทั้งหมดแล้ว'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    },
-                  )
+                      icon: const Icon(Icons.done_all),
+                      tooltip: 'อ่านทั้งหมด',
+                      onPressed: () async {
+                        await provider.markAllAsRead();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('อ่านทั้งหมดแล้ว'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                    )
                   : const SizedBox.shrink();
             },
           ),
-          // Clear all
+
+          // More options
           PopupMenuButton<String>(
             onSelected: (value) async {
               final provider = context.read<NotificationProvider>();
@@ -65,45 +70,42 @@ class NotificationScreen extends StatelessWidget {
                 }
               }
             },
-            itemBuilder:
-                (context) => [
-                  const PopupMenuItem(
-                    value: 'test',
-                    child: Row(
-                      children: [
-                        Icon(Icons.send, size: 20),
-                        SizedBox(width: 8),
-                        Text('ส่งการแจ้งเตือนทดสอบ'),
-                      ],
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'test',
+                child: Row(
+                  children: [
+                    Icon(Icons.send, size: 20),
+                    SizedBox(width: 8),
+                    Text('ส่งการแจ้งเตือนทดสอบ'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'clear_all',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_sweep, size: 20, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text(
+                      'ลบทั้งหมด',
+                      style: TextStyle(color: Colors.red),
                     ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'clear_all',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.delete_sweep,
-                          size: 20,
-                          color: Colors.red,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'ลบทั้งหมด',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
       body: Consumer<NotificationProvider>(
         builder: (context, provider, child) {
+          // Loading state
           if (!provider.isInitialized) {
             return const Center(child: CircularProgressIndicator());
           }
 
+          // Error state
           if (provider.error != null) {
             return Center(
               child: Column(
@@ -120,10 +122,13 @@ class NotificationScreen extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    provider.error!,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      provider.error!,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -135,6 +140,7 @@ class NotificationScreen extends StatelessWidget {
             );
           }
 
+          // Empty state
           if (provider.notifications.isEmpty) {
             return Center(
               child: Column(
@@ -148,13 +154,17 @@ class NotificationScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     'ไม่มีการแจ้งเตือน',
-                    style: Theme.of(context).textTheme.titleLarge
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
                         ?.copyWith(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'การแจ้งเตือนของคุณจะแสดงที่นี่',
-                    style: Theme.of(context).textTheme.bodyMedium
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
                         ?.copyWith(color: Colors.grey[500]),
                   ),
                 ],
@@ -162,40 +172,16 @@ class NotificationScreen extends StatelessWidget {
             );
           }
 
+          // Main content - Grouped by date
           return RefreshIndicator(
             onRefresh: () async {
               provider.refreshNotifications();
             },
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Unread notifications
-                if (provider.unreadNotifications.isNotEmpty) ...[
-                  _buildSectionHeader(
-                    context,
-                    'ยังไม่ได้อ่าน',
-                    provider.unreadCount,
-                  ),
-                  const SizedBox(height: 8),
-                  ...provider.unreadNotifications.map(
-                    (n) => _buildNotificationCard(context, n, provider),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Read notifications
-                if (provider.readNotifications.isNotEmpty) ...[
-                  _buildSectionHeader(
-                    context,
-                    'อ่านแล้ว',
-                    provider.readNotifications.length,
-                  ),
-                  const SizedBox(height: 8),
-                  ...provider.readNotifications.map(
-                    (n) => _buildNotificationCard(context, n, provider),
-                  ),
-                ],
-              ],
+            child: ListView.builder(
+              itemCount: _getTotalItemCount(provider),
+              itemBuilder: (context, index) {
+                return _buildItem(context, provider, index);
+              },
             ),
           );
         },
@@ -203,164 +189,66 @@ class NotificationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(
-    BuildContext context,
-    String title,
-    int count,
-  ) {
-    return Row(
-      children: [
-        Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            count.toString(),
-            style: const TextStyle(
-              color: Colors.blue,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ),
-      ],
-    );
+  // Calculate total item count (headers + notifications)
+  int _getTotalItemCount(NotificationProvider provider) {
+    final dateHeaders = provider.dateHeaders;
+    int count = 0;
+    for (final dateKey in dateHeaders) {
+      count++; // Header
+      count += provider.notificationsByDate[dateKey]?.length ?? 0;
+    }
+    return count;
   }
 
-  Widget _buildNotificationCard(
+  // Build each item (header or notification card)
+  Widget _buildItem(
     BuildContext context,
-    NotificationLog notification,
     NotificationProvider provider,
+    int index,
   ) {
-    final isUnread = !notification.read;
+    final dateHeaders = provider.dateHeaders;
+    int currentIndex = 0;
 
-    return Dismissible(
-      key: Key(notification.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
-        decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      child: Card(
-        elevation: isUnread ? 2 : 0,
-        color: isUnread ? Colors.blue.withOpacity(0.05) : null,
-        margin: const EdgeInsets.only(bottom: 8),
-        child: InkWell(
+    for (final dateKey in dateHeaders) {
+      // Check if this is a header
+      if (currentIndex == index) {
+        return DateHeader(
+          dateText: provider.formatDateHeader(dateKey),
+        );
+      }
+      currentIndex++;
+
+      // Check if this is a notification in this date group
+      final notifications = provider.notificationsByDate[dateKey] ?? [];
+      final relativeIndex = index - currentIndex;
+
+      if (relativeIndex >= 0 && relativeIndex < notifications.length) {
+        final notification = notifications[relativeIndex];
+        return NotificationCard(
+          notification: notification,
+          timeText: provider.formatTime(notification.receivedAt),
           onTap: () async {
-            if (isUnread) {
+            if (!notification.read) {
               await provider.markAsRead(notification.id);
             }
-            // Navigate to relevant screen
             _handleNotificationTap(context, notification);
           },
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Emoji icon
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: _getColorForType(
-                      notification.notificationType,
-                    ).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      notification.emoji,
-                      style: const TextStyle(fontSize: 24),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
+          onDismissed: () {
+            // Handle dismissal if needed
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('ลบการแจ้งเตือน: ${notification.title}'),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
+        );
+      }
 
-                // Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              notification.title,
-                              style: Theme.of(
-                                context,
-                              ).textTheme.titleSmall?.copyWith(
-                                fontWeight:
-                                    isUnread
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                          if (isUnread)
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Colors.blue,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        notification.body,
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(color: Colors.grey[700]),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        notification.timeAgo,
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: Colors.grey[500]),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Color _getColorForType(String type) {
-    switch (type) {
-      case 'achievement':
-        return Colors.green;
-      case 'weekly_summary':
-        return Colors.blue;
-      case 'daily_reminder':
-        return Colors.orange;
-      case 'inactive_reminder':
-        return Colors.purple;
-      default:
-        return Colors.grey;
+      currentIndex += notifications.length;
     }
+
+    return const SizedBox.shrink();
   }
 
   void _handleNotificationTap(
@@ -371,16 +259,13 @@ class NotificationScreen extends StatelessWidget {
 
     switch (type) {
       case 'achievement':
-        // Show achievement details
         _showAchievementDialog(context, notification);
         break;
       case 'weekly_summary':
-        // Navigate to statistics
         debugPrint('Navigate to statistics');
         break;
       case 'daily_reminder':
       case 'inactive_reminder':
-        // Navigate to tasks
         debugPrint('Navigate to tasks');
         break;
       default:
@@ -394,36 +279,36 @@ class NotificationScreen extends StatelessWidget {
   ) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Row(
-              children: [
-                Text(notification.emoji),
-                const SizedBox(width: 8),
-                const Text('ความสำเร็จ'),
-              ],
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(notification.icon, color: Colors.amber, size: 24), // ✅ ถูกต้อง
+            const SizedBox(width: 8),
+            const Text('ความสำเร็จ'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              notification.title,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  notification.title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(notification.body),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('ปิด'),
-              ),
-            ],
+            const SizedBox(height: 8),
+            Text(notification.body),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('ปิด'),
           ),
+        ],
+      ),
     );
   }
 
@@ -434,22 +319,21 @@ class NotificationScreen extends StatelessWidget {
   ) {
     return showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(title),
-            content: Text(content),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('ยกเลิก'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('ยืนยัน'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('ยกเลิก'),
           ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('ยืนยัน'),
+          ),
+        ],
+      ),
     );
   }
 }
