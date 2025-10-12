@@ -7,7 +7,7 @@ import 'package:planmate/provider/task_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'Services/ืnoti.dart';
+import 'Services/noti.dart';
 import 'firebase_options.dart';
 
 // ==== Layers ====
