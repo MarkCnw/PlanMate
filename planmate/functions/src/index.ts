@@ -480,6 +480,48 @@ export const checkProjectCompletion = onDocumentWritten(
   }
 );
 
+// เพิ่มที่ท้ายไฟล์ index.ts
+
+// ✅ ลบการแจ้งเตือนที่เก่ากว่า 7 วัน (ทำงานทุกวัน เวลา 03:00)
+export const cleanupOldNotifications = onSchedule(
+  {schedule: "0 3 * * *", timeZone: "Asia/Bangkok"},
+  async () => {
+    console.log("🔄 Cleaning up old notifications...");
+    const db = admin.firestore();
+    const notificationLogsRef = db.collection("notification_logs");
+    const retentionDays = 7;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+    let totalDeleted = 0;
+    const batchSize = 500;
+    let hasMore = true;
+
+    while (hasMore) {
+      const snapshot = await notificationLogsRef
+        .where("receivedAt", "<", cutoffDate)
+        .limit(batchSize)
+        .get();
+
+      if (snapshot.empty) {
+        hasMore = false;
+        break;
+      }
+
+      const batch = db.batch();
+      snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+
+      totalDeleted += snapshot.size;
+      if (snapshot.size < batchSize) {
+        hasMore = false;
+      }
+    }
+
+    console.log(`✅ Deleted ${totalDeleted} old notifications`);
+  }
+);
+
 // ===== MANUAL NOTIFICATION CALLABLE =====
 
 export const sendTestNotification = onCall(async (req) => {
