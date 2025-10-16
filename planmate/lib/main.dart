@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:planmate/History/Provider/history_provider.dart';
 import 'package:planmate/provider/task_provider.dart';
-import 'package:planmate/Services/notification.dart'; // 🔥 เปลี่ยนจาก noti.dart
-import 'package:planmate/provider/notificationprovider.dart'; // 🔥 เพิ่ม
+import 'package:planmate/Services/notification.dart';
+import 'package:planmate/provider/notificationprovider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/date_symbol_data_local.dart'; // 🔥 เพิ่มบรรทัดนี้
 
 import 'firebase_options.dart';
 
@@ -22,21 +23,31 @@ import 'package:planmate/Auth/presentation/login_screen.dart';
 
 // 🔥 Background message handler (must be top-level function)
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+Future<void> _firebaseMessagingBackgroundHandler(
+  RemoteMessage message,
+) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   debugPrint('📨 Background message: ${message.notification?.title}');
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // 🔥 Initialize locale data สำหรับภาษาไทย (เพิ่มบรรทัดนี้)
+  await initializeDateFormatting('th', null);
+  debugPrint('✅ Thai locale initialized');
+
   // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
   // 🔥 Set background message handler
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  FirebaseMessaging.onBackgroundMessage(
+    _firebaseMessagingBackgroundHandler,
+  );
 
   // 🔥 Get FCM token for debugging
   try {
@@ -59,9 +70,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(),
         ),
-        ChangeNotifierProvider(
-          create: (context) => ProjectProvider(),
-        ),
+        ChangeNotifierProvider(create: (context) => ProjectProvider()),
         ChangeNotifierProvider<TaskProvider>(
           create: (_) => TaskProvider(),
         ),
@@ -180,7 +189,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         if (authProvider.isAuthenticated) {
-          return const CustomBottomNavBarApp();
+          // 🔥 แก้ตรงนี้ - เปลี่ยนเป็น NavigationScreen
+          return const NavigationScreen();
         }
 
         return FutureBuilder<bool>(

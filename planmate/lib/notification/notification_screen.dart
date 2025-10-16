@@ -4,6 +4,7 @@ import 'package:planmate/provider/notificationprovider.dart';
 import 'package:planmate/notification/widgets/date_header.dart';
 import 'package:planmate/notification/widgets/notification_card.dart';
 import 'package:provider/provider.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({Key? key}) : super(key: key);
@@ -16,30 +17,7 @@ class NotificationScreen extends StatelessWidget {
         title: const Text('การแจ้งเตือน'),
         elevation: 0,
         actions: [
-          // Mark all as read
-          Consumer<NotificationProvider>(
-            builder: (context, provider, child) {
-              return provider.hasUnread
-                  ? IconButton(
-                      icon: const Icon(Icons.done_all),
-                      tooltip: 'อ่านทั้งหมด',
-                      onPressed: () async {
-                        await provider.markAllAsRead();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('อ่านทั้งหมดแล้ว'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                    )
-                  : const SizedBox.shrink();
-            },
-          ),
-
-          // More options
+          // ✅ เหลือเฉพาะเมนูเพิ่มเติม
           PopupMenuButton<String>(
             onSelected: (value) async {
               final provider = context.read<NotificationProvider>();
@@ -111,11 +89,7 @@ class NotificationScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.red,
-                  ),
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(
                     'เกิดข้อผิดพลาด',
@@ -146,11 +120,7 @@ class NotificationScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.notifications_none,
-                    size: 80,
-                    color: Colors.grey[400],
-                  ),
+                  Icon(Icons.notifications_none, size: 80, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     'ไม่มีการแจ้งเตือน',
@@ -172,7 +142,7 @@ class NotificationScreen extends StatelessWidget {
             );
           }
 
-          // Main content - Grouped by date
+          // ✅ แสดงรายการแจ้งเตือน grouped by date
           return RefreshIndicator(
             onRefresh: () async {
               provider.refreshNotifications();
@@ -189,7 +159,7 @@ class NotificationScreen extends StatelessWidget {
     );
   }
 
-  // Calculate total item count (headers + notifications)
+  // จำนวน item ทั้งหมด (header + notification)
   int _getTotalItemCount(NotificationProvider provider) {
     final dateHeaders = provider.dateHeaders;
     int count = 0;
@@ -200,7 +170,7 @@ class NotificationScreen extends StatelessWidget {
     return count;
   }
 
-  // Build each item (header or notification card)
+  // ✅ สร้างแต่ละ item (header หรือการ์ด)
   Widget _buildItem(
     BuildContext context,
     NotificationProvider provider,
@@ -210,38 +180,45 @@ class NotificationScreen extends StatelessWidget {
     int currentIndex = 0;
 
     for (final dateKey in dateHeaders) {
-      // Check if this is a header
+      // Header
       if (currentIndex == index) {
-        return DateHeader(
-          dateText: provider.formatDateHeader(dateKey),
-        );
+        return DateHeader(dateText: provider.formatDateHeader(dateKey));
       }
       currentIndex++;
 
-      // Check if this is a notification in this date group
+      // Notifications ภายใต้ header นั้น
       final notifications = provider.notificationsByDate[dateKey] ?? [];
       final relativeIndex = index - currentIndex;
 
       if (relativeIndex >= 0 && relativeIndex < notifications.length) {
         final notification = notifications[relativeIndex];
-        return NotificationCard(
-          notification: notification,
-          timeText: provider.formatTime(notification.receivedAt),
-          onTap: () async {
-            if (!notification.read) {
+
+        // ✅ ครอบด้วย VisibilityDetector ให้ markAsRead อัตโนมัติ
+        return VisibilityDetector(
+          key: Key('notif-${notification.id}'),
+          onVisibilityChanged: (info) async {
+            if (info.visibleFraction > 0.5 && !notification.read) {
               await provider.markAsRead(notification.id);
             }
-            _handleNotificationTap(context, notification);
           },
-          onDismissed: () {
-            // Handle dismissal if needed
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('ลบการแจ้งเตือน: ${notification.title}'),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          },
+          child: NotificationCard(
+            notification: notification,
+            timeText: provider.formatTime(notification.receivedAt),
+            onTap: () async {
+              if (!notification.read) {
+                await provider.markAsRead(notification.id);
+              }
+              _handleNotificationTap(context, notification);
+            },
+            onDismissed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('ลบการแจ้งเตือน: ${notification.title}'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
         );
       }
 
@@ -251,6 +228,7 @@ class NotificationScreen extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
+  // ✅ เมื่อผู้ใช้กดที่ NotificationCard
   void _handleNotificationTap(
     BuildContext context,
     NotificationLog notification,
@@ -282,7 +260,7 @@ class NotificationScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(notification.icon, color: Colors.amber, size: 24), // ✅ ถูกต้อง
+            Icon(notification.icon, color: Colors.amber, size: 24),
             const SizedBox(width: 8),
             const Text('ความสำเร็จ'),
           ],

@@ -9,15 +9,15 @@ import 'package:planmate/Search/Presentation/search_screen.dart';
 
 
 
-class CustomBottomNavBarApp extends StatefulWidget {
-  const CustomBottomNavBarApp({super.key});
+class NavigationScreen extends StatefulWidget {
+  const NavigationScreen({super.key});
 
   @override
-  State<CustomBottomNavBarApp> createState() =>
-      _CustomBottomNavBarAppState();
+  State<NavigationScreen> createState() =>
+      _NavigationScreenState();
 }
 
-class _CustomBottomNavBarAppState extends State<CustomBottomNavBarApp> {
+class _NavigationScreenState extends State<NavigationScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
