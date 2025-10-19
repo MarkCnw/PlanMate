@@ -9,20 +9,16 @@ import 'package:planmate/Services/notification.dart';
 import 'package:planmate/provider/notificationprovider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/date_symbol_data_local.dart'; // 🔥 เพิ่มบรรทัดนี้
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'firebase_options.dart';
-
-// ==== Layers ====
 import 'package:planmate/provider/auth_provider.dart';
 import 'package:planmate/provider/project_provider.dart';
-
-// ==== Screens ====
 import 'package:planmate/Navigation/presentation/navigation_screen.dart';
 import 'package:planmate/Onboarding/Presentation/onboarding_screen.dart';
 import 'package:planmate/Auth/presentation/login_screen.dart';
 
-// 🔥 Background message handler (must be top-level function)
+// 🔥 Background message handler
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(
   RemoteMessage message,
@@ -36,7 +32,7 @@ Future<void> _firebaseMessagingBackgroundHandler(
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🔥 Initialize locale data สำหรับภาษาไทย (เพิ่มบรรทัดนี้)
+  // Initialize locale
   await initializeDateFormatting('th', null);
   debugPrint('✅ Thai locale initialized');
 
@@ -45,12 +41,12 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 🔥 Set background message handler
+  // Set background message handler
   FirebaseMessaging.onBackgroundMessage(
     _firebaseMessagingBackgroundHandler,
   );
 
-  // 🔥 Get FCM token for debugging
+  // Get FCM token
   try {
     final token = await FirebaseMessaging.instance.getToken();
     debugPrint("🔑 FCM Token: $token");
@@ -78,7 +74,6 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<HistoryProvider>(
           create: (_) => HistoryProvider(),
         ),
-        // 🔥 เพิ่ม NotificationProvider
         ChangeNotifierProvider<NotificationProvider>(
           create: (_) => NotificationProvider(),
         ),
@@ -152,7 +147,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// AuthWrapper with notification initialization
+/// ✅ แก้ไข AuthWrapper ให้ทำงานถูกต้อง
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
@@ -161,22 +156,17 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-  late final Future<bool> _seenFuture = _hasSeenOnboarding();
-
   @override
   void initState() {
     super.initState();
-    // 🔥 Initialize notifications when app starts
     _initializeNotifications();
   }
 
   Future<void> _initializeNotifications() async {
     try {
-      // ✅ เรียก initialize ทั้ง NotificationService และ Provider
       final notificationService = NotificationService();
       await notificationService.initialize();
 
-      // ✅ จากนั้นค่อย initialize Provider
       if (mounted) {
         final notificationProvider = context.read<NotificationProvider>();
         await notificationProvider.initialize();
@@ -195,25 +185,31 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<bool> _hasAcceptedTerms() async {
     final prefs = await SharedPreferences.getInstance();
-    debugPrint(
-      '✅ hasAcceptedTerms: ${prefs.getBool('has_accepted_terms')}',
-    );
     return prefs.getBool('has_accepted_terms') ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
+    // ✅ ใช้ Consumer เพื่อฟัง auth state แบบ real-time
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
+        debugPrint('🔄 AuthWrapper rebuild - isAuthenticated: ${authProvider.isAuthenticated}');
+        
+        // ✅ 1. ถ้า login แล้ว -> ไปหน้าหลัก
         if (authProvider.isAuthenticated) {
-          // 🔥 แก้ตรงนี้ - เปลี่ยนเป็น NavigationScreen
+          debugPrint('✅ User authenticated, navigating to NavigationScreen');
           return const NavigationScreen();
         }
 
-        return FutureBuilder(
-          future: Future.wait([_hasSeenOnboarding(), _hasAcceptedTerms()]),
-          builder: (context, AsyncSnapshot<List<bool>> snap) {
-            if (snap.connectionState == ConnectionState.waiting) {
+        // ✅ 2. ถ้ายังไม่ login -> เช็ค Onboarding/Terms
+        return FutureBuilder<List<bool>>(
+          future: Future.wait([
+            _hasSeenOnboarding(),
+            _hasAcceptedTerms(),
+          ]),
+          builder: (context, snapshot) {
+            // Loading state
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return Scaffold(
                 body: Center(
                   child: CircularProgressIndicator(
@@ -225,19 +221,24 @@ class _AuthWrapperState extends State<AuthWrapper> {
               );
             }
 
-            final hasSeenOnboarding = snap.data?[0] ?? false;
-            final hasAcceptedTerms = snap.data?[1] ?? false;
+            final hasSeenOnboarding = snapshot.data?[0] ?? false;
+            final hasAcceptedTerms = snapshot.data?[1] ?? false;
 
+            debugPrint('📍 hasSeenOnboarding: $hasSeenOnboarding');
+            debugPrint('📍 hasAcceptedTerms: $hasAcceptedTerms');
+
+            // ✅ 3. ยังไม่ accept terms -> แสดงหน้า Terms
             if (!hasAcceptedTerms) {
-              // 🔥 เปิดหน้า TermsAcceptance ก่อน
               return const TermsAcceptanceScreen();
             }
 
-            if (hasSeenOnboarding) {
-              return const SignInScreen();
-            } else {
+            // ✅ 4. accept แล้วแต่ยังไม่เคยเห็น onboarding -> แสดง Onboarding
+            if (!hasSeenOnboarding) {
               return const OnboardingScreen();
             }
+
+            // ✅ 5. accept + เห็น onboarding แล้ว -> แสดงหน้า Login
+            return const SignInScreen();
           },
         );
       },

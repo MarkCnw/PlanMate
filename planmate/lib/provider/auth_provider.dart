@@ -1,17 +1,27 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart'
+    show ChangeNotifier, debugPrint, kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+// ใช้ google_sign_in เฉพาะ mobile
+// ignore: depend_on_referenced_packages
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // State variables
+  // ใช้เฉพาะ Android/iOS
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    // scopes: ['email', 'profile'], // จะเพิ่มก็ได้
+  );
+
   User? _currentUser;
   bool _isLoading = false;
   String? _error;
+
+  StreamSubscription<User?>? _authSub;
 
   // Getters
   User? get currentUser => _currentUser;
@@ -19,112 +29,194 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
   bool get isAuthenticated => _currentUser != null;
 
-  // Constructor
   AuthProvider() {
     _initialize();
   }
 
-  // Initialize auth state listener
   void _initialize() {
-    _auth.authStateChanges().listen((User? user) {
-      _currentUser = user;
-      notifyListeners();
-    });
-
-    // Set initial user
+    debugPrint('🔄 AuthProvider: Initializing...');
     _currentUser = _auth.currentUser;
+    debugPrint('📍 Initial user: ${_currentUser?.uid}');
+
+    // ✅ เก็บ subscription และยกเลิกตอน dispose
+    _authSub = _auth.authStateChanges().listen((user) {
+      debugPrint('🔔 Auth state changed: ${user?.uid}');
+      if (_currentUser?.uid != user?.uid) {
+        _currentUser = user;
+        notifyListeners();
+      }
+    });
   }
 
-  // Clear error
+  // Lifecycle
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
+  }
+
   void clearError() {
-    _error = null;
-    notifyListeners();
+    if (_error != null) {
+      _error = null;
+      notifyListeners();
+    }
   }
 
-  // Set loading state
   void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
+    if (_isLoading != loading) {
+      _isLoading = loading;
+      notifyListeners();
+    }
   }
 
-  // Set error state
   void _setError(String? error) {
     _error = error;
     notifyListeners();
   }
 
-  // Google Sign In
+  /// ✅ Google Sign-In ครอบคลุมทุกแพลตฟอร์ม:
+  /// - Web/Windows/Mac/Linux: ใช้ OAuth Provider ของ Firebase โดยตรง
+  /// - Android/iOS: ใช้ google_sign_in -> Firebase credential
   Future<bool> signInWithGoogle() async {
+    _setLoading(true);
+    clearError();
     try {
-      _setLoading(true);
-      clearError();
+      debugPrint('🔄 Starting Google Sign In...');
 
-      // Start Google Sign In process
-      final GoogleSignInAccount? googleSignInAccount =
-          await _googleSignIn.signIn();
+      if (kIsWeb) {
+        final provider =
+            GoogleAuthProvider()
+              ..addScope('email')
+              ..addScope('profile');
+        final cred = await _auth.signInWithPopup(provider);
+        debugPrint(
+          '✅ Firebase sign in (web) successful: ${cred.user?.uid}',
+        );
+        if (cred.user != null) {
+          await _saveUserToFirestore(cred.user!);
+        }
 
-      if (googleSignInAccount == null) {
-        // User cancelled sign in
+        // ✅ บังคับอัปเดต user + แจ้ง UI
+        _currentUser = _auth.currentUser;
         _setLoading(false);
-        return false;
+        notifyListeners(); // <--- สำคัญมาก
+        return true;
+      } else {
+        final GoogleSignInAccount? googleAcc =
+            await _googleSignIn.signIn();
+        if (googleAcc == null) {
+          debugPrint('⚠️ User cancelled Google Sign In');
+          _setLoading(false);
+          return false;
+        }
+
+        debugPrint('✅ Google account selected: ${googleAcc.email}');
+        final GoogleSignInAuthentication authData =
+            await googleAcc.authentication;
+
+        final credential = GoogleAuthProvider.credential(
+          accessToken: authData.accessToken,
+          idToken: authData.idToken,
+        );
+
+        debugPrint('🔄 Signing in to Firebase...');
+        final userCred = await _auth.signInWithCredential(credential);
+        debugPrint('✅ Firebase sign in successful: ${userCred.user?.uid}');
+
+        if (userCred.user != null) {
+          await _saveUserToFirestore(userCred.user!);
+        }
+
+        // ✅ บังคับอัปเดต user + แจ้ง UI ทันที
+        _currentUser = _auth.currentUser;
+        _setLoading(false);
+        notifyListeners(); // 💥 ตัวนี้จะทำให้ AuthWrapper rebuild แล้วเข้า Home
+        return true;
       }
-
-      final GoogleSignInAuthentication googleSignInAuthentication =
-          await googleSignInAccount.authentication;
-
-      final AuthCredential authCredential = GoogleAuthProvider.credential(
-        accessToken: googleSignInAuthentication.accessToken,
-        idToken: googleSignInAuthentication.idToken,
-      );
-
-      // Sign in to Firebase with Google credentials
-      final UserCredential userCredential = await _auth
-          .signInWithCredential(authCredential);
-
-      // Save user data to Firestore
-      if (userCredential.user != null) {
-        await _saveUserToFirestore(userCredential.user!);
-      }
-
-      _setLoading(false);
-      return true;
     } on FirebaseAuthException catch (e) {
+      debugPrint('❌ Firebase Auth Error: ${e.code} - ${e.message}');
       _setLoading(false);
-      _setError('Firebase Auth Error: ${e.message}');
+      _setError(_mapFirebaseAuthError(e));
       return false;
-    } catch (e) {
+    } on Exception catch (e) {
+      final msg = e.toString();
+      debugPrint('❌ Google Sign-In Error: $msg');
       _setLoading(false);
-      _setError('Google Sign-In Error: ${e.toString()}');
+      if (msg.contains('com.google.android.gms') ||
+          msg.contains('Google Play services') ||
+          msg.contains('Unknown calling package name')) {
+        _setError(
+          'อุปกรณ์นี้ไม่มี/ไม่พร้อม Google Play services.\n'
+          'ลองใช้ Emulator ที่มี Google Play image หรืออัปเดต Google Play services\n'
+          'และตรวจสอบว่าได้เพิ่ม SHA-1 debug keystore ใน Firebase Console แล้ว',
+        );
+      } else {
+        _setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบ: $msg');
+      }
       return false;
     }
   }
 
-  // Sign Out
+  String _mapFirebaseAuthError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'account-exists-with-different-credential':
+        return 'บัญชีนี้ถูกใช้งานแล้วด้วยวิธีอื่น';
+      case 'invalid-credential':
+        return 'ข้อมูลการเข้าสู่ระบบไม่ถูกต้อง';
+      case 'operation-not-allowed':
+        return 'การเข้าสู่ระบบด้วย Google ไม่ได้รับอนุญาต';
+      case 'user-disabled':
+        return 'บัญชีนี้ถูกปิดใช้งาน';
+      case 'user-not-found':
+        return 'ไม่พบบัญชีนี้';
+      case 'wrong-password':
+        return 'รหัสผ่านไม่ถูกต้อง';
+      case 'network-request-failed':
+        return 'เกิดปัญหาการเชื่อมต่อเครือข่าย';
+      case 'popup-closed-by-user': // web
+        return 'ปิดหน้าต่างเข้าสู่ระบบก่อนเสร็จสิ้น';
+      default:
+        return 'เกิดข้อผิดพลาด: ${e.message ?? e.code}';
+    }
+  }
+
   Future<void> signOut() async {
     try {
+      debugPrint('🔄 Signing out...');
       _setLoading(true);
       clearError();
 
-      // Sign out from both Google and Firebase
-      await Future.wait([_googleSignIn.signOut(), _auth.signOut()]);
+      // Mobile: ออกจากทั้ง Google + Firebase
+      if (!kIsWeb) {
+        // disconnect จะ revoke token ให้สะอาดกว่าบางเคส
+        try {
+          await _googleSignIn.disconnect();
+        } catch (_) {
+          // บางครั้ง disconnect จะ throw ถ้าไม่มี session; ข้ามได้
+        }
+        await _googleSignIn.signOut();
+      }
+      await _auth.signOut();
 
+      _currentUser = null;
       _setLoading(false);
+      notifyListeners();
+      debugPrint('✅ Sign out successful');
     } catch (e) {
+      debugPrint('❌ Sign out error: $e');
       _setLoading(false);
-      _setError('Sign out error: ${e.toString()}');
+      _setError('เกิดข้อผิดพลาดในการออกจากระบบ: $e');
     }
   }
 
-  // Save user to Firestore
   Future<void> _saveUserToFirestore(User user) async {
     try {
+      debugPrint('🔄 Saving user to Firestore: ${user.uid}');
       final userDoc = _firestore.collection('users').doc(user.uid);
+      final snap = await userDoc.get();
 
-      // Check if user document exists
-      final docSnapshot = await userDoc.get();
-
-      if (!docSnapshot.exists) {
-        // Create new user document
+      if (!snap.exists) {
+        debugPrint('📝 Creating new user document');
         await userDoc.set({
           'uid': user.uid,
           'name': user.displayName ?? '',
@@ -133,40 +225,30 @@ class AuthProvider extends ChangeNotifier {
           'createdAt': FieldValue.serverTimestamp(),
           'lastSignIn': FieldValue.serverTimestamp(),
         });
+        debugPrint('✅ User document created');
       } else {
-        // Update last sign in time
+        debugPrint('📝 Updating last sign in time');
         await userDoc.update({'lastSignIn': FieldValue.serverTimestamp()});
+        debugPrint('✅ User document updated');
       }
     } catch (e) {
-      debugPrint('Error saving user to Firestore: ${e.toString()}');
-      // Don't throw error as sign in should still succeed
+      debugPrint('❌ Error saving user to Firestore: $e');
     }
   }
 
-  // Check if user has seen onboarding
-  Future<bool> hasSeenOnboarding() async {
-    // This would typically use SharedPreferences
-    // For now, we'll implement a simple check
-    return true; // Implement based on your needs
-  }
+  String get displayName => _currentUser?.displayName ?? 'User';
+  String get email => _currentUser?.email ?? '';
+  String? get photoURL => _currentUser?.photoURL;
+  String? get userId => _currentUser?.uid;
 
-  // Get user display name
-  String get displayName {
-    return _currentUser?.displayName ?? 'User';
-  }
-
-  // Get user email
-  String get email {
-    return _currentUser?.email ?? '';
-  }
-
-  // Get user photo URL
-  String? get photoURL {
-    return _currentUser?.photoURL;
-  }
-
-  // Get user ID
-  String? get userId {
-    return _currentUser?.uid;
+  void printAuthState() {
+    debugPrint('========== AUTH STATE ==========');
+    debugPrint('Is Authenticated: $isAuthenticated');
+    debugPrint('User ID: $userId');
+    debugPrint('Email: $email');
+    debugPrint('Display Name: $displayName');
+    debugPrint('Is Loading: $isLoading');
+    debugPrint('Error: $error');
+    debugPrint('================================');
   }
 }
