@@ -194,8 +194,8 @@
                     'If you have any questions about this Privacy Policy, please contact us:',
                 children: [
                   _buildContactInfo('Email', 'chinnawong554@gmail.com'),
-                  _buildContactInfo('Developer', 'Widenex Studio'),
-                  _buildContactInfo('Location', 'Bangkok, Thailand'),
+                  _buildContactInfo('Developer', 'Mark Cnw'),
+                  _buildContactInfo('Location', 'Korat, Thailand'),
                 ],
               ),
 

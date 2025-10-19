@@ -3,19 +3,12 @@ import 'package:flutter/foundation.dart'
     show ChangeNotifier, debugPrint, kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-// ใช้ google_sign_in เฉพาะ mobile
-// ignore: depend_on_referenced_packages
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // ใช้เฉพาะ Android/iOS
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // scopes: ['email', 'profile'], // จะเพิ่มก็ได้
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   User? _currentUser;
   bool _isLoading = false;
@@ -38,9 +31,9 @@ class AuthProvider extends ChangeNotifier {
     _currentUser = _auth.currentUser;
     debugPrint('📍 Initial user: ${_currentUser?.uid}');
 
-    // ✅ เก็บ subscription และยกเลิกตอน dispose
-    _authSub = _auth.authStateChanges().listen((user) {
-      debugPrint('🔔 Auth state changed: ${user?.uid}');
+    // ✅ ใช้ idTokenChanges ครอบคลุมกว่า authStateChanges
+    _authSub = _auth.idTokenChanges().listen((user) {
+      debugPrint('🔔 Auth token/state changed: ${user?.uid}');
       if (_currentUser?.uid != user?.uid) {
         _currentUser = user;
         notifyListeners();
@@ -48,7 +41,6 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
-  // Lifecycle
   @override
   void dispose() {
     _authSub?.cancel();
@@ -74,9 +66,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ✅ Google Sign-In ครอบคลุมทุกแพลตฟอร์ม:
-  /// - Web/Windows/Mac/Linux: ใช้ OAuth Provider ของ Firebase โดยตรง
-  /// - Android/iOS: ใช้ google_sign_in -> Firebase credential
   Future<bool> signInWithGoogle() async {
     _setLoading(true);
     clearError();
@@ -88,6 +77,7 @@ class AuthProvider extends ChangeNotifier {
             GoogleAuthProvider()
               ..addScope('email')
               ..addScope('profile');
+
         final cred = await _auth.signInWithPopup(provider);
         debugPrint(
           '✅ Firebase sign in (web) successful: ${cred.user?.uid}',
@@ -96,12 +86,13 @@ class AuthProvider extends ChangeNotifier {
           await _saveUserToFirestore(cred.user!);
         }
 
-        // ✅ บังคับอัปเดต user + แจ้ง UI
+        // ✅ บังคับอัปเดต + แจ้ง UI ทันที
         _currentUser = _auth.currentUser;
         _setLoading(false);
-        notifyListeners(); // <--- สำคัญมาก
+        notifyListeners();
         return true;
       } else {
+        // Android/iOS
         final GoogleSignInAccount? googleAcc =
             await _googleSignIn.signIn();
         if (googleAcc == null) {
@@ -127,10 +118,13 @@ class AuthProvider extends ChangeNotifier {
           await _saveUserToFirestore(userCred.user!);
         }
 
-        // ✅ บังคับอัปเดต user + แจ้ง UI ทันที
+        // ✅ จุดสำคัญ: อัปเดต state + notify ให้ AuthWrapper รีบิลด์ไปหน้า Home
         _currentUser = _auth.currentUser;
+        debugPrint(
+          '✅ Firebase currentUser after signIn: ${_currentUser?.uid}',
+        );
         _setLoading(false);
-        notifyListeners(); // 💥 ตัวนี้จะทำให้ AuthWrapper rebuild แล้วเข้า Home
+        notifyListeners();
         return true;
       }
     } on FirebaseAuthException catch (e) {
@@ -142,12 +136,13 @@ class AuthProvider extends ChangeNotifier {
       final msg = e.toString();
       debugPrint('❌ Google Sign-In Error: $msg');
       _setLoading(false);
+
       if (msg.contains('com.google.android.gms') ||
           msg.contains('Google Play services') ||
           msg.contains('Unknown calling package name')) {
         _setError(
           'อุปกรณ์นี้ไม่มี/ไม่พร้อม Google Play services.\n'
-          'ลองใช้ Emulator ที่มี Google Play image หรืออัปเดต Google Play services\n'
+          'ใช้ Emulator ที่เป็น Google Play image หรืออัปเดต Google Play services\n'
           'และตรวจสอบว่าได้เพิ่ม SHA-1 debug keystore ใน Firebase Console แล้ว',
         );
       } else {
@@ -157,43 +152,16 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  String _mapFirebaseAuthError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'account-exists-with-different-credential':
-        return 'บัญชีนี้ถูกใช้งานแล้วด้วยวิธีอื่น';
-      case 'invalid-credential':
-        return 'ข้อมูลการเข้าสู่ระบบไม่ถูกต้อง';
-      case 'operation-not-allowed':
-        return 'การเข้าสู่ระบบด้วย Google ไม่ได้รับอนุญาต';
-      case 'user-disabled':
-        return 'บัญชีนี้ถูกปิดใช้งาน';
-      case 'user-not-found':
-        return 'ไม่พบบัญชีนี้';
-      case 'wrong-password':
-        return 'รหัสผ่านไม่ถูกต้อง';
-      case 'network-request-failed':
-        return 'เกิดปัญหาการเชื่อมต่อเครือข่าย';
-      case 'popup-closed-by-user': // web
-        return 'ปิดหน้าต่างเข้าสู่ระบบก่อนเสร็จสิ้น';
-      default:
-        return 'เกิดข้อผิดพลาด: ${e.message ?? e.code}';
-    }
-  }
-
   Future<void> signOut() async {
     try {
       debugPrint('🔄 Signing out...');
       _setLoading(true);
       clearError();
 
-      // Mobile: ออกจากทั้ง Google + Firebase
       if (!kIsWeb) {
-        // disconnect จะ revoke token ให้สะอาดกว่าบางเคส
         try {
           await _googleSignIn.disconnect();
-        } catch (_) {
-          // บางครั้ง disconnect จะ throw ถ้าไม่มี session; ข้ามได้
-        }
+        } catch (_) {}
         await _googleSignIn.signOut();
       }
       await _auth.signOut();
@@ -225,14 +193,36 @@ class AuthProvider extends ChangeNotifier {
           'createdAt': FieldValue.serverTimestamp(),
           'lastSignIn': FieldValue.serverTimestamp(),
         });
-        debugPrint('✅ User document created');
       } else {
         debugPrint('📝 Updating last sign in time');
         await userDoc.update({'lastSignIn': FieldValue.serverTimestamp()});
-        debugPrint('✅ User document updated');
       }
+      debugPrint('✅ User document saved/updated');
     } catch (e) {
       debugPrint('❌ Error saving user to Firestore: $e');
+    }
+  }
+
+  String _mapFirebaseAuthError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'account-exists-with-different-credential':
+        return 'บัญชีนี้ถูกใช้งานแล้วด้วยวิธีอื่น';
+      case 'invalid-credential':
+        return 'ข้อมูลการเข้าสู่ระบบไม่ถูกต้อง';
+      case 'operation-not-allowed':
+        return 'การเข้าสู่ระบบด้วย Google ไม่ได้รับอนุญาต';
+      case 'user-disabled':
+        return 'บัญชีนี้ถูกปิดใช้งาน';
+      case 'user-not-found':
+        return 'ไม่พบบัญชีนี้';
+      case 'wrong-password':
+        return 'รหัสผ่านไม่ถูกต้อง';
+      case 'network-request-failed':
+        return 'เกิดปัญหาการเชื่อมต่อเครือข่าย';
+      case 'popup-closed-by-user':
+        return 'ปิดหน้าต่างเข้าสู่ระบบก่อนเสร็จสิ้น';
+      default:
+        return 'เกิดข้อผิดพลาด: ${e.message ?? e.code}';
     }
   }
 
