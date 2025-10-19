@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:planmate/Profile/Widgets/about_us_page.dart';
 import 'package:planmate/Profile/Widgets/help_support_page.dart';
+import 'package:planmate/Profile/Widgets/privacy_policy_Page.dart';
+import 'package:planmate/Profile/Widgets/terms_of_service_page.dart';
 import 'package:planmate/provider/auth_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -227,13 +229,23 @@ class _MenuGrid extends StatelessWidget {
         icon: Icons.privacy_tip_outlined,
         title: 'Privacy Policy',
         color: const Color(0xFF6c5ce7),
-        onTap: () => _showPrivacyPolicy(context),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PrivacyPolicyPage()),
+          );
+        },
       ),
       _MenuItem(
         icon: Icons.description_outlined,
         title: 'Terms of Service',
         color: const Color(0xFFfd79a8),
-        onTap: () => _showTermsOfService(context),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const TermsOfServicePage()),
+          );
+        },
       ),
     ];
 

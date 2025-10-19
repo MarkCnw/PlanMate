@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:planmate/Auth/presentation/terms_acceptance_screen.dart';
 import 'package:planmate/History/Provider/history_provider.dart';
 import 'package:planmate/provider/task_provider.dart';
 import 'package:planmate/Services/notification.dart';
@@ -192,6 +193,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
     return prefs.getBool('has_seen_onboarding') ?? false;
   }
 
+  Future<bool> _hasAcceptedTerms() async {
+    final prefs = await SharedPreferences.getInstance();
+    debugPrint(
+      '✅ hasAcceptedTerms: ${prefs.getBool('has_accepted_terms')}',
+    );
+    return prefs.getBool('has_accepted_terms') ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
@@ -201,9 +210,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
           return const NavigationScreen();
         }
 
-        return FutureBuilder<bool>(
-          future: _seenFuture,
-          builder: (context, snap) {
+        return FutureBuilder(
+          future: Future.wait([_hasSeenOnboarding(), _hasAcceptedTerms()]),
+          builder: (context, AsyncSnapshot<List<bool>> snap) {
             if (snap.connectionState == ConnectionState.waiting) {
               return Scaffold(
                 body: Center(
@@ -216,10 +225,19 @@ class _AuthWrapperState extends State<AuthWrapper> {
               );
             }
 
-            if (snap.data == true) {
-              return const SignInScreen();
+            final hasSeenOnboarding = snap.data?[0] ?? false;
+            final hasAcceptedTerms = snap.data?[1] ?? false;
+
+            if (!hasAcceptedTerms) {
+              // 🔥 เปิดหน้า TermsAcceptance ก่อน
+              return const TermsAcceptanceScreen();
             }
-            return const OnboardingScreen();
+
+            if (hasSeenOnboarding) {
+              return const SignInScreen();
+            } else {
+              return const OnboardingScreen();
+            }
           },
         );
       },
