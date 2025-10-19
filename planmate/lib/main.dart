@@ -171,9 +171,17 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<void> _initializeNotifications() async {
     try {
+      // ✅ เรียก initialize ทั้ง NotificationService และ Provider
       final notificationService = NotificationService();
       await notificationService.initialize();
-      debugPrint('✅ Notifications initialized in AuthWrapper');
+
+      // ✅ จากนั้นค่อย initialize Provider
+      if (mounted) {
+        final notificationProvider = context.read<NotificationProvider>();
+        await notificationProvider.initialize();
+      }
+
+      debugPrint('✅ All notifications initialized');
     } catch (e) {
       debugPrint('❌ Failed to initialize notifications: $e');
     }

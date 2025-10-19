@@ -173,7 +173,7 @@ class _ProjectCardState extends State<ProjectCard> {
 
     // ค่าอื่นยังคงเป็นแบบมีไอคอน + padding
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

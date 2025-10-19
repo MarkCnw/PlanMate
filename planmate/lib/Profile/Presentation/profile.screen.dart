@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:planmate/Profile/Widgets/about_us_page.dart';
+import 'package:planmate/Profile/Widgets/help_support_page.dart';
 import 'package:planmate/provider/auth_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -7,10 +9,16 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = context.select<AuthProvider, String>((p) => p.displayName);
+    final displayName = context.select<AuthProvider, String>(
+      (p) => p.displayName,
+    );
     final email = context.select<AuthProvider, String>((p) => p.email);
-    final photoURL = context.select<AuthProvider, String?>((p) => p.photoURL);
-    final isLoading = context.select<AuthProvider, bool>((p) => p.isLoading);
+    final photoURL = context.select<AuthProvider, String?>(
+      (p) => p.photoURL,
+    );
+    final isLoading = context.select<AuthProvider, bool>(
+      (p) => p.isLoading,
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFf8fafc),
@@ -26,20 +34,19 @@ class ProfileScreen extends StatelessWidget {
                 photoURL: photoURL,
               ),
               const SizedBox(height: 30),
-              
+
               // Menu Grid
               _MenuGrid(),
-              
+
               // const SizedBox(height: 30),
-              
+
               // // Settings Section
               // _SettingsSection(),
-              
               const SizedBox(height: 30),
-              
+
               // Logout Button
               _LogoutButton(isLoading: isLoading),
-              
+
               // Error Display
               Selector<AuthProvider, String?>(
                 selector: (_, p) => p.error,
@@ -81,7 +88,9 @@ class ProfileScreen extends StatelessWidget {
           content: Text('Logout failed: $err'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       auth.clearError();
@@ -132,16 +141,22 @@ class _UserProfileCard extends StatelessWidget {
             child: CircleAvatar(
               radius: 50,
               backgroundColor: Colors.grey.shade200,
-              backgroundImage: (photoURL != null && photoURL!.isNotEmpty)
-                  ? NetworkImage(photoURL!)
-                  : null,
-              child: (photoURL == null || photoURL!.isEmpty)
-                  ? Icon(Icons.person, size: 40, color: Colors.grey.shade600)
-                  : null,
+              backgroundImage:
+                  (photoURL != null && photoURL!.isNotEmpty)
+                      ? NetworkImage(photoURL!)
+                      : null,
+              child:
+                  (photoURL == null || photoURL!.isEmpty)
+                      ? Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Colors.grey.shade600,
+                      )
+                      : null,
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // User Info
           if (displayName.isNotEmpty) ...[
             Text(
@@ -155,10 +170,13 @@ class _UserProfileCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
           ],
-          
+
           if (email.isNotEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(20),
@@ -186,26 +204,25 @@ class _MenuGrid extends StatelessWidget {
         icon: Icons.info_outline,
         title: 'About Us',
         color: const Color(0xFF4facfe),
-        onTap: () => _showAboutDialog(context),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AboutUsPage()),
+          );
+        },
       ),
       _MenuItem(
         icon: Icons.help_outline,
         title: 'Help & Support',
         color: const Color(0xFF43e97b),
-        onTap: () => _showHelpDialog(context),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const HelpSupportPage()),
+          );
+        },
       ),
-      _MenuItem(
-        icon: Icons.star_outline,
-        title: 'Rate App',
-        color: const Color(0xFFfa709a),
-        onTap: () => _showRatingDialog(context),
-      ),
-      _MenuItem(
-        icon: Icons.share_outlined,
-        title: 'Share App',
-        color: const Color(0xFFfeca57),
-        onTap: () => _shareApp(context),
-      ),
+
       _MenuItem(
         icon: Icons.privacy_tip_outlined,
         title: 'Privacy Policy',
@@ -230,142 +247,117 @@ class _MenuGrid extends StatelessWidget {
         mainAxisSpacing: 16,
       ),
       itemCount: menuItems.length,
-      itemBuilder: (context, index) => _MenuItemCard(item: menuItems[index]),
+      itemBuilder:
+          (context, index) => _MenuItemCard(item: menuItems[index]),
     );
   }
 
   void _showAboutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('About PlanMate'),
-        content: const Text(
-          'PlanMate is your ultimate planning companion. '
-          'Organize your tasks, schedule events, and achieve your goals with ease.\n\n'
-          'Version 1.0.0\n'
-          'Developed with ❤️ for productivity enthusiasts.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text('About PlanMate'),
+            content: const Text(
+              'PlanMate is your ultimate planning companion. '
+              'Organize your tasks, schedule events, and achieve your goals with ease.\n\n'
+              'Version 1.0.0\n'
+              'Developed with ❤️ for productivity enthusiasts.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _showHelpDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Help & Support'),
-        content: const Text(
-          'Need help? We\'re here for you!\n\n'
-          '• Email: support@planmate.app\n'
-          '• FAQ: Available in app settings\n'
-          '• Live Chat: Coming soon\n\n'
-          'Response time: Within 24 hours',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text('Help & Support'),
+            content: const Text(
+              'Need help? We\'re here for you!\n\n'
+              '• Email: support@planmate.app\n'
+              '• FAQ: Available in app settings\n'
+              '• Live Chat: Coming soon\n\n'
+              'Response time: Within 24 hours',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  void _showRatingDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Rate PlanMate'),
-        content: const Text(
-          'Love using PlanMate? Your rating helps us improve and reach more users!\n\n'
-          'Tap the stars to rate us on the App Store.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Later'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Add your app store rating logic here
-            },
-            child: const Text('Rate Now'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _shareApp(BuildContext context) {
-    // Add your share logic here
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Share feature will be available soon!'),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
     );
   }
 
   void _showPrivacyPolicy(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Privacy Policy'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'We respect your privacy and are committed to protecting your personal data.\n\n'
-            'Data Collection:\n'
-            '• We only collect necessary information for app functionality\n'
-            '• No personal data is shared with third parties\n'
-            '• All data is encrypted and stored securely\n\n'
-            'For the full privacy policy, visit our website.',
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text('Privacy Policy'),
+            content: const SingleChildScrollView(
+              child: Text(
+                'We respect your privacy and are committed to protecting your personal data.\n\n'
+                'Data Collection:\n'
+                '• We only collect necessary information for app functionality\n'
+                '• No personal data is shared with third parties\n'
+                '• All data is encrypted and stored securely\n\n'
+                'For the full privacy policy, visit our website.',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
     );
   }
 
   void _showTermsOfService(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Terms of Service'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'By using PlanMate, you agree to these terms:\n\n'
-            '• Use the app responsibly and legally\n'
-            '• Respect other users and our community guidelines\n'
-            '• Do not misuse or attempt to hack the app\n'
-            '• We reserve the right to update these terms\n\n'
-            'For complete terms, visit our website.',
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text('Terms of Service'),
+            content: const SingleChildScrollView(
+              child: Text(
+                'By using PlanMate, you agree to these terms:\n\n'
+                '• Use the app responsibly and legally\n'
+                '• Respect other users and our community guidelines\n'
+                '• Do not misuse or attempt to hack the app\n'
+                '• We reserve the right to update these terms\n\n'
+                'For complete terms, visit our website.',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -414,11 +406,7 @@ class _MenuItemCard extends StatelessWidget {
                 color: item.color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                item.icon,
-                color: item.color,
-                size: 28,
-              ),
+              child: Icon(item.icon, color: item.color, size: 28),
             ),
             const SizedBox(height: 8),
             Text(
@@ -436,114 +424,6 @@ class _MenuItemCard extends StatelessWidget {
     );
   }
 }
-
-// class _SettingsSection extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(16),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.grey.withOpacity(0.1),
-//             blurRadius: 10,
-//             offset: const Offset(0, 5),
-//           ),
-//         ],
-//       ),
-//       child: Column(
-//         children: [
-//           _SettingsTile(
-//             icon: Icons.notifications_outlined,
-//             title: 'Notifications',
-//             subtitle: 'Manage your notifications',
-//             onTap: () => _showNotificationSettings(context),
-//           ),
-//           const Divider(height: 1),
-//           _SettingsTile(
-//             icon: Icons.language_outlined,
-//             title: 'Language',
-//             subtitle: 'English (US)',
-//             onTap: () => _showLanguageSettings(context),
-//           ),
-//           const Divider(height: 1),
-//           _SettingsTile(
-//             icon: Icons.dark_mode_outlined,
-//             title: 'Theme',
-//             subtitle: 'System default',
-//             onTap: () => _showThemeSettings(context),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   void _showNotificationSettings(BuildContext context) {
-//     ScaffoldMessenger.of(context).showSnackBar(
-//       SnackBar(
-//         content: const Text('Notification settings coming soon!'),
-//         behavior: SnackBarBehavior.floating,
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//       ),
-//     );
-//   }
-
-//   void _showLanguageSettings(BuildContext context) {
-//     ScaffoldMessenger.of(context).showSnackBar(
-//       SnackBar(
-//         content: const Text('Language settings coming soon!'),
-//         behavior: SnackBarBehavior.floating,
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//       ),
-//     );
-//   }
-
-//   void _showThemeSettings(BuildContext context) {
-//     ScaffoldMessenger.of(context).showSnackBar(
-//       SnackBar(
-//         content: const Text('Theme settings coming soon!'),
-//         behavior: SnackBarBehavior.floating,
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//       ),
-//     );
-//   }
-// }
-
-// class _SettingsTile extends StatelessWidget {
-//   final IconData icon;
-//   final String title;
-//   final String subtitle;
-//   final VoidCallback onTap;
-
-//   const _SettingsTile({
-//     required this.icon,
-//     required this.title,
-//     required this.subtitle,
-//     required this.onTap,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return ListTile(
-//       leading: Container(
-//         padding: const EdgeInsets.all(8),
-//         decoration: BoxDecoration(
-//           color: Colors.grey.shade100,
-//           borderRadius: BorderRadius.circular(8),
-//         ),
-//         child: Icon(icon, color: Colors.grey.shade700),
-//       ),
-//       title: Text(
-//         title,
-//         style: const TextStyle(fontWeight: FontWeight.w600),
-//       ),
-//       subtitle: Text(subtitle),
-//       trailing: const Icon(Icons.chevron_right),
-//       onTap: onTap,
-//     );
-//   }
-// }
 
 class _LogoutButton extends StatelessWidget {
   final bool isLoading;
@@ -573,32 +453,35 @@ class _LogoutButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
-        child: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.logout, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text(
-                    'Log Out',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+        child:
+            isLoading
+                ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
                   ),
-                ],
-              ),
+                )
+                : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.logout, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Log Out',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
       ),
     );
   }
@@ -614,7 +497,9 @@ class _LogoutButton extends StatelessWidget {
           content: Text('Logout failed: $err'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       auth.clearError();

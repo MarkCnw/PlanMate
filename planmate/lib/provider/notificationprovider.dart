@@ -15,6 +15,9 @@ class NotificationProvider extends ChangeNotifier {
   StreamSubscription<List<NotificationLog>>? _notificationsSubscription;
   StreamSubscription<int>? _unreadCountSubscription;
 
+  // ✅ เพิ่ม flag เพื่อป้องกัน double initialization
+  bool _isInitializing = false;
+
   // Getters
   List<NotificationLog> get notifications => _notifications;
   int get unreadCount => _unreadCount;
@@ -22,14 +25,13 @@ class NotificationProvider extends ChangeNotifier {
   String? get error => _error;
   bool get hasUnread => _unreadCount > 0;
 
-  // Filtered notifications
   List<NotificationLog> get unreadNotifications =>
       _notifications.where((n) => !n.read).toList();
 
   List<NotificationLog> get readNotifications =>
       _notifications.where((n) => n.read).toList();
 
-  // 🔥 NEW: Group notifications by date
+  // Group notifications by date
   Map<String, List<NotificationLog>> get notificationsByDate {
     final grouped = <String, List<NotificationLog>>{};
     
@@ -41,7 +43,6 @@ class NotificationProvider extends ChangeNotifier {
       grouped[dateKey]!.add(notification);
     }
     
-    // Sort notifications within each group by time (newest first)
     grouped.forEach((key, list) {
       list.sort((a, b) => b.receivedAt.compareTo(a.receivedAt));
     });
@@ -49,24 +50,20 @@ class NotificationProvider extends ChangeNotifier {
     return grouped;
   }
 
-  // 🔥 NEW: Get sorted date headers
   List<String> get dateHeaders {
     final headers = notificationsByDate.keys.toList();
     headers.sort((a, b) => _parseDateKey(b).compareTo(_parseDateKey(a)));
     return headers;
   }
 
-  // 🔥 NEW: Get date key for grouping (format: "YYYY-MM-DD")
   String _getDateKey(DateTime date) {
     return DateFormat('yyyy-MM-dd').format(date);
   }
 
-  // 🔥 NEW: Parse date key back to DateTime
   DateTime _parseDateKey(String dateKey) {
     return DateTime.parse(dateKey);
   }
 
-  // 🔥 NEW: Format date header for display (e.g., "01 ต.ค. 2025")
   String formatDateHeader(String dateKey) {
     final date = _parseDateKey(dateKey);
     final now = DateTime.now();
@@ -79,17 +76,14 @@ class NotificationProvider extends ChangeNotifier {
     } else if (dateOnly == yesterday) {
       return 'เมื่อวาน';
     } else {
-      // Format as "DD MMM YYYY" in Thai
       return DateFormat('dd MMM yyyy', 'th').format(date);
     }
   }
 
-  // 🔥 NEW: Format time for notification card (e.g., "17:01")
   String formatTime(DateTime dateTime) {
     return DateFormat('HH:mm').format(dateTime);
   }
 
-  // Group notifications by type
   Map<String, List<NotificationLog>> get groupedByType {
     final map = <String, List<NotificationLog>>{};
     for (final notification in _notifications) {
@@ -99,13 +93,19 @@ class NotificationProvider extends ChangeNotifier {
     return map;
   }
 
-  // Constructor
-  NotificationProvider() {
-    _initialize();
-  }
+  // Constructor - ไม่เรียก _initialize() ที่นี่
+  NotificationProvider();
 
-  /// Initialize notification provider
+  /// ✅ Initialize with guard to prevent multiple calls
   Future<void> _initialize() async {
+    // ป้องกันการ initialize ซ้ำ
+    if (_isInitialized || _isInitializing) {
+      debugPrint('⚠️ NotificationProvider already initialized or initializing');
+      return;
+    }
+
+    _isInitializing = true;
+
     try {
       debugPrint('🔄 Initializing NotificationProvider...');
 
@@ -119,28 +119,46 @@ class NotificationProvider extends ChangeNotifier {
       _startListeningToUnreadCount();
 
       _isInitialized = true;
+      _isInitializing = false;
+      
       debugPrint('✅ NotificationProvider initialized successfully');
       notifyListeners();
     } catch (e) {
+      _isInitializing = false;
       debugPrint('❌ Failed to initialize NotificationProvider: $e');
       _setError('Failed to initialize notifications: $e');
     }
   }
 
-  /// Start listening to notifications
+  /// ✅ เพิ่ม method สำหรับ manual initialization
+  Future<void> initialize() async {
+    if (!_isInitialized && !_isInitializing) {
+      await _initialize();
+    }
+  }
+
+  /// ✅ Start listening with proper cleanup
   void _startListeningToNotifications() {
+    // ยกเลิก subscription เก่าก่อน
     _notificationsSubscription?.cancel();
+    _notificationsSubscription = null;
+
+    debugPrint('🔄 Starting to listen to notifications...');
 
     _notificationsSubscription = _notificationService
         .getNotificationHistory()
         .listen(
           (notifications) {
-            _notifications = notifications;
-            _error = null;
-            notifyListeners();
-            debugPrint(
-              '📦 Received ${notifications.length} notifications',
-            );
+            // ✅ เช็คว่า notification เปลี่ยนแปลงจริงหรือไม่
+            if (_notifications.length != notifications.length ||
+                !_areNotificationsSame(_notifications, notifications)) {
+              _notifications = notifications;
+              _error = null;
+              notifyListeners();
+              debugPrint('📦 Received ${notifications.length} notifications');
+            } else {
+              debugPrint('⏭️ Skip duplicate notification update');
+            }
           },
           onError: (error) {
             debugPrint('❌ Notifications stream error: $error');
@@ -149,17 +167,39 @@ class NotificationProvider extends ChangeNotifier {
         );
   }
 
-  /// Start listening to unread count
+  /// ✅ เช็คว่า list ของ notification เหมือนกันหรือไม่
+  bool _areNotificationsSame(
+    List<NotificationLog> list1,
+    List<NotificationLog> list2,
+  ) {
+    if (list1.length != list2.length) return false;
+    
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i].id != list2[i].id || list1[i].read != list2[i].read) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// ✅ Start listening to unread count with proper cleanup
   void _startListeningToUnreadCount() {
+    // ยกเลิก subscription เก่าก่อน
     _unreadCountSubscription?.cancel();
+    _unreadCountSubscription = null;
+
+    debugPrint('🔄 Starting to listen to unread count...');
 
     _unreadCountSubscription = _notificationService
         .getUnreadCount()
         .listen(
           (count) {
-            _unreadCount = count;
-            notifyListeners();
-            debugPrint('📊 Unread count: $count');
+            // ✅ อัพเดตเฉพาะเมื่อค่าเปลี่ยน
+            if (_unreadCount != count) {
+              _unreadCount = count;
+              notifyListeners();
+              debugPrint('📊 Unread count: $count');
+            }
           },
           onError: (error) {
             debugPrint('❌ Unread count stream error: $error');
@@ -167,30 +207,41 @@ class NotificationProvider extends ChangeNotifier {
         );
   }
 
-  /// Set error
   void _setError(String? error) {
     _error = error;
     notifyListeners();
   }
 
-  /// Clear error
   void clearError() {
     _error = null;
     notifyListeners();
   }
 
-  /// Mark notification as read
+  /// ✅ Mark as read with debounce to prevent duplicate calls
+  final Map<String, bool> _markingAsRead = {};
+
   Future<void> markAsRead(String notificationId) async {
+    // ป้องกันการเรียกซ้ำ
+    if (_markingAsRead[notificationId] == true) {
+      debugPrint('⏭️ Already marking notification as read: $notificationId');
+      return;
+    }
+
     try {
+      _markingAsRead[notificationId] = true;
       await _notificationService.markAsRead(notificationId);
       debugPrint('✅ Marked notification as read: $notificationId');
     } catch (e) {
       debugPrint('❌ Failed to mark as read: $e');
       _setError('Failed to mark notification as read');
+    } finally {
+      // ลบ flag หลังจาก 1 วินาที
+      Future.delayed(const Duration(seconds: 1), () {
+        _markingAsRead.remove(notificationId);
+      });
     }
   }
 
-  /// Mark all as read
   Future<void> markAllAsRead() async {
     try {
       for (final notification in unreadNotifications) {
@@ -203,7 +254,6 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
-  /// Clear all notifications
   Future<void> clearAllNotifications() async {
     try {
       await _notificationService.clearAllNotifications();
@@ -214,7 +264,6 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
-  /// Delete specific notification
   Future<void> deleteNotification(String notificationId) async {
     try {
       debugPrint('🔄 Deleting notification: $notificationId');
@@ -224,7 +273,6 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
-  /// Send test notification
   Future<void> sendTestNotification() async {
     try {
       await _notificationService.sendTestNotification();
@@ -235,14 +283,12 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
-  /// Get notifications by type
   List<NotificationLog> getNotificationsByType(String type) {
     return _notifications
         .where((n) => n.notificationType == type)
         .toList();
   }
 
-  /// Get today's notifications
   List<NotificationLog> get todayNotifications {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -252,7 +298,6 @@ class NotificationProvider extends ChangeNotifier {
     }).toList();
   }
 
-  /// Get this week's notifications
   List<NotificationLog> get weekNotifications {
     final now = DateTime.now();
     final weekAgo = now.subtract(const Duration(days: 7));
@@ -262,7 +307,6 @@ class NotificationProvider extends ChangeNotifier {
     }).toList();
   }
 
-  /// Get notification statistics
   Map<String, int> get notificationStats {
     final achievements = getNotificationsByType('achievement').length;
     final reminders =
@@ -279,11 +323,25 @@ class NotificationProvider extends ChangeNotifier {
     };
   }
 
-  /// Refresh notifications
+  /// ✅ Refresh with guard to prevent multiple calls
+  bool _isRefreshing = false;
+
   void refreshNotifications() {
+    if (_isRefreshing) {
+      debugPrint('⏭️ Already refreshing notifications');
+      return;
+    }
+
+    _isRefreshing = true;
     debugPrint('🔄 Refreshing notifications');
+    
     _startListeningToNotifications();
     _startListeningToUnreadCount();
+    
+    // Reset flag after delay
+    Future.delayed(const Duration(seconds: 2), () {
+      _isRefreshing = false;
+    });
   }
 
   @override

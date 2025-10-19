@@ -29,7 +29,7 @@ class ChartBarView extends StatelessWidget {
             gridData: FlGridData(
               show: true,
               drawVerticalLine: false,
-              horizontalInterval: 1,
+              horizontalInterval: 5,
               getDrawingHorizontalLine:
                   (value) => FlLine(
                     color: const Color(0xFF8B5CF6).withOpacity(0.08),
@@ -41,19 +41,22 @@ class ChartBarView extends StatelessWidget {
               leftTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
-                  reservedSize: 32,
-                  interval: 1,
+                  reservedSize: 42,
+                  interval: 5,
                   getTitlesWidget: (value, meta) {
-                    if (value < 0) return const SizedBox.shrink();
-                    return Text(
-                      value.toInt().toString(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color:
-                            value == 0
-                                ? Colors.grey.shade400
-                                : Colors.grey.shade600,
-                        fontWeight: FontWeight.w600,
+                    // แสดงเฉพาะเลขที่หาร 5 ลงตัว
+                    if (value < 0 || value % 5 != 0)
+                      return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Text(
+                        value.toInt().toString(),
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     );
                   },
@@ -139,7 +142,7 @@ class ChartBarView extends StatelessWidget {
     );
   }
 
-  /// หาค่าสูงสุดของ Y
+  /// หาค่าสูงสุดของ Y (ปรับให้เป็นเลขกลมๆ)
   double _getMaxY() {
     if (weeklyData.isEmpty) return 10;
     double max = 0;
@@ -147,7 +150,11 @@ class ChartBarView extends StatelessWidget {
       if (data.planned > max) max = data.planned;
       if (data.completed > max) max = data.completed;
     }
-    return (max == 0 ? 5 : (max + 1)).ceilToDouble();
+
+    // ปัดเป็นเลขกลมๆ (5, 10, 15, 20...)
+    if (max == 0) return 10;
+    final roundedMax = ((max / 5).ceil() * 5).toDouble();
+    return roundedMax;
   }
 
   /// สร้างแท่ง bar
