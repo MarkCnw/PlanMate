@@ -1,10 +1,13 @@
 import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:planmate/Services/notification.dart';
 import 'package:intl/intl.dart';
 
 class NotificationProvider extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // State variables
   List<NotificationLog> _notifications = [];
@@ -14,6 +17,7 @@ class NotificationProvider extends ChangeNotifier {
 
   StreamSubscription<List<NotificationLog>>? _notificationsSubscription;
   StreamSubscription<int>? _unreadCountSubscription;
+  StreamSubscription<User?>? _authSubscription; // ✅ เพิ่มบรรทัดนี้
 
   // ✅ เพิ่ม flag เพื่อป้องกัน double initialization
   bool _isInitializing = false;
@@ -34,7 +38,7 @@ class NotificationProvider extends ChangeNotifier {
   // Group notifications by date
   Map<String, List<NotificationLog>> get notificationsByDate {
     final grouped = <String, List<NotificationLog>>{};
-    
+
     for (final notification in _notifications) {
       final dateKey = _getDateKey(notification.receivedAt);
       if (!grouped.containsKey(dateKey)) {
@@ -42,11 +46,11 @@ class NotificationProvider extends ChangeNotifier {
       }
       grouped[dateKey]!.add(notification);
     }
-    
+
     grouped.forEach((key, list) {
       list.sort((a, b) => b.receivedAt.compareTo(a.receivedAt));
     });
-    
+
     return grouped;
   }
 
@@ -94,17 +98,52 @@ class NotificationProvider extends ChangeNotifier {
   }
 
   // Constructor - ไม่เรียก _initialize() ที่นี่
-  NotificationProvider();
+  NotificationProvider() {
+    _listenToAuthChanges(); // เพิ่มการฟัง auth state
+  }
+
+  // ✅ เพิ่ม method สำหรับฟัง auth state changes
+  void _listenToAuthChanges() {
+    _authSubscription = _auth.authStateChanges().listen((User? user) {
+      if (user == null) {
+        // User logged out - clear everything
+        debugPrint('🔴 User logged out, clearing NotificationProvider');
+        _clearAllData();
+      } else if (_isInitialized) {
+        // User changed while initialized - reinitialize
+        debugPrint('🔄 User changed, reinitializing NotificationProvider');
+        _clearAllData();
+        _initialize();
+      }
+    });
+  }
+
+  // ✅ เพิ่ม method สำหรับ clear ข้อมูลทั้งหมด
+  void _clearAllData() {
+    debugPrint('🗑️ Clearing all notification data...');
+
+    // Cancel all subscriptions
+    _notificationsSubscription?.cancel();
+    _notificationsSubscription = null;
+
+    _unreadCountSubscription?.cancel();
+    _unreadCountSubscription = null;
+
+    // Reset state
+    _notifications = [];
+    _unreadCount = 0;
+    _isInitialized = false;
+    _isInitializing = false;
+    _error = null;
+
+    notifyListeners();
+    debugPrint('✅ All notification data cleared');
+  }
 
   /// ✅ Initialize with guard to prevent multiple calls
   Future<void> _initialize() async {
-    // ป้องกันการ initialize ซ้ำ
-    if (_isInitialized || _isInitializing) {
-      debugPrint('⚠️ NotificationProvider already initialized or initializing');
-      return;
-    }
-
     _isInitializing = true;
+    _error = null; // ✅ Reset error
 
     try {
       debugPrint('🔄 Initializing NotificationProvider...');
@@ -120,7 +159,7 @@ class NotificationProvider extends ChangeNotifier {
 
       _isInitialized = true;
       _isInitializing = false;
-      
+
       debugPrint('✅ NotificationProvider initialized successfully');
       notifyListeners();
     } catch (e) {
@@ -129,6 +168,8 @@ class NotificationProvider extends ChangeNotifier {
       _setError('Failed to initialize notifications: $e');
     }
   }
+
+  
 
   /// ✅ เพิ่ม method สำหรับ manual initialization
   Future<void> initialize() async {
@@ -155,7 +196,9 @@ class NotificationProvider extends ChangeNotifier {
               _notifications = notifications;
               _error = null;
               notifyListeners();
-              debugPrint('📦 Received ${notifications.length} notifications');
+              debugPrint(
+                '📦 Received ${notifications.length} notifications',
+              );
             } else {
               debugPrint('⏭️ Skip duplicate notification update');
             }
@@ -173,7 +216,7 @@ class NotificationProvider extends ChangeNotifier {
     List<NotificationLog> list2,
   ) {
     if (list1.length != list2.length) return false;
-    
+
     for (int i = 0; i < list1.length; i++) {
       if (list1[i].id != list2[i].id || list1[i].read != list2[i].read) {
         return false;
@@ -223,7 +266,9 @@ class NotificationProvider extends ChangeNotifier {
   Future<void> markAsRead(String notificationId) async {
     // ป้องกันการเรียกซ้ำ
     if (_markingAsRead[notificationId] == true) {
-      debugPrint('⏭️ Already marking notification as read: $notificationId');
+      debugPrint(
+        '⏭️ Already marking notification as read: $notificationId',
+      );
       return;
     }
 
@@ -334,22 +379,24 @@ class NotificationProvider extends ChangeNotifier {
 
     _isRefreshing = true;
     debugPrint('🔄 Refreshing notifications');
-    
+
     _startListeningToNotifications();
     _startListeningToUnreadCount();
-    
+
     // Reset flag after delay
     Future.delayed(const Duration(seconds: 2), () {
       _isRefreshing = false;
     });
   }
 
-  @override
+   @override
   void dispose() {
     debugPrint('🗑️ Disposing NotificationProvider');
+    _authSubscription?.cancel(); // ✅ เพิ่มบรรทัดนี้
     _notificationsSubscription?.cancel();
     _unreadCountSubscription?.cancel();
     _notificationService.dispose();
     super.dispose();
   }
 }
+

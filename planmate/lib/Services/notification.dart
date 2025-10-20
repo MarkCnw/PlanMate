@@ -272,7 +272,7 @@ class NotificationService {
       if (user == null) return;
 
       await _firestore.collection('notification_logs').add({
-        'userId': user.uid,
+        'userId': user.uid, // ✅ ต้องมี userId
         'title': message.notification?.title,
         'body': message.notification?.body,
         'data': message.data,

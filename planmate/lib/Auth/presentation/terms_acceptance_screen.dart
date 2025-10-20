@@ -4,7 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
-import 'package:planmate/Auth/presentation/login_screen.dart';
+
 import 'package:planmate/Onboarding/Presentation/onboarding_screen.dart';
 import 'package:planmate/Profile/Widgets/privacy_policy_page.dart';
 import 'package:planmate/Profile/Widgets/terms_of_service_page.dart';
@@ -82,9 +82,9 @@ class _TermsAcceptanceScreenState extends State<TermsAcceptanceScreen>
 
       if (mounted) {
         Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-  );
+          context,
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        );
       }
     } catch (e) {
       if (mounted) {

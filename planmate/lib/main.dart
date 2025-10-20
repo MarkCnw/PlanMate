@@ -156,10 +156,11 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
+  bool _notificationsInitialized = false;
+
   @override
   void initState() {
     super.initState();
-    _initializeNotifications();
   }
 
   // ✅ เพิ่ม debug เพื่อดูว่า rebuild หรือไม่
@@ -167,9 +168,17 @@ class _AuthWrapperState extends State<AuthWrapper> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final auth = context.watch<AuthProvider>();
-    debugPrint('🔴 [WRAPPER] didChangeDependencies called');
-    debugPrint('🔴 [WRAPPER] isAuthenticated: ${auth.isAuthenticated}');
-    debugPrint('🔴 [WRAPPER] currentUser: ${auth.currentUser?.uid}');
+
+    // ✅ Initialize notifications เมื่อ user login
+    if (auth.isAuthenticated && !_notificationsInitialized) {
+      debugPrint('✅ User authenticated, initializing notifications...');
+      _initializeNotifications();
+      _notificationsInitialized = true;
+    } else if (!auth.isAuthenticated && _notificationsInitialized) {
+      // ✅ Reset flag เมื่อ logout
+      debugPrint('🔴 User logged out, resetting notification flag');
+      _notificationsInitialized = false;
+    }
   }
 
   Future<void> _initializeNotifications() async {
@@ -201,27 +210,32 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     debugPrint('🟢 [WRAPPER] Building AuthWrapper...');
-    
+
     // ✅ CRITICAL FIX: ใช้ context.watch เพื่อฟัง AuthProvider
     final authProvider = context.watch<AuthProvider>();
-    
-    debugPrint('🟢 [WRAPPER] isAuthenticated: ${authProvider.isAuthenticated}');
-    debugPrint('🟢 [WRAPPER] currentUser: ${authProvider.currentUser?.uid}');
-    
+
+    debugPrint(
+      '🟢 [WRAPPER] isAuthenticated: ${authProvider.isAuthenticated}',
+    );
+    debugPrint(
+      '🟢 [WRAPPER] currentUser: ${authProvider.currentUser?.uid}',
+    );
+
     // ✅ 1. ถ้า login แล้ว -> ไปหน้าหลัก
     if (authProvider.isAuthenticated) {
-      debugPrint('✅ [WRAPPER] User authenticated, showing NavigationScreen');
+      debugPrint(
+        '✅ [WRAPPER] User authenticated, showing NavigationScreen',
+      );
       return const NavigationScreen();
     }
 
-    debugPrint('⚠️ [WRAPPER] User NOT authenticated, checking onboarding/terms');
+    debugPrint(
+      '⚠️ [WRAPPER] User NOT authenticated, checking onboarding/terms',
+    );
 
     // ✅ 2. ถ้ายังไม่ login -> เช็ค Onboarding/Terms
     return FutureBuilder<List<bool>>(
-      future: Future.wait([
-        _hasSeenOnboarding(),
-        _hasAcceptedTerms(),
-      ]),
+      future: Future.wait([_hasSeenOnboarding(), _hasAcceptedTerms()]),
       builder: (context, snapshot) {
         // Loading state
         if (snapshot.connectionState == ConnectionState.waiting) {
