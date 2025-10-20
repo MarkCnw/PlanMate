@@ -240,8 +240,8 @@ class TermsOfServicePage extends StatelessWidget {
                   'For questions about these Terms of Service, please contact:',
               children: [
                 _buildContactInfo('Email', 'chinnawong554@gmail.com'),
-                _buildContactInfo('Developer', 'Widenex Studio'),
-                _buildContactInfo('Location', 'Bangkok, Thailand'),
+                _buildContactInfo('Developer', 'Mark Cnw'),
+                _buildContactInfo('Location', 'Nakhon Ratchasima, Thailand'),
               ],
             ),
 

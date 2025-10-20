@@ -31,11 +31,19 @@ class AuthProvider extends ChangeNotifier {
     _currentUser = _auth.currentUser;
     debugPrint('📍 Initial user: ${_currentUser?.uid}');
 
-    // ✅ ใช้ idTokenChanges ครอบคลุมกว่า authStateChanges
-    _authSub = _auth.idTokenChanges().listen((user) {
-      debugPrint('🔔 Auth token/state changed: ${user?.uid}');
-      if (_currentUser?.uid != user?.uid) {
-        _currentUser = user;
+    // ✅ ใช้ userChanges() แทน idTokenChanges() - ครอบคลุมทุกการเปลี่ยนแปลง
+    _authSub = _auth.userChanges().listen((user) {
+      debugPrint('🔔 Auth user changed: ${user?.uid}');
+      final wasAuthenticated = _currentUser != null;
+      final isNowAuthenticated = user != null;
+
+      _currentUser = user;
+
+      // ✅ แจ้ง listeners ทุกครั้งที่ auth state เปลี่ยน
+      if (wasAuthenticated != isNowAuthenticated) {
+        debugPrint(
+          '✅ Authentication state changed! Notifying listeners...',
+        );
         notifyListeners();
       }
     });
@@ -73,6 +81,7 @@ class AuthProvider extends ChangeNotifier {
       debugPrint('🔄 Starting Google Sign In...');
 
       if (kIsWeb) {
+        // ===== WEB =====
         final provider =
             GoogleAuthProvider()
               ..addScope('email')
@@ -82,19 +91,42 @@ class AuthProvider extends ChangeNotifier {
         debugPrint(
           '✅ Firebase sign in (web) successful: ${cred.user?.uid}',
         );
+
         if (cred.user != null) {
           await _saveUserToFirestore(cred.user!);
         }
 
-        // ✅ บังคับอัปเดต + แจ้ง UI ทันที
+        // ✅ อัปเดต currentUser และแจ้ง listeners
         _currentUser = _auth.currentUser;
         _setLoading(false);
+
+        // ✅ Force notify เพื่อให้ AuthWrapper rebuild ทันที
         notifyListeners();
+
+        debugPrint(
+          '✅ Sign in successful - currentUser: ${_currentUser?.uid}',
+        );
         return true;
       } else {
-        // Android/iOS
-        final GoogleSignInAccount? googleAcc =
-            await _googleSignIn.signIn();
+        // ===== ANDROID/iOS =====
+        debugPrint('📱 Starting Google Sign In for mobile...');
+
+        // ✅ ลองใช้ signInSilently ก่อน (สำหรับ returning user)
+        GoogleSignInAccount? googleAcc;
+
+        try {
+          googleAcc = await _googleSignIn.signInSilently();
+          debugPrint('🔄 Silent sign in result: ${googleAcc?.email}');
+        } catch (silentError) {
+          debugPrint('⚠️ Silent sign in failed: $silentError');
+        }
+
+        // ถ้า silent sign in ไม่สำเร็จ ให้แสดง UI
+        if (googleAcc == null) {
+          debugPrint('🔄 Showing Google Sign In UI...');
+          googleAcc = await _googleSignIn.signIn();
+        }
+
         if (googleAcc == null) {
           debugPrint('⚠️ User cancelled Google Sign In');
           _setLoading(false);
@@ -102,6 +134,8 @@ class AuthProvider extends ChangeNotifier {
         }
 
         debugPrint('✅ Google account selected: ${googleAcc.email}');
+
+        // ✅ ดึง authentication credentials
         final GoogleSignInAuthentication authData =
             await googleAcc.authentication;
 
@@ -118,13 +152,20 @@ class AuthProvider extends ChangeNotifier {
           await _saveUserToFirestore(userCred.user!);
         }
 
-        // ✅ จุดสำคัญ: อัปเดต state + notify ให้ AuthWrapper รีบิลด์ไปหน้า Home
+        // ✅ CRITICAL: อัปเดต state และแจ้ง listeners
         _currentUser = _auth.currentUser;
-        debugPrint(
-          '✅ Firebase currentUser after signIn: ${_currentUser?.uid}',
-        );
+        debugPrint('✅ Updated currentUser: ${_currentUser?.uid}');
+        debugPrint('✅ isAuthenticated: $isAuthenticated');
+
         _setLoading(false);
+
+        // ✅ Force notify เพื่อให้ AuthWrapper rebuild ทันที
         notifyListeners();
+
+        // ✅ รอให้ widget tree rebuild
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        debugPrint('✅ Sign in process completed successfully!');
         return true;
       }
     } on FirebaseAuthException catch (e) {
@@ -161,7 +202,11 @@ class AuthProvider extends ChangeNotifier {
       if (!kIsWeb) {
         try {
           await _googleSignIn.disconnect();
-        } catch (_) {}
+        } catch (_) {
+          debugPrint(
+            '⚠️ Google disconnect failed (might not be connected)',
+          );
+        }
         await _googleSignIn.signOut();
       }
       await _auth.signOut();

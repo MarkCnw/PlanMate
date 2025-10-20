@@ -13,16 +13,35 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen> {
   Future<void> _handleGoogleSignIn() async {
-    final auth = context.read<AuthProvider>(); // อ่านครั้งเดียว
+    final auth = context.read<AuthProvider>();
+
+    debugPrint('🔵 [LOGIN] Starting sign in process...');
+    debugPrint(
+      '🔵 [LOGIN] Before sign in - isAuthenticated: ${auth.isAuthenticated}',
+    );
+
     final success = await auth.signInWithGoogle();
+
+    debugPrint('🔵 [LOGIN] Sign in completed - success: $success');
+    debugPrint(
+      '🔵 [LOGIN] After sign in - isAuthenticated: ${auth.isAuthenticated}',
+    );
+    debugPrint('🔵 [LOGIN] Current user: ${auth.currentUser?.uid}');
+
     if (!success && mounted) {
       final msg = auth.error ?? 'Sign in failed';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(msg), backgroundColor: Colors.red),
       );
-      auth.clearError(); // เคลียร์ error หลังแจ้งแล้ว (ป้องกันขึ้นซ้ำ)
+      auth.clearError();
+    } else if (success) {
+      debugPrint(
+        '✅ [LOGIN] Sign in successful! Waiting for navigation...',
+      );
+      // ✅ รอให้ AuthWrapper rebuild และ navigate
+      await Future.delayed(const Duration(milliseconds: 200));
+      debugPrint('🔵 [LOGIN] Should navigate to home now');
     }
-    // ไม่ต้อง navigate เอง: AuthWrapper จะจัดการ
   }
 
   @override
@@ -68,7 +87,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
               const SizedBox(height: 40),
 
-              // ปุ่ม Sign in (ฟังเฉพาะ isLoading)
+              // ปุ่ม Sign in
               Selector<AuthProvider, bool>(
                 selector: (_, p) => p.isLoading,
                 builder: (context, isLoading, _) {
@@ -135,7 +154,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 },
               ),
 
-              // แสดง error (ฟังเฉพาะ error)
+              // แสดง error
               Selector<AuthProvider, String?>(
                 selector: (_, p) => p.error,
                 builder: (context, error, _) {

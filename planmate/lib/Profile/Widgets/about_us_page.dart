@@ -116,7 +116,7 @@ class AboutUsPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Widenex Studio',
+                          'Mark Cnw',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -125,7 +125,7 @@ class AboutUsPage extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Flutter Developer & Designer',
+                          'Mobile Developper ',
                           style: TextStyle(
                             color: Colors.grey,
                             fontSize: 14,
@@ -133,7 +133,7 @@ class AboutUsPage extends StatelessWidget {
                         ),
                         SizedBox(height: 6),
                         Text(
-                          'Bangkok, Thailand',
+                          'Nakhon Ratchasima, Thailand',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey,

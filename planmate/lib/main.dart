@@ -162,6 +162,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
     _initializeNotifications();
   }
 
+  // ✅ เพิ่ม debug เพื่อดูว่า rebuild หรือไม่
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthProvider>();
+    debugPrint('🔴 [WRAPPER] didChangeDependencies called');
+    debugPrint('🔴 [WRAPPER] isAuthenticated: ${auth.isAuthenticated}');
+    debugPrint('🔴 [WRAPPER] currentUser: ${auth.currentUser?.uid}');
+  }
+
   Future<void> _initializeNotifications() async {
     try {
       final notificationService = NotificationService();
@@ -190,57 +200,63 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ ใช้ Consumer เพื่อฟัง auth state แบบ real-time
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
-        debugPrint('🔄 AuthWrapper rebuild - isAuthenticated: ${authProvider.isAuthenticated}');
-        
-        // ✅ 1. ถ้า login แล้ว -> ไปหน้าหลัก
-        if (authProvider.isAuthenticated) {
-          debugPrint('✅ User authenticated, navigating to NavigationScreen');
-          return const NavigationScreen();
+    debugPrint('🟢 [WRAPPER] Building AuthWrapper...');
+    
+    // ✅ CRITICAL FIX: ใช้ context.watch เพื่อฟัง AuthProvider
+    final authProvider = context.watch<AuthProvider>();
+    
+    debugPrint('🟢 [WRAPPER] isAuthenticated: ${authProvider.isAuthenticated}');
+    debugPrint('🟢 [WRAPPER] currentUser: ${authProvider.currentUser?.uid}');
+    
+    // ✅ 1. ถ้า login แล้ว -> ไปหน้าหลัก
+    if (authProvider.isAuthenticated) {
+      debugPrint('✅ [WRAPPER] User authenticated, showing NavigationScreen');
+      return const NavigationScreen();
+    }
+
+    debugPrint('⚠️ [WRAPPER] User NOT authenticated, checking onboarding/terms');
+
+    // ✅ 2. ถ้ายังไม่ login -> เช็ค Onboarding/Terms
+    return FutureBuilder<List<bool>>(
+      future: Future.wait([
+        _hasSeenOnboarding(),
+        _hasAcceptedTerms(),
+      ]),
+      builder: (context, snapshot) {
+        // Loading state
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(context).primaryColor,
+                ),
+              ),
+            ),
+          );
         }
 
-        // ✅ 2. ถ้ายังไม่ login -> เช็ค Onboarding/Terms
-        return FutureBuilder<List<bool>>(
-          future: Future.wait([
-            _hasSeenOnboarding(),
-            _hasAcceptedTerms(),
-          ]),
-          builder: (context, snapshot) {
-            // Loading state
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ),
-              );
-            }
+        final hasSeenOnboarding = snapshot.data?[0] ?? false;
+        final hasAcceptedTerms = snapshot.data?[1] ?? false;
 
-            final hasSeenOnboarding = snapshot.data?[0] ?? false;
-            final hasAcceptedTerms = snapshot.data?[1] ?? false;
+        debugPrint('📍 [WRAPPER] hasSeenOnboarding: $hasSeenOnboarding');
+        debugPrint('📍 [WRAPPER] hasAcceptedTerms: $hasAcceptedTerms');
 
-            debugPrint('📍 hasSeenOnboarding: $hasSeenOnboarding');
-            debugPrint('📍 hasAcceptedTerms: $hasAcceptedTerms');
+        // ✅ 3. ยังไม่ accept terms -> แสดงหน้า Terms
+        if (!hasAcceptedTerms) {
+          debugPrint('➡️ [WRAPPER] Showing TermsAcceptanceScreen');
+          return const TermsAcceptanceScreen();
+        }
 
-            // ✅ 3. ยังไม่ accept terms -> แสดงหน้า Terms
-            if (!hasAcceptedTerms) {
-              return const TermsAcceptanceScreen();
-            }
+        // ✅ 4. accept แล้วแต่ยังไม่เคยเห็น onboarding -> แสดง Onboarding
+        if (!hasSeenOnboarding) {
+          debugPrint('➡️ [WRAPPER] Showing OnboardingScreen');
+          return const OnboardingScreen();
+        }
 
-            // ✅ 4. accept แล้วแต่ยังไม่เคยเห็น onboarding -> แสดง Onboarding
-            if (!hasSeenOnboarding) {
-              return const OnboardingScreen();
-            }
-
-            // ✅ 5. accept + เห็น onboarding แล้ว -> แสดงหน้า Login
-            return const SignInScreen();
-          },
-        );
+        // ✅ 5. accept + เห็น onboarding แล้ว -> แสดงหน้า Login
+        debugPrint('➡️ [WRAPPER] Showing SignInScreen');
+        return const SignInScreen();
       },
     );
   }
