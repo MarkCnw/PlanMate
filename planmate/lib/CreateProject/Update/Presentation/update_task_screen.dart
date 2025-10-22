@@ -151,7 +151,7 @@ class _UpdateTaskSheetState extends State<UpdateTaskSheet> {
         ),
         const SizedBox(height: 8),
         Text(
-          'to ${widget.task}',
+          'to ${widget.task.title}',
           style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
         ),
       ],

@@ -37,42 +37,28 @@ class NotificationScreen extends StatelessWidget {
                     );
                   }
                 }
-              } else if (value == 'test') {
-                await provider.sendTestNotification();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('ส่งการแจ้งเตือนทดสอบแล้ว'),
-                    ),
-                  );
-                }
               }
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'test',
-                child: Row(
-                  children: [
-                    Icon(Icons.send, size: 20),
-                    SizedBox(width: 8),
-                    Text('ส่งการแจ้งเตือนทดสอบ'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'clear_all',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete_sweep, size: 20, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text(
-                      'ลบทั้งหมด',
-                      style: TextStyle(color: Colors.red),
+            itemBuilder:
+                (context) => [
+                  const PopupMenuItem(
+                    value: 'clear_all',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.delete_sweep,
+                          size: 20,
+                          color: Colors.red,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'ลบทั้งหมด',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ],
+                  ),
+                ],
           ),
         ],
       ),
@@ -89,7 +75,11 @@ class NotificationScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.red,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'เกิดข้อผิดพลาด',
@@ -120,21 +110,21 @@ class NotificationScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none, size: 80, color: Colors.grey[400]),
+                  Icon(
+                    Icons.notifications_none,
+                    size: 80,
+                    color: Colors.grey[400],
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'ไม่มีการแจ้งเตือน',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
+                    style: Theme.of(context).textTheme.titleLarge
                         ?.copyWith(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'การแจ้งเตือนของคุณจะแสดงที่นี่',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
+                    style: Theme.of(context).textTheme.bodyMedium
                         ?.copyWith(color: Colors.grey[500]),
                   ),
                 ],
@@ -257,36 +247,36 @@ class NotificationScreen extends StatelessWidget {
   ) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(notification.icon, color: Colors.amber, size: 24),
-            const SizedBox(width: 8),
-            const Text('ความสำเร็จ'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              notification.title,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+      builder:
+          (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(notification.icon, color: Colors.amber, size: 24),
+                const SizedBox(width: 8),
+                const Text('ความสำเร็จ'),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(notification.body),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('ปิด'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notification.title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(notification.body),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('ปิด'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -297,21 +287,22 @@ class NotificationScreen extends StatelessWidget {
   ) {
     return showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('ยกเลิก'),
+      builder:
+          (context) => AlertDialog(
+            title: Text(title),
+            content: Text(content),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('ยกเลิก'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('ยืนยัน'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('ยืนยัน'),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -36,7 +36,12 @@ class ButtomAppBar extends StatelessWidget {
               isSelected: selectIndex == 1,
               onTap: () => onItemTapped(1),
             ),
-            const SizedBox(width: 40), // ช่องเว้นกลาง (สำหรับ FAB)
+            NavItemWidget(
+              icon: FontAwesomeIcons.pen,
+              label: 'Create',
+              isSelected: selectIndex == 2,
+              onTap: () => onItemTapped(2),
+            ),
             NavItemWidget(
               icon: FontAwesomeIcons.clockRotateLeft,
               label: 'History',

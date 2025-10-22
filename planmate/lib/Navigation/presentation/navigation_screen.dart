@@ -36,7 +36,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_selectedIndex],
-      floatingActionButton: CustomFAB(onPressed: () => _onItemTapped(2)),
+
       floatingActionButtonLocation:
           FloatingActionButtonLocation.centerDocked,
 

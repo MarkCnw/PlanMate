@@ -15,7 +15,7 @@ class ProjectSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           title,
@@ -25,17 +25,17 @@ class ProjectSectionHeader extends StatelessWidget {
             color: Color(0xFF001858)
           ),
         ),
-        GestureDetector(
-          onTap: onActionTap,
-          child: Text(
-            actionText,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF172c66),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
+        // GestureDetector(
+        //   onTap: onActionTap,
+        //   child: Text(
+        //     actionText,
+        //     style: const TextStyle(
+        //       fontSize: 14,
+        //       color: Color(0xFF172c66),
+        //       fontWeight: FontWeight.w500,
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

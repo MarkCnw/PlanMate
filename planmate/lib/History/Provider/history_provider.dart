@@ -71,7 +71,7 @@ class HistoryProvider extends ChangeNotifier {
       }
 
       // ❌ ลบ orderBy ออกชั่วคราวเพื่อหลีกเลี่ยงปัญหา index
-      // query = query.orderBy('timestamp', descending: true).limit(100);
+      query = query.orderBy('timestamp', descending: true).limit(100);
       query = query.limit(100);
 
       print('🔍 DEBUG: Executing query...');
